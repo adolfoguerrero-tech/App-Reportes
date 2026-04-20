@@ -2,8 +2,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Reportabilidad v2.1</title>
+<title>Sistema Reportabilidad v2.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
@@ -136,7 +137,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
       <input type="date" id="c-ini" onchange="renderCons()">
       <input type="date" id="c-fin" onchange="renderCons()">
       <button class="btn" onclick="exportExcel()">Exportar a Excel</button>
-      <button class="btn btn-sec" onclick="exportVisual()">Generar Galería PDF</button>
+      <button class="btn btn-sec" onclick="exportarFotosZip()">Descargar Fotos por Equipo (ZIP)</button>
     </div>
     <div id="cons-body"></div>
   </div>
@@ -188,7 +189,7 @@ const MOTIVOS = ["Mantención programada", "Mantención no programada", "Equipo 
 
 // SISTEMA DE ROLES
 let currentRole = 'user'; // Empieza siempre como usuario
-const ADMIN_PASS = 'admin123'; // CONTRASEÑA DE ADMINISTRADOR (Cámbiala)
+const ADMIN_PASS = 'admin123'; // CONTRASEÑA DE ADMINISTRADOR (Cámbiala cuando quieras)
 
 function toggleRole() {
   if (currentRole === 'user') {
@@ -482,7 +483,7 @@ function validate(){
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&String(r.id)!==String(id)))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&String(r.id)!==String(id)))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
   
-  // VALIDACIÓN CRONOLÓGICA ESTRICTA (Nueva funcionalidad)
+  // VALIDACIÓN CRONOLÓGICA ESTRICTA
   if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
     const repsEq = reports.filter(r => r.equipo === eq && String(r.id) !== String(id));
     
@@ -622,8 +623,13 @@ function exportExcel(){
   XLSX.writeFile(wb,`Consolidado_${ini}_a_${fin}.xlsx`);
 }
 
-// NUEVA FUNCIÓN PARA EXPORTAR GALERÍA VISUAL (PDF)
-function exportVisual() {
+// NUEVA FUNCIÓN PARA EXPORTAR FOTOS EN CARPETAS ZIP
+function exportarFotosZip() {
+  if (typeof JSZip === 'undefined') {
+    alert('Cargando herramienta ZIP, intenta de nuevo en un segundo...');
+    return;
+  }
+
   const ini = document.getElementById('c-ini').value;
   const fin = document.getElementById('c-fin').value;
   const reps = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
@@ -633,30 +639,29 @@ function exportVisual() {
     return;
   }
 
-  let html = `<html><head><title>Galería Fotográfica ${ini} a ${fin}</title>
-    <style>
-      body { font-family: sans-serif; padding: 20px; }
-      .card { border: 1px solid #ccc; margin-bottom: 20px; padding: 15px; page-break-inside: avoid; }
-      img { max-height: 400px; max-width: 100%; border-radius: 4px; margin-top: 10px; }
-      .meta { font-size: 14px; color: #444; margin-bottom: 8px; }
-    </style></head><body>
-    <h2>Respaldo Fotográfico de Reports - Rentamaq</h2>
-    <p style="margin-bottom:20px">Período: ${fmtD(ini)} al ${fmtD(fin)}</p>`;
+  const zip = new JSZip();
 
   reps.forEach(r => {
-    html += `<div class="card">
-      <div class="meta"><b>Equipo:</b> ${r.equipo} | <b>Fecha:</b> ${fmtD(r.fecha)} | <b>Turno:</b> ${r.turno}</div>
-      <div class="meta"><b>Folio:</b> ${r.folio || 'N/A'} | <b>Operador:</b> ${r.operador} | <b>Horómetro:</b> ${r.hi} → ${r.hf}</div>
-      ${r.obs ? `<div class="meta"><b>Obs:</b> ${r.obs}</div>` : ''}
-      <img src="${r.foto}">
-    </div>`;
+    // Le quitamos el encabezado a la foto para que quede como archivo puro
+    const base64Data = r.foto.split(',')[1];
+    
+    // Creamos una carpeta para cada equipo
+    const folder = zip.folder(r.equipo);
+    
+    // Nombramos el archivo con la fecha, turno y folio
+    const fileName = `${r.fecha}_${r.turno}_Folio-${r.folio || 'SF'}.jpg`;
+    
+    folder.file(fileName, base64Data, {base64: true});
   });
 
-  html += `<script>window.print();<\/script></body></html>`;
-  
-  const ventana = window.open('', '_blank');
-  ventana.document.write(html);
-  ventana.document.close();
+  zip.generateAsync({type:"blob"}).then(function(content) {
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Respaldo_Fotos_${ini}_al_${fin}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
 }
 
 function renderEquipos(){
@@ -729,7 +734,7 @@ function closeModal(){document.getElementById('modal').classList.remove('show')}
 
 // INICIALIZACIÓN
 initGrid();
-applyRoles(); // Llama a la validación de roles al arrancar
+applyRoles();
 </script>
 </body>
 </html>
