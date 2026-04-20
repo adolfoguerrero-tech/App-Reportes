@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Reportabilidad v2.3</title>
+<title>Sistema Reportabilidad v2.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -214,7 +214,7 @@ function toggleRole() {
 }
 
 function applyRoles() {
-  const adminOnly = ['nav-grid', 'nav-cons', 'nav-equipos', 'nav-err', 'nav-cfg'];
+  const adminOnly = ['nav-cons', 'nav-equipos', 'nav-err', 'nav-cfg']; // Eliminado 'nav-grid' para que el operador pueda entrar
   adminOnly.forEach(id => {
     document.getElementById(id).style.display = currentRole === 'admin' ? 'inline-block' : 'none';
   });
@@ -302,7 +302,6 @@ function renderDash(){
 }
 
 function openGridFor(pat){
-  if (currentRole === 'user') return; // Bloquear si es operador
   document.getElementById('sel-eq').value=pat;
   show('grid')
 }
@@ -345,7 +344,7 @@ function renderGrid(){
       if(a){ausN++;return `<td><div class="cell-just" onclick="editAusencia(${a.id})"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
       if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
       missN++;
-      return `<td><div class="cell-miss" onclick="openAusForm('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>click para justificar</small></div></td>`;
+      return `<td><div class="cell-miss" onclick="promptMissingAction('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>Click para gestionar</small></div></td>`;
     };
     html+=`<tr><td><b>${fmtD(fs)}</b></td>${cell('Día')}${cell('Noche')}</tr>`;
   });
@@ -358,6 +357,34 @@ function renderGrid(){
   <div class="stat"><div class="lbl">Horas acumuladas</div><div class="val">${totHrs.toFixed(1)}</div></div>
   </div>`;
   document.getElementById('grid-body').innerHTML=cab+html;
+}
+
+function promptMissingAction(pat, fecha, turno) {
+  document.getElementById('modal-box').innerHTML = `
+    <h2 style="margin-bottom:10px">Gestionar Turno Sin Registro</h2>
+    <p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>
+    <p style="margin-bottom:20px">¿Qué deseas hacer con este turno vacío?</p>
+    <div class="grid2">
+      <button class="btn btn-sec" onclick="openAusForm('${pat}','${fecha}','${turno}')">Justificar Ausencia</button>
+      <button class="btn" onclick="openNewReportFromGrid('${pat}','${fecha}','${turno}')">Ingresar Report</button>
+    </div>
+    <div style="margin-top:10px;text-align:right">
+      <button class="btn btn-sec btn-sm" onclick="closeModal()" style="border:none">Cancelar</button>
+    </div>
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+
+function openNewReportFromGrid(pat, fecha, turno) {
+  closeModal();
+  clearForm();
+  show('new');
+  setTimeout(() => {
+    document.getElementById('f-eq').value = pat;
+    document.getElementById('f-fecha').value = fecha;
+    document.getElementById('f-turno').value = turno;
+    onEqChange();
+  }, 50);
 }
 
 function openAusForm(pat,fecha,turno,aid){
