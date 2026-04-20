@@ -2,118 +2,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rentamaq Cloud v3.3</title>
+    <title>Rentamaq Master v3.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: #f0f2f5; color: #1a1a1a; font-size: 13px; }
-        .nav { background: #1F4E78; color: #fff; padding: 10px; display: flex; gap: 5px; align-items: center; }
-        .nav button { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-        .nav button.active { background: #fff; color: #1F4E78; }
-        .container { padding: 15px; max-width: 1200px; margin: auto; }
-        .card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .stat { background: #fff; padding: 15px; border-radius: 8px; text-align: center; border-bottom: 3px solid #1F4E78; }
-        .stat div:first-child { font-size: 10px; color: #888; text-transform: uppercase; }
-        .stat div:last-child { font-size: 20px; font-weight: bold; color: #1F4E78; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn { background: #1F4E78; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-sec { background: #6c757d; }
-        .badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; }
-        .b-ok { background: #d4edda; color: #155724; }
-        .b-wait { background: #fff3cd; color: #856404; }
-        .hidden { display: none; }
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
-        .modal.show { display:flex; }
-        .modal-box { background:#fff; padding:20px; border-radius:8px; width:90%; max-width:500px; }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+        .nav{background:#1F4E78;color:#fff;padding:10px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+        .nav h1{font-size:15px;font-weight:500;margin-right:16px}
+        .nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+        .nav button.active{background:#fff;color:#1F4E78}
+        .container{padding:20px;max-width:1400px;margin:0 auto}
+        .card{background:#fff;border-radius:8px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:14px}
+        .stat{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:center}
+        .stat .lbl{font-size:10px;color:#888;text-transform:uppercase}
+        .stat .val{font-size:22px;font-weight:bold;color:#1F4E78}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th{background:#f0f2f5;padding:9px;text-align:left;color:#555}
+        td{padding:8px 9px;border-bottom:1px solid #eee}
+        .badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
+        .b-ok{background:#D4EDDA;color:#155724}.b-warn{background:#FFF3CD;color:#856404}
+        input,select,textarea{width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:5px;margin-bottom:10px}
+        label{display:block;font-size:11px;font-weight:bold;color:#555;margin-bottom:3px}
+        .btn{background:#1F4E78;color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-weight:bold}
+        .btn-sec{background:#fff;color:#555;border:1px solid #ddd}
+        .hidden{display:none}
+        .cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:6px;cursor:pointer}
+        .cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:6px;cursor:pointer}
+        .cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:6px;cursor:pointer}
+        .cell-fut{background:#f8f8f8;color:#aaa;padding:6px;text-align:center}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+        .modal.show{display:flex}
+        .modal-box{background:#fff;border-radius:8px;max-width:500px;width:90%;padding:20px;max-height:90vh;overflow-y:auto}
+        .cloud-indicator{background:#639922;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:5px}
     </style>
 </head>
 <body>
 
 <div class="nav">
-    <h3 style="margin-right:10px">Rentamaq <small id="status" style="color:#ff9800">(...)</small></h3>
-    <button onclick="showView('dash')" id="n-dash" class="active">Dash</button>
-    <button onclick="showView('new')" id="n-new">Nuevo</button>
-    <button onclick="showView('eq')" id="n-eq">Flota</button>
-    <button onclick="toggleAdmin()" id="n-admin" style="margin-left:auto">Admin</button>
+    <h1>Rentamaq <span class="cloud-indicator">Cloud OK</span></h1>
+    <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
+    <button onclick="show('grid')" id="n-grid">Grilla Equipo</button>
+    <button onclick="show('new')" id="n-new">Nuevo Report</button>
+    <button onclick="show('cons')" id="n-cons">Consolidados</button>
+    <button onclick="show('equipos')" id="n-equipos">Equipos</button>
+    <button onclick="toggleAdmin()" id="n-admin" style="margin-left:auto; background:#BA7517">Admin</button>
 </div>
 
 <div class="container">
-    <div id="v-dash">
+    <div id="view-dash">
         <div class="stats">
-            <div class="stat"><div>Equipos</div><div id="s-eq">0</div></div>
-            <div class="stat"><div>Reports</div><div id="s-rep">0</div></div>
-            <div class="stat"><div>Horas Totales</div><div id="s-hrs">0</div></div>
+            <div class="stat"><div class="lbl">Total Horas</div><div class="val" id="s-hrs">0</div></div>
+            <div class="stat"><div class="lbl">Equipos</div><div class="val" id="s-eq">0</div></div>
+            <div class="stat"><div class="lbl">Reports</div><div class="val" id="s-rep">0</div></div>
         </div>
         <div class="card">
-            <input type="text" id="busq" placeholder="Buscar patente..." oninput="renderDash()">
+            <input type="text" id="fltr" placeholder="Filtrar patente o tipo..." oninput="renderDash()">
             <table id="t-dash">
-                <thead><tr><th>Patente</th><th>Tipo</th><th>Horómetro</th><th>Estado</th></tr></thead>
+                <thead><tr><th>Patente</th><th>Tipo</th><th>Horómetro</th><th>Reports</th><th>Estado</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 
-    <div id="v-new" class="hidden">
-        <div class="card" style="max-width:500px; margin:auto;">
-            <h2>Nuevo Reporte</h2>
-            <form id="f-report" onsubmit="guardarReporte(event)">
-                <label>Equipo</label>
-                <select id="f-eq" required onchange="actualizarHoroInicial()"></select>
-                <label>Fecha</label>
-                <input type="date" id="f-fec" required>
-                <label>Turno</label>
-                <select id="f-tur"><option>Día</option><option>Noche</option></select>
-                <label>Operador</label>
-                <input type="text" id="f-ope" required>
-                <div style="display:flex; gap:10px">
-                    <div style="flex:1"><label>H. Inicial</label><input type="number" step="0.1" id="f-hi" required></div>
-                    <div style="flex:1"><label>H. Final</label><input type="number" step="0.1" id="f-hf" required></div>
+    <div id="view-grid" class="hidden">
+        <div class="card">
+            <div style="display:flex;gap:10px;margin-bottom:15px">
+                <select id="sel-eq" onchange="renderGrid()"></select>
+                <input type="date" id="per-ini" onchange="renderGrid()">
+                <input type="date" id="per-fin" onchange="renderGrid()">
+            </div>
+            <div id="grid-body"></div>
+        </div>
+    </div>
+
+    <div id="view-new" class="hidden">
+        <div class="card" style="max-width:600px;margin:auto">
+            <h2 id="form-title">Ingresar Report</h2>
+            <form onsubmit="saveReport(event)">
+                <input type="hidden" id="f-id">
+                <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div><label>Fecha</label><input type="date" id="f-fecha" required></div>
+                    <div><label>Turno</label><select id="f-turno"><option>Día</option><option>Noche</option></select></div>
                 </div>
-                <label>Foto</label>
-                <input type="file" id="f-img" accept="image/*">
-                <button type="submit" class="btn" id="btn-save">Guardar Reporte</button>
+                <label>Operador</label><input type="text" id="f-op" required>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div><label>H. Inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
+                    <div><label>H. Final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
+                </div>
+                <label>Folio</label><input type="text" id="f-folio">
+                <label>Foto Report</label><input type="file" id="f-foto" accept="image/*" onchange="compFoto(event)">
+                <div id="prev-foto"></div>
+                <div id="f-msgs"></div>
+                <div style="text-align:right;margin-top:10px">
+                    <button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
+                    <button type="submit" class="btn" id="btn-save">Guardar</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="v-eq" class="hidden">
+    <div id="view-cons" class="hidden">
         <div class="card">
-            <div style="display:flex; justify-content:space-between">
-                <h2>Gestión de Flota</h2>
-                <button class="btn" onclick="abrirModalEquipo()">+ Agregar</button>
+            <div style="display:flex;gap:10px;margin-bottom:15px">
+                <input type="date" id="c-ini">
+                <input type="date" id="c-fin">
+                <button class="btn" onclick="exportExcel()">Excel</button>
+                <button class="btn btn-sec" onclick="exportarFotosZip()">ZIP Fotos</button>
             </div>
-            <table id="t-eq">
-                <thead><tr><th>Patente</th><th>Tipo</th><th>Horo Actual</th><th>Acción</th></tr></thead>
+            <div id="cons-body"></div>
+        </div>
+    </div>
+
+    <div id="view-equipos" class="hidden">
+        <div class="card">
+            <button class="btn" onclick="openEqForm()">+ Nuevo Equipo</button>
+            <table id="t-eq" style="margin-top:10px">
+                <thead><tr><th>Patente</th><th>Tipo</th><th>Horómetro</th><th>Acción</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div id="modal" class="modal">
-    <div class="modal-box">
-        <h2 id="m-title">Equipo</h2>
-        <label>Patente</label><input type="text" id="m-pat">
-        <label>Tipo</label><input type="text" id="m-tip">
-        <label>Horómetro Inicial</label><input type="number" step="0.1" id="m-hor">
-        <div style="display:flex; gap:10px; margin-top:10px">
-            <button class="btn" onclick="guardarEquipo()">Guardar</button>
-            <button class="btn btn-sec" onclick="closeModal()">Cerrar</button>
-        </div>
-    </div>
-</div>
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box" id="modal-box"></div></div>
 
 <script>
-// CREDENCIALES
 const firebaseConfig = {
     apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
     authDomain: "app-reportabilidad.firebaseapp.com",
@@ -123,152 +142,208 @@ const firebaseConfig = {
     appId: "1:423911487944:web:abbf3c7464bb335bfc28fd"
 };
 
-// INICIALIZACIÓN
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-let r_data = [], e_data = [];
-let isAdmin = false;
+let reports = [], equipos = [], ausencias = [], fotoData = null, isAdmin = false;
 
-// ESCUCHAR DATOS (Tiempo Real)
-db.collection("equipos").onSnapshot(snap => {
-    e_data = snap.docs.map(d => d.data());
-    renderDash();
-    renderEquipos();
-    llenarSelectEquipos();
-    document.getElementById('status').textContent = "Cloud OK";
-    document.getElementById('status').style.color = "#4caf50";
+// SINCRONIZACIÓN
+db.collection("equipos").onSnapshot(s => {
+    equipos = s.docs.map(d => d.data());
+    renderDash(); renderEquipos();
+    document.getElementById('f-eq').innerHTML = '<option value="">— Seleccionar —</option>' + equipos.map(e => `<option value="${e.patente}">${e.patente}</option>`).join('');
+    document.getElementById('sel-eq').innerHTML = equipos.map(e => `<option value="${e.patente}">${e.patente}</option>`).join('');
 });
+db.collection("reportes").onSnapshot(s => { reports = s.docs.map(d => d.data()); renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid(); });
+db.collection("ausencias").onSnapshot(s => { ausencias = s.docs.map(d => d.data()); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid(); });
 
-db.collection("reportes").onSnapshot(snap => {
-    r_data = snap.docs.map(d => d.data());
-    renderDash();
-});
-
-// NAVEGACIÓN
-function showView(v) {
-    document.getElementById('v-dash').classList.add('hidden');
-    document.getElementById('v-new').classList.add('hidden');
-    document.getElementById('v-eq').classList.add('hidden');
-    document.getElementById('v-'+v).classList.remove('hidden');
+function show(v){
+    document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById('n-'+v).classList.add('active');
+    document.getElementById('view-'+v).classList.remove('hidden');
+    document.getElementById('n-'+v)?.classList.add('active');
 }
 
-function toggleAdmin() {
-    let p = prompt("Clave:");
-    if(p === "admin123") {
-        isAdmin = true;
-        alert("Modo Admin Activado");
-        showView('eq');
-    }
-}
+function todayS(){ return new Date().toISOString().split('T')[0]; }
+function fmtD(d){ return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'}); }
 
 // DASHBOARD
-function renderDash() {
-    const bus = document.getElementById('busq').value.toLowerCase();
-    const tbody = document.querySelector('#t-dash tbody');
-    let hrs = 0;
-    
-    tbody.innerHTML = e_data.filter(e => e.patente.toLowerCase().includes(bus)).map(e => {
-        const reps = r_data.filter(r => r.equipo === e.patente);
-        const horo = e.horo || 0;
-        const totalEqHrs = reps.reduce((a, b) => a + (b.hf - b.hi), 0);
-        hrs += totalEqHrs;
-        return `<tr>
-            <td><b>${e.patente}</b></td>
-            <td>${e.tipo}</td>
-            <td>${horo}</td>
-            <td><span class="badge b-ok">Conectado</span></td>
-        </tr>`;
+function renderDash(){
+    const f = document.getElementById('fltr').value.toLowerCase();
+    const hoy = todayS();
+    let totalH = 0;
+    document.querySelector('#t-dash tbody').innerHTML = equipos.filter(e => e.patente.toLowerCase().includes(f)).map(e => {
+        const rs = reports.filter(r => r.equipo === e.patente);
+        const hasToday = rs.some(r => r.fecha === hoy);
+        const hrs = rs.reduce((a, b) => a + (b.hf - b.hi), 0);
+        totalH += hrs;
+        return `<tr onclick="openGridFor('${e.patente}')" style="cursor:pointer"><td><b>${e.patente}</b></td><td>${e.tipo}</td><td>${e.horo}</td><td>${rs.length}</td><td><span class="badge ${hasToday?'b-ok':'b-warn'}">${hasToday?'Al día':'Pendiente'}</span></td></tr>`;
     }).join('');
-
-    document.getElementById('s-eq').textContent = e_data.length;
-    document.getElementById('s-rep').textContent = r_data.length;
-    document.getElementById('s-hrs').textContent = hrs.toFixed(1);
+    document.getElementById('s-hrs').textContent = totalH.toFixed(1);
+    document.getElementById('s-eq').textContent = equipos.length;
+    document.getElementById('s-rep').textContent = reports.length;
 }
 
-// GESTIÓN EQUIPOS
-function renderEquipos() {
-    document.querySelector('#t-eq tbody').innerHTML = e_data.map(e => `
-        <tr>
-            <td>${e.patente}</td>
-            <td>${e.tipo}</td>
-            <td>${e.horo}</td>
-            <td><button onclick="borrarEquipo('${e.patente}')" style="color:red; background:none; border:none; cursor:pointer">X</button></td>
-        </tr>
-    `).join('');
+// GRILLA
+function openGridFor(p){ document.getElementById('sel-eq').value=p; show('grid'); renderGrid(); }
+function renderGrid(){
+    const pat = document.getElementById('sel-eq').value;
+    const ini = document.getElementById('per-ini').value || todayS();
+    const fin = document.getElementById('per-fin').value || todayS();
+    const d1 = new Date(ini+'T00:00'), d2 = new Date(fin+'T00:00');
+    let html = `<table><thead><tr><th>Fecha</th><th>Día</th><th>Noche</th></tr></thead><tbody>`;
+    for(let d = new Date(d1); d <= d2; d.setDate(d.getDate()+1)){
+        const fs = d.toISOString().split('T')[0];
+        const cell = (t) => {
+            const r = reports.find(x => x.equipo === pat && x.fecha === fs && x.turno === t);
+            const a = ausencias.find(x => x.equipo === pat && x.fecha === fs && x.turno === t);
+            if(r) return `<td><div class="cell-ok" onclick="editReport('${r.id}')"><b>${r.hf-r.hi}h</b><br><small>${r.folio||'S/F'}</small></div></td>`;
+            if(a) return `<td><div class="cell-just" onclick="editAusencia('${a.id}')"><b>AUS</b><br><small>${a.motivo}</small></div></td>`;
+            if(fs > todayS()) return `<td><div class="cell-fut">-</div></td>`;
+            return `<td><div class="cell-miss" onclick="promptMissing('${pat}','${fs}','${t}')"><b>FALTA</b></div></td>`;
+        };
+        html += `<tr><td>${fmtD(fs)}</td>${cell('Día')}${cell('Noche')}</tr>`;
+    }
+    document.getElementById('grid-body').innerHTML = html + `</tbody></table>`;
 }
 
-function abrirModalEquipo() { document.getElementById('modal').classList.add('show'); }
-function closeModal() { document.getElementById('modal').classList.remove('show'); }
-
-async function guardarEquipo() {
-    const p = document.getElementById('m-pat').value.toUpperCase();
-    const t = document.getElementById('m-tip').value;
-    const h = parseFloat(document.getElementById('m-hor').value) || 0;
-    if(!p) return;
-    await db.collection("equipos").doc(p).set({ patente: p, tipo: t, horo: h });
-    closeModal();
+function promptMissing(p, f, t){
+    document.getElementById('modal-box').innerHTML = `<h3>Gestionar Turno</h3><p>${p} - ${f} (${t})</p><br><button class="btn" onclick="goNew('${p}','${f}','${t}')">Ingresar Report</button> <button class="btn btn-sec" onclick="goAus('${p}','${f}','${t}')">Justificar Ausencia</button>`;
+    document.getElementById('modal').classList.add('show');
 }
-
-async function borrarEquipo(p) {
-    if(confirm("¿Eliminar " + p + "?")) await db.collection("equipos").doc(p).delete();
-}
+function goNew(p,f,t){ closeModal(); clearForm(); document.getElementById('f-eq').value=p; document.getElementById('f-fecha').value=f; document.getElementById('f-turno').value=t; onEqChange(); show('new'); }
 
 // REPORTES
-function llenarSelectEquipos() {
-    document.getElementById('f-eq').innerHTML = '<option value="">Seleccione...</option>' + 
-    e_data.map(e => `<option value="${e.patente}">${e.patente}</option>`).join('');
+function onEqChange(){ const e = equipos.find(x => x.patente === document.getElementById('f-eq').value); if(e) document.getElementById('f-hi').value = e.horo; }
+function calcDif(){ document.getElementById('f-hf').value && (document.getElementById('f-hi').value) && (document.getElementById('f-msgs').innerHTML = ""); }
+
+function compFoto(e){
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+            const c = document.createElement('canvas'); const sc = Math.min(1, 800/img.width);
+            c.width = img.width*sc; c.height = img.height*sc;
+            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+            fotoData = c.toDataURL('image/jpeg', 0.6);
+            document.getElementById('prev-foto').innerHTML = `<img src="${fotoData}" style="width:100px;margin-top:10px">`;
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(e.target.files[0]);
 }
 
-function actualizarHoroInicial() {
-    const p = document.getElementById('f-eq').value;
-    const e = e_data.find(x => x.patente === p);
-    if(e) document.getElementById('f-hi').value = e.horo;
-}
-
-async function guardarReporte(ev) {
+async function saveReport(ev){
     ev.preventDefault();
-    const btn = document.getElementById('btn-save');
-    btn.disabled = true; btn.textContent = "Sincronizando...";
-
-    const id = Date.now().toString();
-    const pat = document.getElementById('f-eq').value;
-    const hf = parseFloat(document.getElementById('f-hf').value);
+    const hi = parseFloat(document.getElementById('f-hi').value), hf = parseFloat(document.getElementById('f-hf').value);
+    const pat = document.getElementById('f-eq').value, fec = document.getElementById('f-fecha').value;
     
-    let imgUrl = "";
-    const file = document.getElementById('f-img').files[0];
-    if(file) {
+    // VALIDACIÓN CRONOLÓGICA
+    const pasados = reports.filter(r => r.equipo === pat && r.fecha < fec);
+    const futuros = reports.filter(r => r.equipo === pat && r.fecha > fec);
+    if(pasados.some(r => r.hf > hi)) return alert("Error: Horómetro inicial menor a reportes pasados.");
+    if(futuros.some(r => r.hi < hf)) return alert("Error: Horómetro final mayor a reportes futuros.");
+    if(hf < hi) return alert("H. Final no puede ser menor a Inicial.");
+
+    const id = document.getElementById('f-id').value || Date.now().toString();
+    document.getElementById('btn-save').disabled = true;
+    
+    let url = reports.find(r => r.id === id)?.foto || "";
+    if(fotoData){
         const ref = storage.ref(`fotos/${id}.jpg`);
-        await ref.put(file);
-        imgUrl = await ref.getDownloadURL();
+        await ref.putString(fotoData, 'data_url');
+        url = await ref.getDownloadURL();
     }
 
-    const report = {
-        id: id,
-        equipo: pat,
-        fecha: document.getElementById('f-fec').value,
-        turno: document.getElementById('f-tur').value,
-        operador: document.getElementById('f-ope').value,
-        hi: parseFloat(document.getElementById('f-hi').value),
-        hf: hf,
-        foto: imgUrl
-    };
+    const data = { id, equipo: pat, fecha: fec, turno: document.getElementById('f-turno').value, hi, hf, operador: document.getElementById('f-op').value, folio: document.getElementById('f-folio').value, foto: url };
+    await db.collection("reportes").doc(id).set(data);
+    
+    // Actualizar horómetro del equipo si es el más reciente
+    const ultimo = reports.filter(r => r.equipo === pat).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+    if(!ultimo || fec >= ultimo.fecha) await db.collection("equipos").doc(pat).update({ horo: hf });
 
-    await db.collection("reportes").doc(id).set(report);
-    await db.collection("equipos").doc(pat).update({ horo: hf });
-
-    alert("¡Reporte Guardado en Nube!");
-    document.getElementById('f-report').reset();
-    btn.disabled = false; btn.textContent = "Guardar Reporte";
-    showView('dash');
+    alert("Guardado OK"); clearForm(); show('dash');
 }
 
-// Al cargar
-document.getElementById('f-fec').value = new Date().toISOString().split('T')[0];
-</script>
+function clearForm(){ document.getElementById('f-id').value=""; document.getElementById('prev-foto').innerHTML=""; fotoData=null; document.getElementById('btn-save').disabled=false; }
 
+function editReport(id){
+    const r = reports.find(x => x.id === id);
+    if(!r) return;
+    clearForm();
+    document.getElementById('f-id').value = r.id;
+    document.getElementById('f-eq').value = r.equipo;
+    document.getElementById('f-fecha').value = r.fecha;
+    document.getElementById('f-turno').value = r.turno;
+    document.getElementById('f-hi').value = r.hi;
+    document.getElementById('f-hf').value = r.hf;
+    document.getElementById('f-op').value = r.operador;
+    document.getElementById('f-folio').value = r.folio;
+    if(r.foto) document.getElementById('prev-foto').innerHTML = `<img src="${r.foto}" style="width:100px">`;
+    show('new');
+}
+
+// ADMIN EQUIPOS
+function renderEquipos(){
+    document.querySelector('#t-eq tbody').innerHTML = equipos.map(e => `<tr><td>${e.patente}</td><td>${e.tipo}</td><td>${e.horo}</td><td><button onclick="delEq('${e.patente}')">Eliminar</button></td></tr>`).join('');
+}
+function openEqForm(){
+    document.getElementById('modal-box').innerHTML = `<h3>Nuevo Equipo</h3><label>Patente</label><input id="m-p"><label>Tipo</label><input id="m-t"><label>Horo</label><input type="number" id="m-h"><button class="btn" onclick="saveEq()">Guardar</button>`;
+    document.getElementById('modal').classList.add('show');
+}
+async function saveEq(){
+    const p = document.getElementById('m-p').value.toUpperCase();
+    await db.collection("equipos").doc(p).set({ patente: p, tipo: document.getElementById('m-t').value, horo: parseFloat(document.getElementById('m-h').value), estado: 'Activo' });
+    closeModal();
+}
+async function delEq(p){ if(confirm("¿Eliminar?")) await db.collection("equipos").doc(p).delete(); }
+
+// AUSENCIAS
+function goAus(p, f, t){
+    document.getElementById('modal-box').innerHTML = `<h3>Justificar Ausencia</h3><label>Motivo</label><select id="a-mot"><option>Mantención</option><option>Sin Operador</option><option>Clima</option><option>No requerido</option></select><button class="btn" onclick="saveAus('${p}','${f}','${t}')">Guardar</button>`;
+}
+async function saveAus(equipo, fecha, turno){
+    const id = Date.now().toString();
+    await db.collection("ausencias").doc(id).set({ id, equipo, fecha, turno, motivo: document.getElementById('a-mot').value });
+    closeModal();
+}
+async function editAusencia(id){ if(confirm("¿Eliminar esta justificación?")) await db.collection("ausencias").doc(id).delete(); }
+
+// EXPORTACIÓN
+async function exportarFotosZip() {
+    const ini = document.getElementById('c-ini').value, fin = document.getElementById('c-fin').value;
+    const filtered = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
+    if(!filtered.length) return alert("Sin fotos");
+    const zip = new JSZip();
+    for(let r of filtered){
+        const blob = await fetch(r.foto).then(res => res.blob());
+        zip.folder(r.equipo).file(`${r.fecha}_${r.turno}.jpg`, blob);
+    }
+    zip.generateAsync({type:"blob"}).then(c => { const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download="fotos.zip"; a.click(); });
+}
+
+function exportExcel(){
+    const ini = document.getElementById('c-ini').value, fin = document.getElementById('c-fin').value;
+    const data = reports.filter(r => r.fecha >= ini && r.fecha <= fin).map(r => ({ Fecha: r.fecha, Turno: r.turno, Equipo: r.equipo, H_Ini: r.hi, H_Fin: r.hf, Horas: r.hf-r.hi, Operador: r.operador, Folio: r.folio, Link: r.foto }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Reports");
+    XLSX.writeFile(wb, "Reporte_Rentamaq.xlsx");
+}
+
+function toggleAdmin(){ if(prompt("Pass:")==="admin123"){ isAdmin=true; applyRoles(); show('dash'); } }
+function applyRoles(){
+    const isA = isAdmin;
+    document.getElementById('n-cons').style.display = isA?'inline-block':'none';
+    document.getElementById('n-equipos').style.display = isA?'inline-block':'none';
+    document.getElementById('n-admin').textContent = isA?'Admin OK':'Admin';
+}
+function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+
+// Inicio
+show('dash');
+applyRoles();
+</script>
 </body>
 </html>
+
