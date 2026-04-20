@@ -2,9 +2,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Reportabilidad v2.4</title>
+<title>Sistema Reportabilidad v3.1 (Cloud Ready)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
@@ -47,11 +52,13 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .foto-thumb{width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #ddd}.foto-full{max-width:100%;border-radius:5px;margin-top:8px}
 .pill-foto{background:#D4EDDA;color:#155724;font-size:10px;padding:2px 7px;border-radius:8px}.pill-nofoto{background:#FFF3CD;color:#856404;font-size:10px;padding:2px 7px;border-radius:8px}
 .row-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.empty{text-align:center;padding:40px;color:#aaa}
+.cloud-indicator{background:#BA7517;color:white;padding:4px 8px;border-radius:12px;font-size:10px;margin-left:8px;}
+.cloud-on{background:#639922;}
 </style>
 </head>
 <body>
 <div class="nav">
-  <h1>Reportabilidad · Rentamaq</h1>
+  <h1>Reportabilidad · Rentamaq <span id="cloud-status" class="cloud-indicator">Local Mode</span></h1>
   <button id="nav-dash" class="active" onclick="show('dash')">Dashboard</button>
   <button id="nav-grid" onclick="show('grid')">Grilla equipo</button>
   <button id="nav-new" onclick="show('new')">Nuevo report</button>
@@ -123,7 +130,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
       <div id="f-msgs" style="margin-top:10px"></div>
       <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
         <button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
-        <button type="submit" class="btn">Guardar</button>
+        <button type="submit" class="btn" id="btn-submit-report">Guardar</button>
       </div>
     </form>
   </div>
@@ -170,7 +177,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="view-cfg" class="hidden">
   <div class="card" style="max-width:640px">
     <h2>Respaldo y restauración</h2>
-    <p class="small" style="margin-bottom:14px">Los datos se guardan en este navegador. Descarga respaldo periódicamente para no perderlos.</p>
+    <p class="small" style="margin-bottom:14px">Los datos se guardan en este navegador. Si la Nube está activa, estos respaldos locales son secundarios.</p>
     <div class="row-flex">
       <button class="btn" onclick="backup()">Descargar respaldo (JSON)</button>
       <input type="file" id="f-restore" accept=".json" style="display:none" onchange="restore(event)">
@@ -185,14 +192,76 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box" id="modal-box"></div></div>
 
 <script>
-// DATOS INICIALES
-const EQUIPOS_DEFAULT = [{"patente": "TBGH-68", "tipo": "Rodillo", "horometro_actual": 5021.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXSP-20", "tipo": "Rodillo", "horometro_actual": 5033.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPTK-55", "tipo": "Rodillo", "horometro_actual": 1087.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "LVGG-39", "tipo": "Rodillo", "horometro_actual": 6775.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull B-26", "tipo": "Bulldozer", "horometro_actual": 1954.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull B-24", "tipo": "Bulldozer", "horometro_actual": 3646.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "KTVK-56", "tipo": "Bulldozer", "horometro_actual": 22530.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull LJVG BZ-23", "tipo": "Bulldozer", "horometro_actual": 5397.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "LLXS-83", "tipo": "Bulldozer", "horometro_actual": 5097.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RWGW-85", "tipo": "Bulldozer", "horometro_actual": 1162.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RWHS-79", "tipo": "Cargador Frontal", "horometro_actual": 4626.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPRG-12", "tipo": "Cargador Frontal", "horometro_actual": 5699.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "GHA-06", "tipo": "Motoniveladora", "horometro_actual": 5186.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TJPH-89", "tipo": "Motoniveladora", "horometro_actual": 4855.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGTX-44", "tipo": "Camión Pluma", "horometro_actual": 2933.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VLZW-29", "tipo": "Camión Pluma", "horometro_actual": 554.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VRWJ-15", "tipo": "Camión Aljibe", "horometro_actual": 1139.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TFRV-14", "tipo": "Retroexcavadora", "horometro_actual": 3744.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Nueva Retro 22", "tipo": "Retroexcavadora", "horometro_actual": 3063.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPTK-56", "tipo": "Excavadora", "horometro_actual": 1290.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "EXC.24", "tipo": "Excavadora", "horometro_actual": 3646.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "EXC.25", "tipo": "Excavadora", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBTS-56", "tipo": "Excavadora", "horometro_actual": 5266.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TJWY-89", "tipo": "Excavadora", "horometro_actual": 6770.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDXF-11", "tipo": "Camión Petrolero", "horometro_actual": 1293.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSZJ-92", "tipo": "Camión Petrolero", "horometro_actual": 704.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "THYD-27", "tipo": "Camión Petrolero", "horometro_actual": 6713.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-10", "tipo": "Camión Tolva", "horometro_actual": 9243.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VBZJ-16", "tipo": "Camión Tolva", "horometro_actual": 3724.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-17", "tipo": "Camión Tolva", "horometro_actual": 3268.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "STXS-17", "tipo": "Camión Tolva", "horometro_actual": 7303.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TPTX-19", "tipo": "Camión Tolva", "horometro_actual": 5937.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-19", "tipo": "Camión Tolva", "horometro_actual": 6248.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSFS-21", "tipo": "Camión Tolva", "horometro_actual": 1079.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-22", "tipo": "Camión Tolva", "horometro_actual": 7366.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TLPG-22", "tipo": "Camión Tolva", "horometro_actual": 3436.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-25", "tipo": "Camión Tolva", "horometro_actual": 8348.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TLPG-25", "tipo": "Camión Tolva", "horometro_actual": 3214.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDZH-28", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SSYV-29", "tipo": "Camión Tolva", "horometro_actual": 2921.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-30", "tipo": "Camión Tolva", "horometro_actual": 8671.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDZH-32", "tipo": "Camión Tolva", "horometro_actual": 9994.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZZ-32", "tipo": "Camión Tolva", "horometro_actual": 1635.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSKW-33", "tipo": "Camión Tolva", "horometro_actual": 2608.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-33", "tipo": "Camión Tolva", "horometro_actual": 7163.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-35", "tipo": "Camión Tolva", "horometro_actual": -129, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSFW-37", "tipo": "Camión Tolva", "horometro_actual": 9352.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TGGG-37", "tipo": "Camión Tolva", "horometro_actual": 2369.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VRZR-40", "tipo": "Camión Tolva", "horometro_actual": 1126.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCLR-41", "tipo": "Camión Tolva", "horometro_actual": -5426, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-44", "tipo": "Camión Tolva", "horometro_actual": 1569.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SLLT-46", "tipo": "Camión Tolva", "horometro_actual": 5433.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGWX-47", "tipo": "Camión Tolva", "horometro_actual": -2570, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-47", "tipo": "Camión Tolva", "horometro_actual": 1547.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGWX-48", "tipo": "Camión Tolva", "horometro_actual": 2701.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-48", "tipo": "Camión Tolva", "horometro_actual": 3070.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCJB-48", "tipo": "Camión Tolva", "horometro_actual": 2504.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVT-50", "tipo": "Camión Tolva", "horometro_actual": 10366.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-51", "tipo": "Camión Tolva", "horometro_actual": 4547.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXVX-51", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-52", "tipo": "Camión Tolva", "horometro_actual": 918.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-52", "tipo": "Camión Tolva", "horometro_actual": -5861, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-53", "tipo": "Camión Tolva", "horometro_actual": -1601, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-53", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVT-54", "tipo": "Camión Tolva", "horometro_actual": 10148.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-56", "tipo": "Camión Tolva", "horometro_actual": 3381.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TWDC-57", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SKDS-66", "tipo": "Camión Tolva", "horometro_actual": 5600.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SCFY-66", "tipo": "Camión Tolva", "horometro_actual": 7075.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSFB-66", "tipo": "Camión Tolva", "horometro_actual": -1059, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SCFY-67", "tipo": "Camión Tolva", "horometro_actual": 6471.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RZTF-69", "tipo": "Camión Tolva", "horometro_actual": 6248.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-70", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSTS-71", "tipo": "Camión Tolva", "horometro_actual": 7182.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TPWX-71", "tipo": "Camión Tolva", "horometro_actual": 4741.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VHGW-71", "tipo": "Camión Tolva", "horometro_actual": 1514.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VHGW-73", "tipo": "Camión Tolva", "horometro_actual": 2766.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKF-73", "tipo": "Camión Tolva", "horometro_actual": 3361.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PZZV-74", "tipo": "Camión Tolva", "horometro_actual": 7215.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PHJC-74", "tipo": "Camión Tolva", "horometro_actual": 7689.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSGG-79", "tipo": "Camión Tolva", "horometro_actual": 3206.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSBD-82", "tipo": "Camión Tolva", "horometro_actual": 1053.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SFYV-82", "tipo": "Camión Tolva", "horometro_actual": 12614.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKHJ-82", "tipo": "Camión Tolva", "horometro_actual": 3430.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSTS-82", "tipo": "Camión Tolva", "horometro_actual": 7654.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PRVK-82", "tipo": "Camión Tolva", "horometro_actual": 7110.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SJVV-83", "tipo": "Camión Tolva", "horometro_actual": 5824.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-83", "tipo": "Camión Tolva", "horometro_actual": 1167.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVR-84", "tipo": "Camión Tolva", "horometro_actual": 10884.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSGF-84", "tipo": "Camión Tolva", "horometro_actual": 1151.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-86", "tipo": "Camión Tolva", "horometro_actual": 1143.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-87", "tipo": "Camión Tolva", "horometro_actual": 2812.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSRH-90", "tipo": "Camión Tolva", "horometro_actual": 7075.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-93", "tipo": "Camión Tolva", "horometro_actual": 4924.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PZZV-94", "tipo": "Camión Tolva", "horometro_actual": 6804.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-94", "tipo": "Camión Tolva", "horometro_actual": 5039.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCJV-95", "tipo": "Camión Tolva", "horometro_actual": 3900.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VBCR-95", "tipo": "Camión Tolva", "horometro_actual": 6652.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXHC-96", "tipo": "Camión Tolva", "horometro_actual": 5406.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-96", "tipo": "Camión Tolva", "horometro_actual": 3258.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-97", "tipo": "Camión Tolva", "horometro_actual": 2019.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SJVV-98", "tipo": "Camión Tolva", "horometro_actual": 7129.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-98", "tipo": "Camión Tolva", "horometro_actual": 5171.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "STXS-26", "tipo": "Mini Bus", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "THXL-77", "tipo": "Mini Bus", "horometro_actual": 46097.0, "estado": "Activo", "proveedor": "Rentamaq"}];
+/* =====================================================================
+   CONFIGURACIÓN FIREBASE Y ARQUITECTURA HÍBRIDA
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
+  authDomain: "app-reportabilidad.firebaseapp.com",
+  projectId: "app-reportabilidad",
+  storageBucket: "app-reportabilidad.firebasestorage.app",
+  messagingSenderId: "423911487944",
+  appId: "1:423911487944:web:abbf3c7464bb335bfc28fd"
+};
+
+let db = null;
+let storage = null;
+
+// DATOS INICIALES (Variables Híbridas)
+const EQUIPOS_DEFAULT = [{"patente": "TBGH-68", "tipo": "Rodillo", "horometro_actual": 5021.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXSP-20", "tipo": "Rodillo", "horometro_actual": 5033.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPTK-55", "tipo": "Rodillo", "horometro_actual": 1087.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "LVGG-39", "tipo": "Rodillo", "horometro_actual": 6775.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull B-26", "tipo": "Bulldozer", "horometro_actual": 1954.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull B-24", "tipo": "Bulldozer", "horometro_actual": 3646.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "KTVK-56", "tipo": "Bulldozer", "horometro_actual": 22530.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull LJVG BZ-23", "tipo": "Bulldozer", "horometro_actual": 5397.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "LLXS-83", "tipo": "Bulldozer", "horometro_actual": 5097.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RWGW-85", "tipo": "Bulldozer", "horometro_actual": 1162.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RWHS-79", "tipo": "Cargador Frontal", "horometro_actual": 4626.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPRG-12", "tipo": "Cargador Frontal", "horometro_actual": 5699.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "GHA-06", "tipo": "Motoniveladora", "horometro_actual": 5186.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TJPH-89", "tipo": "Motoniveladora", "horometro_actual": 4855.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGTX-44", "tipo": "Camión Pluma", "horometro_actual": 2933.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VLZW-29", "tipo": "Camión Pluma", "horometro_actual": 554.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VRWJ-15", "tipo": "Camión Aljibe", "horometro_actual": 1139.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TFRV-14", "tipo": "Retroexcavadora", "horometro_actual": 3744.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Nueva Retro 22", "tipo": "Retroexcavadora", "horometro_actual": 3063.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPTK-56", "tipo": "Excavadora", "horometro_actual": 1290.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "EXC.24", "tipo": "Excavadora", "horometro_actual": 3646.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "EXC.25", "tipo": "Excavadora", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBTS-56", "tipo": "Excavadora", "horometro_actual": 5266.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TJWY-89", "tipo": "Excavadora", "horometro_actual": 6770.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDXF-11", "tipo": "Camión Petrolero", "horometro_actual": 1293.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSZJ-92", "tipo": "Camión Petrolero", "horometro_actual": 704.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "THYD-27", "tipo": "Camión Petrolero", "horometro_actual": 6713.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-10", "tipo": "Camión Tolva", "horometro_actual": 9243.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VBZJ-16", "tipo": "Camión Tolva", "horometro_actual": 3724.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-17", "tipo": "Camión Tolva", "horometro_actual": 3268.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "STXS-17", "tipo": "Camión Tolva", "horometro_actual": 7303.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TPTX-19", "tipo": "Camión Tolva", "horometro_actual": 5937.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-19", "tipo": "Camión Tolva", "horometro_actual": 6248.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSFS-21", "tipo": "Camión Tolva", "horometro_actual": 1079.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-22", "tipo": "Camión Tolva", "horometro_actual": 7366.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TLPG-22", "tipo": "Camión Tolva", "horometro_actual": 3436.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-25", "tipo": "Camión Tolva", "horometro_actual": 8348.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TLPG-25", "tipo": "Camión Tolva", "horometro_actual": 3214.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDZH-28", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SSYV-29", "tipo": "Camión Tolva", "horometro_actual": 2921.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-30", "tipo": "Camión Tolva", "horometro_actual": 8671.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDZH-32", "tipo": "Camión Tolva", "horometro_actual": 9994.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZZ-32", "tipo": "Camión Tolva", "horometro_actual": 1635.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSKW-33", "tipo": "Camión Tolva", "horometro_actual": 2608.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-33", "tipo": "Camión Tolva", "horometro_actual": 7163.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-35", "tipo": "Camión Tolva", "horometro_actual": -129, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSFW-37", "tipo": "Camión Tolva", "horometro_actual": 9352.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TGGG-37", "tipo": "Camión Tolva", "horometro_actual": 2369.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VRZR-40", "tipo": "Camión Tolva", "horometro_actual": 1126.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCLR-41", "tipo": "Camión Tolva", "horometro_actual": -5426, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-44", "tipo": "Camión Tolva", "horometro_actual": 1569.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SLLT-46", "tipo": "Camión Tolva", "horometro_actual": 5433.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGWX-47", "tipo": "Camión Tolva", "horometro_actual": -2570, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-47", "tipo": "Camión Tolva", "horometro_actual": 1547.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGWX-48", "tipo": "Camión Tolva", "horometro_actual": 2701.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-48", "tipo": "Camión Tolva", "horometro_actual": 3070.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCJB-48", "tipo": "Camión Tolva", "horometro_actual": 2504.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVT-50", "tipo": "Camión Tolva", "horometro_actual": 10366.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-51", "tipo": "Camión Tolva", "horometro_actual": 4547.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXVX-51", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-52", "tipo": "Camión Tolva", "horometro_actual": 918.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-52", "tipo": "Camión Tolva", "horometro_actual": -5861, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-53", "tipo": "Camión Tolva", "horometro_actual": -1601, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-53", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVT-54", "tipo": "Camión Tolva", "horometro_actual": 10148.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-56", "tipo": "Camión Tolva", "horometro_actual": 3381.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TWDC-57", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SKDS-66", "tipo": "Camión Tolva", "horometro_actual": 5600.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SCFY-66", "tipo": "Camión Tolva", "horometro_actual": 7075.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSFB-66", "tipo": "Camión Tolva", "horometro_actual": -1059, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SCFY-67", "tipo": "Camión Tolva", "horometro_actual": 6471.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RZTF-69", "tipo": "Camión Tolva", "horometro_actual": 6248.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-70", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSTS-71", "tipo": "Camión Tolva", "horometro_actual": 7182.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TPWX-71", "tipo": "Camión Tolva", "horometro_actual": 4741.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VHGW-71", "tipo": "Camión Tolva", "horometro_actual": 1514.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VHGW-73", "tipo": "Camión Tolva", "horometro_actual": 2766.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKF-73", "tipo": "Camión Tolva", "horometro_actual": 3361.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PZZV-74", "tipo": "Camión Tolva", "horometro_actual": 7215.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PHJC-74", "tipo": "Camión Tolva", "horometro_actual": 7689.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSGG-79", "tipo": "Camión Tolva", "horometro_actual": 3206.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSBD-82", "tipo": "Camión Tolva", "horometro_actual": 1053.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SFYV-82", "tipo": "Camión Tolva", "horometro_actual": 12614.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKHJ-82", "tipo": "Camión Tolva", "horometro_actual": 3430.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSTS-82", "tipo": "Camión Tolva", "horometro_actual": 7654.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PRVK-82", "tipo": "Camión Tolva", "horometro_actual": 7110.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SJVV-83", "tipo": "Camión Tolva", "horometro_actual": 5824.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-83", "tipo": "Camión Tolva", "horometro_actual": 1167.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVR-84", "tipo": "Camión Tolva", "horometro_actual": 10884.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSGF-84", "tipo": "Camión Tolva", "horometro_actual": 1151.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-86", "tipo": "Camión Tolva", "horometro_actual": 1143.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-87", "tipo": "Camión Tolva", "horometro_actual": 2812.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSRH-90", "tipo": "Camión Tolva", "horometro_actual": 7075.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-93", "tipo": "Camión Tolva", "horometro_actual": 4924.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PZZV-94", "Camión Tolva", "horometro_actual": 6804.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-94", "tipo": "Camión Tolva", "horometro_actual": 5039.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCJV-95", "tipo": "Camión Tolva", "horometro_actual": 3900.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VBCR-95", "tipo": "Camión Tolva", "horometro_actual": 6652.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXHC-96", "tipo": "Camión Tolva", "horometro_actual": 5406.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-96", "tipo": "Camión Tolva", "horometro_actual": 3258.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-97", "tipo": "Camión Tolva", "horometro_actual": 2019.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SJVV-98", "tipo": "Camión Tolva", "horometro_actual": 7129.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-98", "tipo": "Camión Tolva", "horometro_actual": 5171.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "STXS-26", "tipo": "Mini Bus", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "THXL-77", "tipo": "Mini Bus", "horometro_actual": 46097.0, "estado": "Activo", "proveedor": "Rentamaq"}];
 const PROVS_DEFAULT = ["Rentamaq", "Subarriendo A", "Subarriendo B"];
 const MOTIVOS = ["Mantención programada", "Mantención no programada", "Equipo no requerido por Teck", "Sin operador disponible", "Mala condición climática", "Emergencia en faena", "Equipo en traslado", "Espera condición segura", "Detención extraordinaria", "Otro"];
 
-// SISTEMA DE ROLES
-let currentRole = 'user'; // Empieza siempre como usuario
-const ADMIN_PASS = 'admin123'; // CONTRASEÑA DE ADMINISTRADOR (Cámbiala cuando quieras)
+let reports = JSON.parse(localStorage.getItem('rep-reports') || '[]');
+let equipos = JSON.parse(localStorage.getItem('rep-equipos') || 'null') || EQUIPOS_DEFAULT;
+let provs = JSON.parse(localStorage.getItem('rep-provs') || 'null') || PROVS_DEFAULT;
+let ausencias = JSON.parse(localStorage.getItem('rep-ausencias') || '[]');
+
+function saveLocal() {
+  localStorage.setItem('rep-reports', JSON.stringify(reports));
+  localStorage.setItem('rep-equipos', JSON.stringify(equipos));
+  localStorage.setItem('rep-provs', JSON.stringify(provs));
+  localStorage.setItem('rep-ausencias', JSON.stringify(ausencias));
+}
+
+// INICIALIZACIÓN DE NUBE
+if (firebaseConfig.apiKey !== "PEGA_AQUI_TU_API_KEY") {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  storage = firebase.storage();
+  
+  // Persistencia para faena sin internet
+  db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+  db.enablePersistence().catch(err => console.warn("Firebase Offline config:", err));
+
+  document.getElementById('cloud-status').textContent = "Cloud Mode";
+  document.getElementById('cloud-status').classList.add("cloud-on");
+
+  // Escuchadores en tiempo real (Sincronizan del Cloud a Local)
+  db.collection("reports").onSnapshot(s => {
+    reports = s.docs.map(d => d.data());
+    saveLocal(); renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid();
+  });
+  db.collection("ausencias").onSnapshot(s => {
+    ausencias = s.docs.map(d => d.data());
+    saveLocal(); renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid();
+  });
+  db.collection("equipos").onSnapshot(s => {
+    equipos = s.docs.map(d => d.data());
+    saveLocal(); renderEquipos(); renderDash();
+  });
+  db.collection("config").doc("proveedores").onSnapshot(d => {
+    if(d.exists) { provs = d.data().lista; saveLocal(); renderEquipos(); renderDash(); }
+  });
+} else {
+  saveLocal(); // Respaldo inicial si no hay nube
+}
+
+/* =====================================================================
+   SISTEMA DE ROLES Y VISTAS
+   ===================================================================== */
+let currentRole = 'user';
+const ADMIN_PASS = 'admin123'; 
 
 function toggleRole() {
   if (currentRole === 'user') {
@@ -200,42 +269,27 @@ function toggleRole() {
     if (p === ADMIN_PASS) {
       currentRole = 'admin';
       document.getElementById('nav-login').textContent = 'Rol: Admin';
-      document.getElementById('nav-login').style.background = '#639922'; // Verde
+      document.getElementById('nav-login').style.background = '#639922'; 
     } else if (p !== null) {
-      alert('Contraseña incorrecta');
-      return;
+      alert('Contraseña incorrecta'); return;
     }
   } else {
     currentRole = 'user';
     document.getElementById('nav-login').textContent = 'Rol: Operador';
-    document.getElementById('nav-login').style.background = '#BA7517'; // Naranja
+    document.getElementById('nav-login').style.background = '#BA7517'; 
   }
   applyRoles();
 }
 
 function applyRoles() {
-  const adminOnly = ['nav-cons', 'nav-equipos', 'nav-err', 'nav-cfg']; // Eliminado 'nav-grid' para que el operador pueda entrar
+  const adminOnly = ['nav-cons', 'nav-equipos', 'nav-err', 'nav-cfg'];
   adminOnly.forEach(id => {
     document.getElementById(id).style.display = currentRole === 'admin' ? 'inline-block' : 'none';
   });
-  // Si vuelve a usuario y estaba en vista admin, lo manda al dash
   if (currentRole === 'user' && adminOnly.some(id => document.getElementById(id).classList.contains('active'))) {
     show('dash');
   }
 }
-
-let reports = JSON.parse(localStorage.getItem('rep-reports') || '[]');
-let equipos = JSON.parse(localStorage.getItem('rep-equipos') || 'null') || EQUIPOS_DEFAULT;
-let provs = JSON.parse(localStorage.getItem('rep-provs') || 'null') || PROVS_DEFAULT;
-let ausencias = JSON.parse(localStorage.getItem('rep-ausencias') || '[]');
-
-function save(){
-  localStorage.setItem('rep-reports', JSON.stringify(reports));
-  localStorage.setItem('rep-equipos', JSON.stringify(equipos));
-  localStorage.setItem('rep-provs', JSON.stringify(provs));
-  localStorage.setItem('rep-ausencias', JSON.stringify(ausencias));
-}
-save();
 
 function show(v){
   ['dash','grid','new','cons','equipos','err','cfg'].forEach(x=>{
@@ -256,12 +310,13 @@ function show(v){
 function fmtD(d){return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
 function todayS(){return new Date().toISOString().slice(0,10)}
 function defaultPeriod(){
-  const h=new Date();
-  const i=new Date(h.getFullYear(),h.getMonth()-1,21);
-  const f=new Date(h.getFullYear(),h.getMonth(),20);
+  const h=new Date(); const i=new Date(h.getFullYear(),h.getMonth()-1,21); const f=new Date(h.getFullYear(),h.getMonth(),20);
   return {ini:i.toISOString().slice(0,10),fin:f.toISOString().slice(0,10)}
 }
 
+/* =====================================================================
+   DASHBOARD
+   ===================================================================== */
 function renderDash(){
   const fltrProv = document.getElementById('fltr-prov');
   fltrProv.innerHTML = '<option value="">Todos proveedores</option>'+provs.map(p=>`<option>${p}</option>`).join('');
@@ -276,8 +331,7 @@ function renderDash(){
   const repsPorEq = {};
   repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
   
-  let totHrs=0,totRep=0,conFoto=0,hoyN=0;
-  const hoy=todayS();
+  let totHrs=0,totRep=0,conFoto=0,hoyN=0; const hoy=todayS();
   
   const tb=document.querySelector('#t-dash tbody');
   tb.innerHTML = lista.map(e=>{
@@ -297,14 +351,13 @@ function renderDash(){
   document.getElementById('s-rep').textContent = totRep;
   document.getElementById('s-rep-sub').textContent = `${conFoto} con foto`;
   document.getElementById('s-today').textContent = hoyN;
-  const aus = ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin).length;
-  document.getElementById('s-aus').textContent = aus;
+  document.getElementById('s-aus').textContent = ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin).length;
 }
 
-function openGridFor(pat){
-  document.getElementById('sel-eq').value=pat;
-  show('grid')
-}
+/* =====================================================================
+   GRILLA Y AUSENCIAS
+   ===================================================================== */
+function openGridFor(pat){ document.getElementById('sel-eq').value=pat; show('grid') }
 
 function initGrid(){
   const sel=document.getElementById('sel-eq');
@@ -321,12 +374,11 @@ function renderGrid(){
   if(!pat||!ini||!fin){document.getElementById('grid-body').innerHTML='';return}
   const eq = equipos.find(e=>e.patente===pat);
   const d1=new Date(ini+'T00:00'),d2=new Date(fin+'T00:00');
-  const dias=[];
-  for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1))dias.push(new Date(d));
+  const dias=[]; for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1)) dias.push(new Date(d));
+  
   const reps=reports.filter(r=>r.equipo===pat&&r.fecha>=ini&&r.fecha<=fin);
   const aus=ausencias.filter(a=>a.equipo===pat&&a.fecha>=ini&&a.fecha<=fin);
-  const hoy=todayS();
-  let totHrs=0,reptN=0,ausN=0,missN=0;
+  const hoy=todayS(); let totHrs=0,reptN=0,ausN=0,missN=0;
   
   let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo} · Proveedor: ${eq.proveedor||'—'} · Horóm. actual: ${eq.horometro_actual||'—'}</div>`;
   html+=`<table><thead><tr><th style="width:110px">Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
@@ -339,9 +391,9 @@ function renderGrid(){
       if(r){
         totHrs+=Number(r.dif||0);reptN++;
         const foto=r.foto?'<span class="pill-foto">con foto</span>':'<span class="pill-nofoto">sin foto</span>';
-        return `<td><div class="cell-ok" onclick="editReport(${r.id})" style="cursor:pointer"><b>${r.folio||'s/folio'}</b> · ${r.dif}h ${foto}<small>${r.operador} · ${r.hi}→${r.hf}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
+        return `<td><div class="cell-ok" onclick="editReport('${r.id}')" style="cursor:pointer"><b>${r.folio||'s/folio'}</b> · ${r.dif}h ${foto}<small>${r.operador} · ${r.hi}→${r.hf}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
       }
-      if(a){ausN++;return `<td><div class="cell-just" onclick="editAusencia(${a.id})"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
+      if(a){ausN++;return `<td><div class="cell-just" onclick="editAusencia('${a.id}')"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
       if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
       missN++;
       return `<td><div class="cell-miss" onclick="promptMissingAction('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>Click para gestionar</small></div></td>`;
@@ -350,12 +402,7 @@ function renderGrid(){
   });
   html+='</tbody></table>';
   
-  const cab=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
-  <div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div>
-  <div class="stat"><div class="lbl">Justificados</div><div class="val" style="color:#378ADD">${ausN}</div></div>
-  <div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:#E24B4A">${missN}</div></div>
-  <div class="stat"><div class="lbl">Horas acumuladas</div><div class="val">${totHrs.toFixed(1)}</div></div>
-  </div>`;
+  const cab=`<div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div><div class="stat"><div class="lbl">Justificados</div><div class="val" style="color:#378ADD">${ausN}</div></div><div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:#E24B4A">${missN}</div></div><div class="stat"><div class="lbl">Horas acumuladas</div><div class="val">${totHrs.toFixed(1)}</div></div></div>`;
   document.getElementById('grid-body').innerHTML=cab+html;
 }
 
@@ -363,27 +410,19 @@ function promptMissingAction(pat, fecha, turno) {
   document.getElementById('modal-box').innerHTML = `
     <h2 style="margin-bottom:10px">Gestionar Turno Sin Registro</h2>
     <p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>
-    <p style="margin-bottom:20px">¿Qué deseas hacer con este turno vacío?</p>
     <div class="grid2">
       <button class="btn btn-sec" onclick="openAusForm('${pat}','${fecha}','${turno}')">Justificar Ausencia</button>
       <button class="btn" onclick="openNewReportFromGrid('${pat}','${fecha}','${turno}')">Ingresar Report</button>
     </div>
-    <div style="margin-top:10px;text-align:right">
-      <button class="btn btn-sec btn-sm" onclick="closeModal()" style="border:none">Cancelar</button>
-    </div>
+    <div style="margin-top:10px;text-align:right"><button class="btn btn-sec btn-sm" onclick="closeModal()" style="border:none">Cancelar</button></div>
   `;
   document.getElementById('modal').classList.add('show');
 }
 
 function openNewReportFromGrid(pat, fecha, turno) {
-  closeModal();
-  clearForm();
-  show('new');
+  closeModal(); clearForm(); show('new');
   setTimeout(() => {
-    document.getElementById('f-eq').value = pat;
-    document.getElementById('f-fecha').value = fecha;
-    document.getElementById('f-turno').value = turno;
-    onEqChange();
+    document.getElementById('f-eq').value = pat; document.getElementById('f-fecha').value = fecha; document.getElementById('f-turno').value = turno; onEqChange();
   }, 50);
 }
 
@@ -392,36 +431,38 @@ function openAusForm(pat,fecha,turno,aid){
   document.getElementById('modal-box').innerHTML=`
   <h2 style="margin-bottom:10px">${a?'Editar':'Justificar'} ausencia</h2>
   <p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>
-  <label>Motivo</label>
-  <select id="a-motivo">${MOTIVOS.map(m=>`<option ${a&&a.motivo===m?'selected':''}>${m}</option>`).join('')}</select>
-  <label>Descripción</label>
-  <textarea id="a-desc" rows="3">${a?a.descripcion||'':''}</textarea>
-  <label>Aplica descuento al cobro</label>
-  <select id="a-desc2"><option ${a&&a.descuento==='Sí'?'selected':''}>Sí</option><option ${a&&a.descuento==='No'?'selected':''}>No</option></select>
-  <label>Validado por (opcional)</label>
-  <input id="a-val" value="${a?a.validado||'':''}" placeholder="Nombre Teck">
+  <label>Motivo</label><select id="a-motivo">${MOTIVOS.map(m=>`<option ${a&&a.motivo===m?'selected':''}>${m}</option>`).join('')}</select>
+  <label>Descripción</label><textarea id="a-desc" rows="3">${a?a.descripcion||'':''}</textarea>
+  <label>Aplica descuento al cobro</label><select id="a-desc2"><option ${a&&a.descuento==='Sí'?'selected':''}>Sí</option><option ${a&&a.descuento==='No'?'selected':''}>No</option></select>
+  <label>Validado por (opcional)</label><input id="a-val" value="${a?a.validado||'':''}" placeholder="Nombre Teck">
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-  ${a?'<button class="btn btn-dang btn-sm" onclick="delAusencia('+a.id+')">Eliminar</button>':''}
+  ${a?`<button class="btn btn-dang btn-sm" onclick="delAusencia('${a.id}')">Eliminar</button>`:''}
   <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
-  <button class="btn" onclick="saveAusencia('${pat}','${fecha}','${turno}',${a?a.id:'null'})">Guardar</button>
+  <button class="btn" onclick="saveAusencia('${pat}','${fecha}','${turno}','${a?a.id:''}')">Guardar</button>
   </div>`;
   document.getElementById('modal').classList.add('show');
 }
 
 function saveAusencia(pat,fecha,turno,id){
-  const obj={id:id||Date.now(),equipo:pat,fecha,turno,
-    motivo:document.getElementById('a-motivo').value,
-    descripcion:document.getElementById('a-desc').value,
-    descuento:document.getElementById('a-desc2').value,
-    validado:document.getElementById('a-val').value,
-    ts:new Date().toISOString()};
+  const obj={id:id||String(Date.now()),equipo:pat,fecha,turno,motivo:document.getElementById('a-motivo').value,descripcion:document.getElementById('a-desc').value,descuento:document.getElementById('a-desc2').value,validado:document.getElementById('a-val').value};
   if(id){ausencias=ausencias.map(a=>a.id===id?obj:a)}else{ausencias.push(obj)}
-  save();closeModal();renderGrid();renderDash();
+  saveLocal();
+  if(db) db.collection("ausencias").doc(obj.id).set(obj, {merge:true});
+  closeModal(); renderGrid(); renderDash();
 }
 
 function editAusencia(id){const a=ausencias.find(x=>x.id===id);if(a)openAusForm(a.equipo,a.fecha,a.turno,id)}
-function delAusencia(id){if(confirm('¿Eliminar esta ausencia?')){ausencias=ausencias.filter(a=>a.id!==id);save();closeModal();renderGrid()}}
+function delAusencia(id){
+  if(confirm('¿Eliminar esta ausencia?')){
+    ausencias=ausencias.filter(a=>a.id!==id); saveLocal();
+    if(db) db.collection("ausencias").doc(id).delete();
+    closeModal(); renderGrid();
+  }
+}
 
+/* =====================================================================
+   INGRESO Y EDICIÓN DE REPORTS (HÍBRIDO CLOUD/LOCAL)
+   ===================================================================== */
 function initNew(){
   const sel=document.getElementById('f-eq');
   sel.innerHTML='<option value="">— Seleccionar —</option>'+equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo}</option>`).join('');
@@ -432,7 +473,7 @@ function initNew(){
 }
 
 function editReport(id){
-  const r=reports.find(x=>x.id===id);if(!r)return;
+  const r=reports.find(x=>String(x.id)===String(id));if(!r)return;
   show('new');
   setTimeout(()=>{
     document.getElementById('new-title').textContent='Editar report';
@@ -457,8 +498,15 @@ function editReport(id){
   },50);
 }
 
-function delReport(id){if(confirm('¿Eliminar este report?')){reports=reports.filter(r=>r.id!==id);save();clearForm();show('grid');renderGrid()}}
-function quitFoto(){document.getElementById('f-foto-prev').innerHTML='';document.getElementById('f-foto').value=''}
+function delReport(id){
+  if(confirm('¿Eliminar este report?')){
+    reports=reports.filter(r=>String(r.id)!==String(id)); saveLocal();
+    if(db) db.collection("reports").doc(String(id)).delete();
+    clearForm(); show('grid'); renderGrid();
+  }
+}
+
+function quitFoto(){document.getElementById('f-foto-prev').innerHTML='';document.getElementById('f-foto').value=''; fotoData=null;}
 
 let fotoData=null;
 function compFoto(e){
@@ -467,9 +515,7 @@ function compFoto(e){
   r.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      const c=document.createElement('canvas');
-      const maxW=1200;
-      const sc=Math.min(1,maxW/img.width);
+      const c=document.createElement('canvas'); const maxW=1200; const sc=Math.min(1,maxW/img.width);
       c.width=img.width*sc;c.height=img.height*sc;
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       fotoData=c.toDataURL('image/jpeg',0.7);
@@ -487,7 +533,6 @@ function onEqChange(){
   if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horometro_actual||'';
   calcDif();
 }
-
 function calcDif(){
   const hi=parseFloat(document.getElementById('f-hi').value)||0;
   const hf=parseFloat(document.getElementById('f-hf').value)||0;
@@ -513,19 +558,13 @@ function validate(){
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&String(r.id)!==String(id)))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&String(r.id)!==String(id)))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
   
-  // VALIDACIÓN CRONOLÓGICA ESTRICTA
+  // VALIDACIÓN CRONOLÓGICA
   if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
     const repsEq = reports.filter(r => r.equipo === eq && String(r.id) !== String(id));
-    
     const mayorEnPasado = repsEq.find(r => r.fecha < fecha && r.hf > hi);
-    if (mayorEnPasado) {
-      msgs.push({ t: 'err', m: `⊘ Incoherencia: El ${fmtD(mayorEnPasado.fecha)} terminó con ${mayorEnPasado.hf}h. No puedes iniciar con ${hi}h.` });
-    }
-    
+    if (mayorEnPasado) msgs.push({ t: 'err', m: `⊘ Incoherencia: El ${fmtD(mayorEnPasado.fecha)} terminó con ${mayorEnPasado.hf}h. No puedes iniciar con ${hi}h.` });
     const menorEnFuturo = repsEq.find(r => r.fecha > fecha && r.hi < hf);
-    if (menorEnFuturo) {
-      msgs.push({ t: 'err', m: `⊘ Incoherencia: El ${fmtD(menorEnFuturo.fecha)} ya partió con ${menorEnFuturo.hi}h. No puedes terminar con ${hf}h.` });
-    }
+    if (menorEnFuturo) msgs.push({ t: 'err', m: `⊘ Incoherencia: El ${fmtD(menorEnFuturo.fecha)} ya partió con ${menorEnFuturo.hi}h. No puedes terminar con ${hf}h.` });
   }
 
   if(!isNaN(hi)&&eq&&!id){
@@ -537,224 +576,110 @@ function validate(){
   
   document.getElementById('f-msgs').innerHTML=msgs.map(x=>`<div class="${x.t}">${x.m}</div>`).join('');
   const hasErr=msgs.some(m=>m.t==='err');
-  document.querySelector('#form-new button[type=submit]').disabled=hasErr;
+  document.getElementById('btn-submit-report').disabled=hasErr;
   return !hasErr;
 }
+document.addEventListener('input',e=>{if(e.target.closest('#form-new'))validate()});
+document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate()});
 
-document.addEventListener('input',e=>{if(e.target.closest('#form-new'))validate()});document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate()});
-
-function saveReport(e){
-  e.preventDefault();if(!validate())return;
-  const id=document.getElementById('f-id').value;
+async function saveReport(e){
+  e.preventDefault(); if(!validate()) return;
+  const btn = document.getElementById('btn-submit-report');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  
+  const id=document.getElementById('f-id').value || String(Date.now());
   const r={
-    id:id?Number(id):Date.now(),
-    fecha:document.getElementById('f-fecha').value,
-    turno:document.getElementById('f-turno').value,
-    folio:document.getElementById('f-folio').value,
-    equipo:document.getElementById('f-eq').value,
-    operador:document.getElementById('f-op').value,
-    hi:parseFloat(document.getElementById('f-hi').value),
-    hf:parseFloat(document.getElementById('f-hf').value),
-    dif:parseFloat(document.getElementById('f-dif').value),
-    hef:parseFloat(document.getElementById('f-hef').value)||0,
-    obs:document.getElementById('f-obs').value,
-    foto:fotoData||(id?reports.find(x=>x.id===Number(id))?.foto:null),
-    ts:new Date().toISOString()
+    id:id, fecha:document.getElementById('f-fecha').value, turno:document.getElementById('f-turno').value, folio:document.getElementById('f-folio').value, equipo:document.getElementById('f-eq').value, operador:document.getElementById('f-op').value, hi:parseFloat(document.getElementById('f-hi').value), hf:parseFloat(document.getElementById('f-hf').value), dif:parseFloat(document.getElementById('f-dif').value), hef:parseFloat(document.getElementById('f-hef').value)||0, obs:document.getElementById('f-obs').value, foto:fotoData||(reports.find(x=>String(x.id)===String(id))?.foto||null)
   };
-  if(id){reports=reports.map(x=>x.id===Number(id)?r:x)}else{reports.push(r)}
-  const eq=equipos.find(x=>x.patente===r.equipo);
-  if(eq&&r.hf>(eq.horometro_actual||0))eq.horometro_actual=r.hf;
-  save();
-  alert('Report '+(id?'actualizado':'guardado')+' ✓');
+
+  // Guardado Local (Inmediato)
+  if(document.getElementById('f-id').value){reports=reports.map(x=>String(x.id)===String(id)?r:x)}else{reports.push(r)}
+  const eq=equipos.find(x=>x.patente===r.equipo); if(eq&&r.hf>(eq.horometro_actual||0))eq.horometro_actual=r.hf;
+  saveLocal();
+
+  // Guardado en Cloud (Asíncrono)
+  if(db) {
+    try {
+      if (fotoData && fotoData.startsWith('data:')) {
+        btn.textContent = 'Subiendo foto...';
+        const ref = storage.ref(`fotos/${id}.jpg`);
+        await ref.putString(fotoData, 'data_url');
+        r.foto = await ref.getDownloadURL();
+      }
+      await db.collection("reports").doc(id).set(r, {merge:true});
+      await db.collection("equipos").doc(r.equipo).set(eq, {merge:true});
+      alert('Report sincronizado en Nube ✓');
+    } catch (err) {
+      alert('Guardado localmente. Se sincronizará al tener señal.'); console.warn(err);
+    }
+  } else {
+    alert('Report guardado localmente ✓');
+  }
+  
+  btn.textContent = 'Guardar'; btn.disabled = false;
   clearForm();
 }
 
 function clearForm(){
-  document.getElementById('form-new').reset();
-  document.getElementById('f-id').value='';
-  document.getElementById('f-msgs').innerHTML='';
-  document.getElementById('f-foto-prev').innerHTML='';
-  fotoData=null;
-  const b=document.getElementById('btn-del-rep');if(b)b.remove();
-  initNew();
+  document.getElementById('form-new').reset(); document.getElementById('f-id').value=''; document.getElementById('f-msgs').innerHTML=''; document.getElementById('f-foto-prev').innerHTML=''; fotoData=null; const b=document.getElementById('btn-del-rep');if(b)b.remove(); initNew(); document.getElementById('btn-submit-report').disabled = false; document.getElementById('btn-submit-report').textContent = 'Guardar';
 }
 
-function initCons(){const p=defaultPeriod();document.getElementById('c-ini').value=p.ini;document.getElementById('c-fin').value=p.fin;renderCons()}
-
-function renderCons(){
-  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
-  if(!ini||!fin)return;
-  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
-  
-  const porProv={};
-  equipos.forEach(e=>{
-    const p=e.proveedor||'Sin proveedor';
-    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0};
-    porProv[p].equipos++;
-  });
-  reps.forEach(r=>{
-    const e=equipos.find(x=>x.patente===r.equipo);
-    const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';
-    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0};
-    porProv[p].reports++;
-    porProv[p].horas+=Number(r.dif||0);
-    if(r.foto)porProv[p].conFoto++;
-  });
-  
-  const porEq={};
-  equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,conFoto:0}});
-  reps.forEach(r=>{if(porEq[r.equipo]){porEq[r.equipo].reports++;porEq[r.equipo].horas+=Number(r.dif||0);if(r.foto)porEq[r.equipo].conFoto++}});
-  
-  let totH=0,totR=0,totF=0;
-  Object.values(porProv).forEach(p=>{totH+=p.horas;totR+=p.reports;totF+=p.conFoto});
-  
-  let html=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
-  <div class="stat"><div class="lbl">Total horas</div><div class="val">${totH.toFixed(1)}</div></div>
-  <div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div>
-  <div class="stat"><div class="lbl">Con respaldo foto</div><div class="val">${totF}</div><div class="sub">${totR?Math.round(totF*100/totR):0}%</div></div>
-  <div class="stat"><div class="lbl">Proveedores</div><div class="val">${Object.keys(porProv).length}</div></div>
-  </div>`;
-  
-  html+='<h3>Consolidado por proveedor</h3><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Con foto</th></tr></thead><tbody>';
-  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td>${d.conFoto}/${d.reports}</td></tr>`});
-  html+='</tbody></table>';
-  
-  html+='<h3 style="margin-top:18px">Detalle por equipo</h3><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Con foto</th></tr></thead><tbody>';
-  Object.values(porEq).filter(x=>x.reports>0).sort((a,b)=>b.horas-a.horas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo}</td><td>${x.eq.proveedor||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td>${x.conFoto}/${x.reports}</td></tr>`});
-  html+='</tbody></table>';
-  
-  document.getElementById('cons-body').innerHTML=html;
-}
-
-function exportExcel(){
-  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
-  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
-  const wb=XLSX.utils.book_new();
-  
-  const filas=reps.map(r=>{
-    const e=equipos.find(x=>x.patente===r.equipo);
-    return {Fecha:r.fecha,Turno:r.turno,Equipo:r.equipo,Tipo:e?e.tipo:'',Proveedor:e?e.proveedor:'',Folio:r.folio,Operador:r.operador,HorómInicial:r.hi,HorómFinal:r.hf,Diferencia:r.dif,HorasEfectivas:r.hef,Observaciones:r.obs,TieneFoto:r.foto?'Sí':'No'};
-  });
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),'General');
-  
-  const provsSet=[...new Set(equipos.map(e=>e.proveedor||'Sin proveedor'))];
-  provsSet.forEach(p=>{
-    const fp=filas.filter(f=>f.Proveedor===p);
-    if(fp.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp),('Prov '+p).slice(0,31));
-  });
-  
-  const res={};
-  filas.forEach(f=>{res[f.Proveedor]=res[f.Proveedor]||{Proveedor:f.Proveedor,Reports:0,Horas:0};res[f.Proveedor].Reports++;res[f.Proveedor].Horas+=Number(f.Diferencia||0)});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(res)),'Resumen Proveedor');
-  
-  const aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
-  if(aus.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(aus),'Ausencias');
-  
-  XLSX.writeFile(wb,`Consolidado_${ini}_a_${fin}.xlsx`);
-}
-
-// NUEVA FUNCIÓN PARA EXPORTAR FOTOS EN CARPETAS ZIP
-function exportarFotosZip() {
-  if (typeof JSZip === 'undefined') {
-    alert('Cargando herramienta ZIP, intenta de nuevo en un segundo...');
-    return;
-  }
-
-  const ini = document.getElementById('c-ini').value;
-  const fin = document.getElementById('c-fin').value;
-  const reps = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
-
-  if (reps.length === 0) {
-    alert('No hay reports con foto en este período.');
-    return;
-  }
-
-  const zip = new JSZip();
-
-  reps.forEach(r => {
-    // Le quitamos el encabezado a la foto para que quede como archivo puro
-    const base64Data = r.foto.split(',')[1];
-    
-    // Creamos una carpeta para cada equipo
-    const folder = zip.folder(r.equipo);
-    
-    // Nombramos el archivo con la fecha, turno y folio
-    const fileName = `${r.fecha}_${r.turno}_Folio-${r.folio || 'SF'}.jpg`;
-    
-    folder.file(fileName, base64Data, {base64: true});
-  });
-
-  zip.generateAsync({type:"blob"}).then(function(content) {
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Respaldo_Fotos_${ini}_al_${fin}.zip`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-}
-
-// FUNCIONES PARA ADMINISTRAR EQUIPOS
+/* =====================================================================
+   EQUIPOS Y PROVEEDORES (HÍBRIDO CLOUD/LOCAL)
+   ===================================================================== */
 function renderEquipos(){
   const tb=document.getElementById('t-eq');
   tb.innerHTML=equipos.map(e=>`<tr>
-    <td><b>${e.patente}</b></td>
-    <td>${e.tipo}</td>
+    <td><b>${e.patente}</b></td><td>${e.tipo}</td>
     <td><select onchange="setProv('${e.patente}',this.value)"><option value="">Sin proveedor</option>${provs.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td>
-    <td>${e.horometro_actual||'0'}</td>
-    <td><span class="badge ${e.estado==='Activo'?'b-ok':'b-crit'}">${e.estado||'Activo'}</span></td>
+    <td>${e.horometro_actual||'0'}</td><td><span class="badge ${e.estado==='Activo'?'b-ok':'b-crit'}">${e.estado||'Activo'}</span></td>
     <td><button class="btn btn-sec btn-sm" onclick="openEqForm('${e.patente}')">Editar</button></td>
   </tr>`).join('');
 }
 
-function setProv(pat,p){const e=equipos.find(x=>x.patente===pat);if(e){e.proveedor=p;save()}}
+function setProv(pat,p){
+  const e=equipos.find(x=>x.patente===pat);
+  if(e){e.proveedor=p; saveLocal(); if(db) db.collection("equipos").doc(pat).set(e, {merge:true});}
+}
 
 function openEqForm(pat) {
   const e = pat ? equipos.find(x => x.patente === pat) : null;
   document.getElementById('modal-box').innerHTML = `
     <h2 style="margin-bottom:12px">${e ? 'Editar' : 'Nuevo'} Equipo</h2>
-    <label>Patente / Código interno</label>
-    <input id="e-pat" value="${e ? e.patente : ''}" ${e ? 'readonly style="background:#eee"' : ''}>
-    <label>Tipo (Ej: Camión Tolva, Excavadora)</label>
-    <input id="e-tipo" value="${e ? e.tipo : ''}">
-    <label>Horómetro Actual (Si es nuevo, con cuánto parte)</label>
-    <input type="number" step="0.1" id="e-horo" value="${e ? (e.horometro_actual||0) : 0}">
-    <label>Estado</label>
-    <select id="e-est">
-      <option ${e && e.estado==='Activo'?'selected':''}>Activo</option>
-      <option ${e && e.estado==='Inactivo'?'selected':''}>Inactivo</option>
-    </select>
+    <label>Patente / Código interno</label><input id="e-pat" value="${e ? e.patente : ''}" ${e ? 'readonly style="background:#eee"' : ''}>
+    <label>Tipo (Ej: Camión Tolva, Excavadora)</label><input id="e-tipo" value="${e ? e.tipo : ''}">
+    <label>Horómetro Actual</label><input type="number" step="0.1" id="e-horo" value="${e ? (e.horometro_actual||0) : 0}">
+    <label>Estado</label><select id="e-est"><option ${e && e.estado==='Activo'?'selected':''}>Activo</option><option ${e && e.estado==='Inactivo'?'selected':''}>Inactivo</option></select>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-      ${e ? `<button class="btn btn-dang btn-sm" style="margin-right:auto" onclick="delEq('${e.patente}')">Eliminar Equipo</button>` : ''}
+      ${e ? `<button class="btn btn-dang btn-sm" style="margin-right:auto" onclick="delEq('${e.patente}')">Eliminar</button>` : ''}
       <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
       <button class="btn" onclick="saveEq('${e ? e.patente : ''}')">Guardar</button>
-    </div>
-  `;
+    </div>`;
   document.getElementById('modal').classList.add('show');
 }
 
 function saveEq(oldPat) {
-  const pat = document.getElementById('e-pat').value.trim();
-  const tipo = document.getElementById('e-tipo').value.trim();
-  const horo = parseFloat(document.getElementById('e-horo').value) || 0;
-  const est = document.getElementById('e-est').value;
-
-  if (!pat || !tipo) return alert('La patente y el tipo son obligatorios');
-
+  const pat = document.getElementById('e-pat').value.trim(); const tipo = document.getElementById('e-tipo').value.trim(); const horo = parseFloat(document.getElementById('e-horo').value) || 0; const est = document.getElementById('e-est').value;
+  if (!pat || !tipo) return alert('Patente y tipo obligatorios');
+  
+  let eqObj;
   if (oldPat) {
-    const eq = equipos.find(x => x.patente === oldPat);
-    if (eq) { eq.tipo = tipo; eq.horometro_actual = horo; eq.estado = est; }
+    eqObj = equipos.find(x => x.patente === oldPat);
+    if (eqObj) { eqObj.tipo = tipo; eqObj.horometro_actual = horo; eqObj.estado = est; }
   } else {
-    if (equipos.find(x => x.patente === pat)) return alert('Esta patente ya existe en la flota');
-    equipos.push({ patente: pat, tipo: tipo, horometro_actual: horo, estado: est, proveedor: '' });
+    if (equipos.find(x => x.patente === pat)) return alert('Patente ya existe');
+    eqObj = { patente: pat, tipo: tipo, horometro_actual: horo, estado: est, proveedor: '' };
+    equipos.push(eqObj);
   }
-  save(); closeModal(); renderEquipos(); renderDash(); initNew(); initGrid();
+  saveLocal(); if(db) db.collection("equipos").doc(pat).set(eqObj, {merge:true});
+  closeModal(); renderEquipos(); renderDash(); initNew(); initGrid();
 }
 
 function delEq(pat) {
-  if (confirm(`¿Seguro que quieres eliminar el equipo ${pat}?\nOjo: Esto lo quita de la flota, pero sus reports históricos se mantienen.`)) {
-    equipos = equipos.filter(x => x.patente !== pat);
-    save(); closeModal(); renderEquipos(); renderDash(); initNew(); initGrid();
+  if (confirm(`¿Seguro que quieres eliminar el equipo ${pat}?`)) {
+    equipos = equipos.filter(x => x.patente !== pat); saveLocal();
+    if(db) db.collection("equipos").doc(pat).delete();
+    closeModal(); renderEquipos(); renderDash(); initNew(); initGrid();
   }
 }
 
@@ -767,57 +692,96 @@ function openProvs(){
 }
 function addProv(){const v=document.getElementById('new-prov').value.trim();if(v&&!provs.includes(v)){provs.push(v);openProvs()}}
 function delProv(i){provs.splice(i,1);openProvs()}
-function saveProvs(){provs=provs.map((_,i)=>document.getElementById('p-'+i).value.trim()).filter(Boolean);save();closeModal();renderEquipos();renderDash()}
+function saveProvs(){
+  provs=provs.map((_,i)=>document.getElementById('p-'+i).value.trim()).filter(Boolean); saveLocal();
+  if(db) db.collection("config").doc("proveedores").set({lista: provs});
+  closeModal(); renderEquipos(); renderDash();
+}
+
+/* =====================================================================
+   CONSOLIDADOS Y EXPORTACIONES
+   ===================================================================== */
+function initCons(){const p=defaultPeriod();document.getElementById('c-ini').value=p.ini;document.getElementById('c-fin').value=p.fin;renderCons()}
+function renderCons(){
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  if(!ini||!fin)return;
+  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
+  const porProv={}; equipos.forEach(e=>{const p=e.proveedor||'Sin proveedor';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0};porProv[p].equipos++;});
+  reps.forEach(r=>{const e=equipos.find(x=>x.patente===r.equipo);const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0};porProv[p].reports++;porProv[p].horas+=Number(r.dif||0);if(r.foto)porProv[p].conFoto++;});
+  const porEq={}; equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,conFoto:0}});
+  reps.forEach(r=>{if(porEq[r.equipo]){porEq[r.equipo].reports++;porEq[r.equipo].horas+=Number(r.dif||0);if(r.foto)porEq[r.equipo].conFoto++}});
+  let totH=0,totR=0,totF=0; Object.values(porProv).forEach(p=>{totH+=p.horas;totR+=p.reports;totF+=p.conFoto});
+  
+  let html=`<div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><div class="lbl">Total horas</div><div class="val">${totH.toFixed(1)}</div></div><div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div><div class="stat"><div class="lbl">Con respaldo foto</div><div class="val">${totF}</div><div class="sub">${totR?Math.round(totF*100/totR):0}%</div></div><div class="stat"><div class="lbl">Proveedores</div><div class="val">${Object.keys(porProv).length}</div></div></div>`;
+  html+='<h3>Consolidado por proveedor</h3><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Con foto</th></tr></thead><tbody>';
+  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td>${d.conFoto}/${d.reports}</td></tr>`});
+  html+='</tbody></table><h3 style="margin-top:18px">Detalle por equipo</h3><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Con foto</th></tr></thead><tbody>';
+  Object.values(porEq).filter(x=>x.reports>0).sort((a,b)=>b.horas-a.horas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo}</td><td>${x.eq.proveedor||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td>${x.conFoto}/${x.reports}</td></tr>`});
+  html+='</tbody></table>'; document.getElementById('cons-body').innerHTML=html;
+}
+
+function exportExcel(){
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value; const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin); const wb=XLSX.utils.book_new();
+  const filas=reps.map(r=>{const e=equipos.find(x=>x.patente===r.equipo);return {Fecha:r.fecha,Turno:r.turno,Equipo:r.equipo,Tipo:e?e.tipo:'',Proveedor:e?e.proveedor:'',Folio:r.folio,Operador:r.operador,HorómInicial:r.hi,HorómFinal:r.hf,Diferencia:r.dif,HorasEfectivas:r.hef,Observaciones:r.obs,LinkFoto:r.foto||'No'};});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),'General');
+  const provsSet=[...new Set(equipos.map(e=>e.proveedor||'Sin proveedor'))];
+  provsSet.forEach(p=>{const fp=filas.filter(f=>f.Proveedor===p);if(fp.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp),('Prov '+p).slice(0,31));});
+  const res={}; filas.forEach(f=>{res[f.Proveedor]=res[f.Proveedor]||{Proveedor:f.Proveedor,Reports:0,Horas:0};res[f.Proveedor].Reports++;res[f.Proveedor].Horas+=Number(f.Diferencia||0)});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(res)),'Resumen Proveedor');
+  const aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin); if(aus.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(aus),'Ausencias');
+  XLSX.writeFile(wb,`Consolidado_${ini}_a_${fin}.xlsx`);
+}
+
+async function exportarFotosZip() {
+  if (typeof JSZip === 'undefined') return alert('Cargando herramienta ZIP...');
+  const ini = document.getElementById('c-ini').value; const fin = document.getElementById('c-fin').value;
+  const reps = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
+  if (reps.length === 0) return alert('No hay reports con foto en este período.');
+  
+  const zip = new JSZip();
+  alert("Procesando fotos, por favor espera...");
+  
+  for(let r of reps) {
+    const folder = zip.folder(r.equipo);
+    const fileName = `${r.fecha}_${r.turno}_Folio-${r.folio || 'SF'}.jpg`;
+    
+    if(r.foto.startsWith('http')) {
+      // Descargar desde Firebase Storage
+      try {
+        const response = await fetch(r.foto); const blob = await response.blob(); folder.file(fileName, blob);
+      } catch(e) { console.error("Fallo al descargar foto cloud", e); }
+    } else {
+      // Base64 local
+      folder.file(fileName, r.foto.split(',')[1], {base64: true});
+    }
+  }
+
+  zip.generateAsync({type:"blob"}).then(function(content) {
+    const url = URL.createObjectURL(content); const a = document.createElement('a'); a.href = url; a.download = `Respaldo_Fotos_${ini}_al_${fin}.zip`; a.click(); URL.revokeObjectURL(url);
+  });
+}
 
 function renderErr(){
   const folios={},dups=[],saltos=[];
   reports.forEach(r=>{const k=r.equipo+'|'+r.folio;if(r.folio&&folios[k])dups.push({eq:r.equipo,folio:r.folio});if(r.folio)folios[k]=true});
-  const porEq={};
-  reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
+  const porEq={}; reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
   Object.keys(porEq).forEach(eq=>{
     const rs=porEq[eq].sort((a,b)=>(a.fecha+a.turno).localeCompare(b.fecha+b.turno));
     for(let i=1;i<rs.length;i++){const gap=rs[i].hi-rs[i-1].hf;if(Math.abs(gap)>2)saltos.push({eq,fecha:rs[i].fecha,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})}
   });
-  const sinF=reports.filter(r=>!r.folio).length;
-  const sinFoto=reports.filter(r=>!r.foto).length;
-  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
-  <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
-  <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
-  <div class="stat"><div class="lbl">Sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
-  <div class="stat"><div class="lbl">Saltos de horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
-  </div>
-  <h3 style="margin-top:14px">Saltos detectados</h3>
-  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha</th><th>Anterior</th><th>Actual</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha}</td><td>${s.prev}</td><td>${s.curr}</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}
-  <h3 style="margin-top:14px">Folios duplicados</h3>
-  ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
+  const sinF=reports.filter(r=>!r.folio).length; const sinFoto=reports.filter(r=>!r.foto).length;
+  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div><div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div><div class="stat"><div class="lbl">Sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div><div class="stat"><div class="lbl">Saltos de horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div></div><h3 style="margin-top:14px">Saltos detectados</h3>${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha</th><th>Anterior</th><th>Actual</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha}</td><td>${s.prev}</td><td>${s.curr}</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}<h3 style="margin-top:14px">Folios duplicados</h3>${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
 }
 
 function renderCfg(){
-  document.getElementById('cfg-stats').innerHTML=`Equipos: ${equipos.length}<br>Proveedores: ${provs.length}<br>Reports: ${reports.length}<br>Ausencias: ${ausencias.length}<br>Tamaño aprox: ${Math.round(JSON.stringify({reports,equipos,provs,ausencias}).length/1024)} KB`;
+  document.getElementById('cfg-stats').innerHTML=`Equipos: ${equipos.length}<br>Proveedores: ${provs.length}<br>Reports: ${reports.length}<br>Ausencias: ${ausencias.length}<br>Tamaño Local Aprox: ${Math.round(JSON.stringify({reports,equipos,provs,ausencias}).length/1024)} KB`;
 }
-
-function backup(){
-  const data={version:2,fecha:new Date().toISOString(),reports,equipos,provs,ausencias};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`respaldo_reportabilidad_${todayS()}.json`;a.click();
-}
-
+function backup(){const data={version:3,fecha:new Date().toISOString(),reports,equipos,provs,ausencias};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`respaldo_reportabilidad_${todayS()}.json`;a.click();}
 function restore(e){
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    try{
-      const d=JSON.parse(ev.target.result);
-      if(confirm(`Restaurar ${d.reports?.length||0} reports, ${d.equipos?.length||0} equipos, ${d.ausencias?.length||0} ausencias? Se sobrescriben los datos actuales.`)){
-        reports=d.reports||[];equipos=d.equipos||equipos;provs=d.provs||provs;ausencias=d.ausencias||[];
-        save();alert('Restaurado ✓');renderCfg();
-      }
-    }catch(err){alert('Archivo inválido: '+err.message)}
-  };
-  r.readAsText(f);
+  const f=e.target.files[0];if(!f)return; const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(confirm(`Restaurar ${d.reports?.length||0} reports? (No afecta la nube hasta sincronizar manual)`)){reports=d.reports||[];equipos=d.equipos||equipos;provs=d.provs||provs;ausencias=d.ausencias||[];saveLocal();alert('Restaurado Local ✓');renderCfg();}}catch(err){alert('Archivo inválido')}}; r.readAsText(f);
 }
-
-function wipe(){localStorage.clear();reports=[];equipos=EQUIPOS_DEFAULT;provs=PROVS_DEFAULT;ausencias=[];save();renderCfg();alert('Datos borrados')}
+function wipe(){localStorage.clear();reports=[];equipos=EQUIPOS_DEFAULT;provs=PROVS_DEFAULT;ausencias=[];saveLocal();renderCfg();alert('Datos locales borrados. Si la nube está activa, se volverán a descargar solos.')}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 
 // INICIALIZACIÓN
