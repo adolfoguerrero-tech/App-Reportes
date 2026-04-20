@@ -1,0 +1,735 @@
+<!DOCTYPE html><html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Reportabilidad v2.1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+.nav{background:#1F4E78;color:#fff;padding:10px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+.nav h1{font-size:15px;font-weight:500;margin-right:16px}
+.nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.nav button:hover{background:rgba(255,255,255,.2)}
+.nav button.active{background:#fff;color:#1F4E78;font-weight:500}
+.container{padding:20px;max-width:1500px;margin:0 auto}
+.card{background:#fff;border-radius:8px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+h2{font-size:17px;margin-bottom:12px;color:#1F4E78;font-weight:500}
+h3{font-size:13px;margin-bottom:8px;color:#444;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.stat .val{font-size:22px;font-weight:500;color:#1F4E78;margin-top:3px}
+.stat .sub{font-size:10px;color:#aaa;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
+td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top}
+tr:hover{background:#fafbfc}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
+.b-ok{background:#D4EDDA;color:#155724}.b-warn{background:#FFF3CD;color:#856404}.b-alert{background:#FAEEDA;color:#633806}.b-crit{background:#F8D7DA;color:#721C24}.b-info{background:#D1ECF1;color:#0C5460}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:5px;font-size:13px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1F4E78}
+label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;margin-top:9px}
+.btn{background:#1F4E78;color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500}
+.btn:hover{background:#163A5C}.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-sec{background:#fff;color:#555;border:1px solid #ddd}.btn-sec:hover{background:#f5f5f5}
+.btn-dang{background:#c33;color:#fff;border:none}.btn-sm{padding:4px 9px;font-size:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.err{background:#F8D7DA;color:#721C24;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.warn{background:#FFF3CD;color:#856404;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.ok{background:#D4EDDA;color:#155724;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:7px}.cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:7px;cursor:pointer}.cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:7px;cursor:pointer}.cell-fut{background:#f8f8f8;color:#aaa;padding:7px;text-align:center}
+.cell-ok small,.cell-just small,.cell-miss small{font-size:10px;display:block;color:#555;margin-top:2px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}.modal.show{display:flex}
+.modal-box{background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow-y:auto}.hidden{display:none}
+.small{font-size:11px;color:#888}
+.foto-thumb{width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #ddd}.foto-full{max-width:100%;border-radius:5px;margin-top:8px}
+.pill-foto{background:#D4EDDA;color:#155724;font-size:10px;padding:2px 7px;border-radius:8px}.pill-nofoto{background:#FFF3CD;color:#856404;font-size:10px;padding:2px 7px;border-radius:8px}
+.row-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.empty{text-align:center;padding:40px;color:#aaa}
+</style>
+</head>
+<body>
+<div class="nav">
+  <h1>Reportabilidad · Rentamaq</h1>
+  <button id="nav-dash" class="active" onclick="show('dash')">Dashboard</button>
+  <button id="nav-grid" onclick="show('grid')">Grilla equipo</button>
+  <button id="nav-new" onclick="show('new')">Nuevo report</button>
+  <button id="nav-cons" onclick="show('cons')">Consolidados</button>
+  <button id="nav-equipos" onclick="show('equipos')">Equipos</button>
+  <button id="nav-err" onclick="show('err')">Diagnóstico</button>
+  <button id="nav-cfg" onclick="show('cfg')">Respaldo</button>
+  <button id="nav-login" onclick="toggleRole()" style="margin-left:auto; background:#BA7517; color:white;">Rol: Operador</button>
+</div>
+
+<div class="container">
+<div id="view-dash">
+  <h2>Panel de control</h2>
+  <div class="stats">
+    <div class="stat"><div class="lbl">Horas facturables</div><div class="val" id="s-hrs">0</div><div class="sub">período vigente</div></div>
+    <div class="stat"><div class="lbl">Total equipos</div><div class="val" id="s-eq">0</div><div class="sub" id="s-eq-sub"></div></div>
+    <div class="stat"><div class="lbl">Reports ingresados</div><div class="val" id="s-rep">0</div><div class="sub" id="s-rep-sub">con y sin foto</div></div>
+    <div class="stat"><div class="lbl">Con reporte hoy</div><div class="val" id="s-today">0</div></div>
+    <div class="stat"><div class="lbl">Ausencias justificadas</div><div class="val" id="s-aus">0</div></div>
+  </div>
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
+      <h3>Equipos de la flota</h3>
+      <div class="row-flex">
+        <select id="fltr-prov" onchange="renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
+        <input id="fltr" placeholder="Filtrar..." style="width:200px" oninput="renderDash()">
+      </div>
+    </div>
+    <table id="t-dash">
+      <thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Horas período</th><th>Estado</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="view-grid" class="hidden">
+  <div class="card">
+    <div class="row-flex" style="margin-bottom:12px">
+      <h2 style="margin:0">Grilla por equipo</h2>
+      <select id="sel-eq" onchange="renderGrid()" style="max-width:240px"></select>
+      <input type="date" id="per-ini" onchange="renderGrid()" style="max-width:150px">
+      <input type="date" id="per-fin" onchange="renderGrid()" style="max-width:150px">
+    </div>
+    <div id="grid-body"></div>
+  </div>
+</div>
+
+<div id="view-new" class="hidden">
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <h2 id="new-title">Ingresar nuevo report</h2>
+    <form id="form-new" onsubmit="saveReport(event)">
+      <input type="hidden" id="f-id">
+      <div class="grid3">
+        <div><label>Fecha</label><input type="date" id="f-fecha" required></div>
+        <div><label>Turno</label><select id="f-turno" required><option value="">—</option><option>Día</option><option>Noche</option></select></div>
+        <div><label>Folio papel</label><input id="f-folio" placeholder="Ej: 34477"></div>
+      </div>
+      <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
+      <label>Operador</label><input id="f-op" required>
+      <div class="grid3">
+        <div><label>Horóm. inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
+        <div><label>Horóm. final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
+        <div><label>Diferencia</label><input id="f-dif" disabled style="background:#f5f5f5"></div>
+      </div>
+      <label>Horas efectivas</label><input type="number" step="0.1" id="f-hef">
+      <label>Foto del report (opcional)</label><input type="file" id="f-foto" accept="image/*" onchange="compFoto(event)">
+      <div id="f-foto-prev"></div>
+      <label>Observaciones</label><textarea id="f-obs" rows="2"></textarea>
+      <div id="f-msgs" style="margin-top:10px"></div>
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="view-cons" class="hidden">
+  <h2>Consolidados del período</h2>
+  <div class="card">
+    <div class="row-flex" style="margin-bottom:12px">
+      <label style="margin:0">Período:</label>
+      <input type="date" id="c-ini" onchange="renderCons()">
+      <input type="date" id="c-fin" onchange="renderCons()">
+      <button class="btn" onclick="exportExcel()">Exportar a Excel</button>
+      <button class="btn btn-sec" onclick="exportVisual()">Generar Galería PDF</button>
+    </div>
+    <div id="cons-body"></div>
+  </div>
+</div>
+
+<div id="view-equipos" class="hidden">
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin:0">Equipos y proveedores</h2>
+      <button class="btn btn-sec" onclick="openProvs()">Gestionar proveedores</button>
+    </div>
+    <table>
+      <thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro actual</th><th>Estado</th><th></th></tr></thead>
+      <tbody id="t-eq"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="view-err" class="hidden">
+  <div class="card">
+    <h2>Diagnóstico de errores</h2>
+    <p class="small" style="margin-bottom:10px">Análisis automático sobre los reports ingresados.</p>
+    <div id="err-body"></div>
+  </div>
+</div>
+
+<div id="view-cfg" class="hidden">
+  <div class="card" style="max-width:640px">
+    <h2>Respaldo y restauración</h2>
+    <p class="small" style="margin-bottom:14px">Los datos se guardan en este navegador. Descarga respaldo periódicamente para no perderlos.</p>
+    <div class="row-flex">
+      <button class="btn" onclick="backup()">Descargar respaldo (JSON)</button>
+      <input type="file" id="f-restore" accept=".json" style="display:none" onchange="restore(event)">
+      <button class="btn btn-sec" onclick="document.getElementById('f-restore').click()">Restaurar desde respaldo</button>
+      <button class="btn btn-dang" onclick="if(confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer'))wipe()">Borrar todo</button>
+    </div>
+    <div style="margin-top:20px;padding:12px;background:#f5f6f8;border-radius:6px" class="small"><b>Estado actual:</b><br><span id="cfg-stats"></span></div>
+  </div>
+</div>
+
+</div>
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box" id="modal-box"></div></div>
+
+<script>
+// DATOS INICIALES
+const EQUIPOS_DEFAULT = [{"patente": "TBGH-68", "tipo": "Rodillo", "horometro_actual": 5021.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXSP-20", "tipo": "Rodillo", "horometro_actual": 5033.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPTK-55", "tipo": "Rodillo", "horometro_actual": 1087.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "LVGG-39", "tipo": "Rodillo", "horometro_actual": 6775.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull B-26", "tipo": "Bulldozer", "horometro_actual": 1954.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull B-24", "tipo": "Bulldozer", "horometro_actual": 3646.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "KTVK-56", "tipo": "Bulldozer", "horometro_actual": 22530.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Bull LJVG BZ-23", "tipo": "Bulldozer", "horometro_actual": 5397.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "LLXS-83", "tipo": "Bulldozer", "horometro_actual": 5097.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RWGW-85", "tipo": "Bulldozer", "horometro_actual": 1162.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RWHS-79", "tipo": "Cargador Frontal", "horometro_actual": 4626.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPRG-12", "tipo": "Cargador Frontal", "horometro_actual": 5699.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "GHA-06", "tipo": "Motoniveladora", "horometro_actual": 5186.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TJPH-89", "tipo": "Motoniveladora", "horometro_actual": 4855.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGTX-44", "tipo": "Camión Pluma", "horometro_actual": 2933.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VLZW-29", "tipo": "Camión Pluma", "horometro_actual": 554.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VRWJ-15", "tipo": "Camión Aljibe", "horometro_actual": 1139.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TFRV-14", "tipo": "Retroexcavadora", "horometro_actual": 3744.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "Nueva Retro 22", "tipo": "Retroexcavadora", "horometro_actual": 3063.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPTK-56", "tipo": "Excavadora", "horometro_actual": 1290.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "EXC.24", "tipo": "Excavadora", "horometro_actual": 3646.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "EXC.25", "tipo": "Excavadora", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBTS-56", "tipo": "Excavadora", "horometro_actual": 5266.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TJWY-89", "tipo": "Excavadora", "horometro_actual": 6770.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDXF-11", "tipo": "Camión Petrolero", "horometro_actual": 1293.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSZJ-92", "tipo": "Camión Petrolero", "horometro_actual": 704.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "THYD-27", "tipo": "Camión Petrolero", "horometro_actual": 6713.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-10", "tipo": "Camión Tolva", "horometro_actual": 9243.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VBZJ-16", "tipo": "Camión Tolva", "horometro_actual": 3724.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-17", "tipo": "Camión Tolva", "horometro_actual": 3268.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "STXS-17", "tipo": "Camión Tolva", "horometro_actual": 7303.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TPTX-19", "tipo": "Camión Tolva", "horometro_actual": 5937.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-19", "tipo": "Camión Tolva", "horometro_actual": 6248.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSFS-21", "tipo": "Camión Tolva", "horometro_actual": 1079.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-22", "tipo": "Camión Tolva", "horometro_actual": 7366.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TLPG-22", "tipo": "Camión Tolva", "horometro_actual": 3436.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-25", "tipo": "Camión Tolva", "horometro_actual": 8348.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TLPG-25", "tipo": "Camión Tolva", "horometro_actual": 3214.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDZH-28", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SSYV-29", "tipo": "Camión Tolva", "horometro_actual": 2921.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TTZT-30", "tipo": "Camión Tolva", "horometro_actual": 8671.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDZH-32", "tipo": "Camión Tolva", "horometro_actual": 9994.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZZ-32", "tipo": "Camión Tolva", "horometro_actual": 1635.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSKW-33", "tipo": "Camión Tolva", "horometro_actual": 2608.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-33", "tipo": "Camión Tolva", "horometro_actual": 7163.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SPFK-35", "tipo": "Camión Tolva", "horometro_actual": -129, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSFW-37", "tipo": "Camión Tolva", "horometro_actual": 9352.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TGGG-37", "tipo": "Camión Tolva", "horometro_actual": 2369.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VRZR-40", "tipo": "Camión Tolva", "horometro_actual": 1126.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCLR-41", "tipo": "Camión Tolva", "horometro_actual": -5426, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-44", "tipo": "Camión Tolva", "horometro_actual": 1569.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SLLT-46", "tipo": "Camión Tolva", "horometro_actual": 5433.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGWX-47", "tipo": "Camión Tolva", "horometro_actual": -2570, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-47", "tipo": "Camión Tolva", "horometro_actual": 1547.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VGWX-48", "tipo": "Camión Tolva", "horometro_actual": 2701.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-48", "tipo": "Camión Tolva", "horometro_actual": 3070.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCJB-48", "tipo": "Camión Tolva", "horometro_actual": 2504.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVT-50", "tipo": "Camión Tolva", "horometro_actual": 10366.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-51", "tipo": "Camión Tolva", "horometro_actual": 4547.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXVX-51", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-52", "tipo": "Camión Tolva", "horometro_actual": 918.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-52", "tipo": "Camión Tolva", "horometro_actual": -5861, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPZY-53", "tipo": "Camión Tolva", "horometro_actual": -1601, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXKZ-53", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVT-54", "tipo": "Camión Tolva", "horometro_actual": 10148.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-56", "tipo": "Camión Tolva", "horometro_actual": 3381.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TWDC-57", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SKDS-66", "tipo": "Camión Tolva", "horometro_actual": 5600.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SCFY-66", "tipo": "Camión Tolva", "horometro_actual": 7075.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSFB-66", "tipo": "Camión Tolva", "horometro_actual": -1059, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SCFY-67", "tipo": "Camión Tolva", "horometro_actual": 6471.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RZTF-69", "tipo": "Camión Tolva", "horometro_actual": 6248.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TDYW-70", "tipo": "Camión Tolva", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSTS-71", "tipo": "Camión Tolva", "horometro_actual": 7182.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TPWX-71", "tipo": "Camión Tolva", "horometro_actual": 4741.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VHGW-71", "tipo": "Camión Tolva", "horometro_actual": 1514.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VHGW-73", "tipo": "Camión Tolva", "horometro_actual": 2766.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKF-73", "tipo": "Camión Tolva", "horometro_actual": 3361.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PZZV-74", "tipo": "Camión Tolva", "horometro_actual": 7215.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PHJC-74", "tipo": "Camión Tolva", "horometro_actual": 7689.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TSGG-79", "tipo": "Camión Tolva", "horometro_actual": 3206.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSBD-82", "tipo": "Camión Tolva", "horometro_actual": 1053.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SFYV-82", "tipo": "Camión Tolva", "horometro_actual": 12614.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKHJ-82", "tipo": "Camión Tolva", "horometro_actual": 3430.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSTS-82", "tipo": "Camión Tolva", "horometro_actual": 7654.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PRVK-82", "tipo": "Camión Tolva", "horometro_actual": 7110.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SJVV-83", "tipo": "Camión Tolva", "horometro_actual": 5824.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-83", "tipo": "Camión Tolva", "horometro_actual": 1167.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SHVR-84", "tipo": "Camión Tolva", "horometro_actual": 10884.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VSGF-84", "tipo": "Camión Tolva", "horometro_actual": 1151.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VPGK-86", "tipo": "Camión Tolva", "horometro_actual": 1143.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VKKD-87", "tipo": "Camión Tolva", "horometro_actual": 2812.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PSRH-90", "tipo": "Camión Tolva", "horometro_actual": 7075.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-93", "tipo": "Camión Tolva", "horometro_actual": 4924.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "PZZV-94", "tipo": "Camión Tolva", "horometro_actual": 6804.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-94", "tipo": "Camión Tolva", "horometro_actual": 5039.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "TCJV-95", "tipo": "Camión Tolva", "horometro_actual": 3900.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "VBCR-95", "tipo": "Camión Tolva", "horometro_actual": 6652.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SXHC-96", "tipo": "Camión Tolva", "horometro_actual": 5406.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-96", "tipo": "Camión Tolva", "horometro_actual": 3258.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-97", "tipo": "Camión Tolva", "horometro_actual": 2019.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "SJVV-98", "tipo": "Camión Tolva", "horometro_actual": 7129.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "RBLJ-98", "tipo": "Camión Tolva", "horometro_actual": 5171.0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "STXS-26", "tipo": "Mini Bus", "horometro_actual": 0, "estado": "Activo", "proveedor": "Rentamaq"}, {"patente": "THXL-77", "tipo": "Mini Bus", "horometro_actual": 46097.0, "estado": "Activo", "proveedor": "Rentamaq"}];
+const PROVS_DEFAULT = ["Rentamaq", "Subarriendo A", "Subarriendo B"];
+const MOTIVOS = ["Mantención programada", "Mantención no programada", "Equipo no requerido por Teck", "Sin operador disponible", "Mala condición climática", "Emergencia en faena", "Equipo en traslado", "Espera condición segura", "Detención extraordinaria", "Otro"];
+
+// SISTEMA DE ROLES
+let currentRole = 'user'; // Empieza siempre como usuario
+const ADMIN_PASS = 'admin123'; // CONTRASEÑA DE ADMINISTRADOR (Cámbiala)
+
+function toggleRole() {
+  if (currentRole === 'user') {
+    const p = prompt('Ingrese contraseña de administrador:');
+    if (p === ADMIN_PASS) {
+      currentRole = 'admin';
+      document.getElementById('nav-login').textContent = 'Rol: Admin';
+      document.getElementById('nav-login').style.background = '#639922'; // Verde
+    } else if (p !== null) {
+      alert('Contraseña incorrecta');
+      return;
+    }
+  } else {
+    currentRole = 'user';
+    document.getElementById('nav-login').textContent = 'Rol: Operador';
+    document.getElementById('nav-login').style.background = '#BA7517'; // Naranja
+  }
+  applyRoles();
+}
+
+function applyRoles() {
+  const adminOnly = ['nav-grid', 'nav-cons', 'nav-equipos', 'nav-err', 'nav-cfg'];
+  adminOnly.forEach(id => {
+    document.getElementById(id).style.display = currentRole === 'admin' ? 'inline-block' : 'none';
+  });
+  // Si vuelve a usuario y estaba en vista admin, lo manda al dash
+  if (currentRole === 'user' && adminOnly.some(id => document.getElementById(id).classList.contains('active'))) {
+    show('dash');
+  }
+}
+
+let reports = JSON.parse(localStorage.getItem('rep-reports') || '[]');
+let equipos = JSON.parse(localStorage.getItem('rep-equipos') || 'null') || EQUIPOS_DEFAULT;
+let provs = JSON.parse(localStorage.getItem('rep-provs') || 'null') || PROVS_DEFAULT;
+let ausencias = JSON.parse(localStorage.getItem('rep-ausencias') || '[]');
+
+function save(){
+  localStorage.setItem('rep-reports', JSON.stringify(reports));
+  localStorage.setItem('rep-equipos', JSON.stringify(equipos));
+  localStorage.setItem('rep-provs', JSON.stringify(provs));
+  localStorage.setItem('rep-ausencias', JSON.stringify(ausencias));
+}
+save();
+
+function show(v){
+  ['dash','grid','new','cons','equipos','err','cfg'].forEach(x=>{
+    document.getElementById('view-'+x).classList.add('hidden');
+    document.getElementById('nav-'+x).classList.remove('active');
+  });
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.getElementById('nav-'+v).classList.add('active');
+  if(v==='dash')renderDash();
+  if(v==='grid')renderGrid();
+  if(v==='new')initNew();
+  if(v==='cons')initCons();
+  if(v==='equipos')renderEquipos();
+  if(v==='err')renderErr();
+  if(v==='cfg')renderCfg();
+}
+
+function fmtD(d){return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
+function todayS(){return new Date().toISOString().slice(0,10)}
+function defaultPeriod(){
+  const h=new Date();
+  const i=new Date(h.getFullYear(),h.getMonth()-1,21);
+  const f=new Date(h.getFullYear(),h.getMonth(),20);
+  return {ini:i.toISOString().slice(0,10),fin:f.toISOString().slice(0,10)}
+}
+
+function renderDash(){
+  const fltrProv = document.getElementById('fltr-prov');
+  fltrProv.innerHTML = '<option value="">Todos proveedores</option>'+provs.map(p=>`<option>${p}</option>`).join('');
+  const f = (document.getElementById('fltr').value||'').toLowerCase();
+  const fp = document.getElementById('fltr-prov').value;
+  const per = defaultPeriod();
+  const repsP = reports.filter(r=>r.fecha>=per.ini&&r.fecha<=per.fin);
+  let lista = equipos;
+  if(fp) lista = lista.filter(e=>e.proveedor===fp);
+  if(f) lista = lista.filter(e=>e.patente.toLowerCase().includes(f)||e.tipo.toLowerCase().includes(f)||(e.proveedor||'').toLowerCase().includes(f));
+  
+  const repsPorEq = {};
+  repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
+  
+  let totHrs=0,totRep=0,conFoto=0,hoyN=0;
+  const hoy=todayS();
+  
+  const tb=document.querySelector('#t-dash tbody');
+  tb.innerHTML = lista.map(e=>{
+    const rs = repsPorEq[e.patente]||[];
+    const hrs = rs.reduce((a,b)=>a+Number(b.dif||0),0);
+    totHrs+=hrs; totRep+=rs.length;
+    conFoto += rs.filter(r=>r.foto).length;
+    const tienHoy = rs.some(r=>r.fecha===hoy);
+    if(tienHoy)hoyN++;
+    const st = rs.length===0?'<span class="badge b-warn">Sin reports</span>':(tienHoy?'<span class="badge b-ok">Al día</span>':'<span class="badge b-info">Con historial</span>');
+    return `<tr style="cursor:pointer" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo}</td><td>${e.proveedor||'—'}</td><td>${e.horometro_actual||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${st}</td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty">Sin equipos que coincidan</td></tr>';
+  
+  document.getElementById('s-hrs').textContent = totHrs.toFixed(0);
+  document.getElementById('s-eq').textContent = lista.length;
+  document.getElementById('s-eq-sub').textContent = `de ${equipos.length} total`;
+  document.getElementById('s-rep').textContent = totRep;
+  document.getElementById('s-rep-sub').textContent = `${conFoto} con foto`;
+  document.getElementById('s-today').textContent = hoyN;
+  const aus = ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin).length;
+  document.getElementById('s-aus').textContent = aus;
+}
+
+function openGridFor(pat){
+  if (currentRole === 'user') return; // Bloquear si es operador
+  document.getElementById('sel-eq').value=pat;
+  show('grid')
+}
+
+function initGrid(){
+  const sel=document.getElementById('sel-eq');
+  sel.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo}</option>`).join('');
+  const p = defaultPeriod();
+  document.getElementById('per-ini').value = p.ini;
+  document.getElementById('per-fin').value = p.fin;
+}
+
+function renderGrid(){
+  const pat=document.getElementById('sel-eq').value;
+  const ini=document.getElementById('per-ini').value;
+  const fin=document.getElementById('per-fin').value;
+  if(!pat||!ini||!fin){document.getElementById('grid-body').innerHTML='';return}
+  const eq = equipos.find(e=>e.patente===pat);
+  const d1=new Date(ini+'T00:00'),d2=new Date(fin+'T00:00');
+  const dias=[];
+  for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1))dias.push(new Date(d));
+  const reps=reports.filter(r=>r.equipo===pat&&r.fecha>=ini&&r.fecha<=fin);
+  const aus=ausencias.filter(a=>a.equipo===pat&&a.fecha>=ini&&a.fecha<=fin);
+  const hoy=todayS();
+  let totHrs=0,reptN=0,ausN=0,missN=0;
+  
+  let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo} · Proveedor: ${eq.proveedor||'—'} · Horóm. actual: ${eq.horometro_actual||'—'}</div>`;
+  html+=`<table><thead><tr><th style="width:110px">Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
+  
+  dias.forEach(d=>{
+    const fs=d.toISOString().slice(0,10);
+    const cell=(t)=>{
+      const r=reps.find(x=>x.fecha===fs&&x.turno===t);
+      const a=aus.find(x=>x.fecha===fs&&x.turno===t);
+      if(r){
+        totHrs+=Number(r.dif||0);reptN++;
+        const foto=r.foto?'<span class="pill-foto">con foto</span>':'<span class="pill-nofoto">sin foto</span>';
+        return `<td><div class="cell-ok" onclick="editReport(${r.id})" style="cursor:pointer"><b>${r.folio||'s/folio'}</b> · ${r.dif}h ${foto}<small>${r.operador} · ${r.hi}→${r.hf}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
+      }
+      if(a){ausN++;return `<td><div class="cell-just" onclick="editAusencia(${a.id})"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
+      if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
+      missN++;
+      return `<td><div class="cell-miss" onclick="openAusForm('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>click para justificar</small></div></td>`;
+    };
+    html+=`<tr><td><b>${fmtD(fs)}</b></td>${cell('Día')}${cell('Noche')}</tr>`;
+  });
+  html+='</tbody></table>';
+  
+  const cab=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div>
+  <div class="stat"><div class="lbl">Justificados</div><div class="val" style="color:#378ADD">${ausN}</div></div>
+  <div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:#E24B4A">${missN}</div></div>
+  <div class="stat"><div class="lbl">Horas acumuladas</div><div class="val">${totHrs.toFixed(1)}</div></div>
+  </div>`;
+  document.getElementById('grid-body').innerHTML=cab+html;
+}
+
+function openAusForm(pat,fecha,turno,aid){
+  const a = aid?ausencias.find(x=>x.id===aid):null;
+  document.getElementById('modal-box').innerHTML=`
+  <h2 style="margin-bottom:10px">${a?'Editar':'Justificar'} ausencia</h2>
+  <p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>
+  <label>Motivo</label>
+  <select id="a-motivo">${MOTIVOS.map(m=>`<option ${a&&a.motivo===m?'selected':''}>${m}</option>`).join('')}</select>
+  <label>Descripción</label>
+  <textarea id="a-desc" rows="3">${a?a.descripcion||'':''}</textarea>
+  <label>Aplica descuento al cobro</label>
+  <select id="a-desc2"><option ${a&&a.descuento==='Sí'?'selected':''}>Sí</option><option ${a&&a.descuento==='No'?'selected':''}>No</option></select>
+  <label>Validado por (opcional)</label>
+  <input id="a-val" value="${a?a.validado||'':''}" placeholder="Nombre Teck">
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+  ${a?'<button class="btn btn-dang btn-sm" onclick="delAusencia('+a.id+')">Eliminar</button>':''}
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveAusencia('${pat}','${fecha}','${turno}',${a?a.id:'null'})">Guardar</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+function saveAusencia(pat,fecha,turno,id){
+  const obj={id:id||Date.now(),equipo:pat,fecha,turno,
+    motivo:document.getElementById('a-motivo').value,
+    descripcion:document.getElementById('a-desc').value,
+    descuento:document.getElementById('a-desc2').value,
+    validado:document.getElementById('a-val').value,
+    ts:new Date().toISOString()};
+  if(id){ausencias=ausencias.map(a=>a.id===id?obj:a)}else{ausencias.push(obj)}
+  save();closeModal();renderGrid();renderDash();
+}
+
+function editAusencia(id){const a=ausencias.find(x=>x.id===id);if(a)openAusForm(a.equipo,a.fecha,a.turno,id)}
+function delAusencia(id){if(confirm('¿Eliminar esta ausencia?')){ausencias=ausencias.filter(a=>a.id!==id);save();closeModal();renderGrid()}}
+
+function initNew(){
+  const sel=document.getElementById('f-eq');
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo}</option>`).join('');
+  if(!document.getElementById('f-id').value){
+    document.getElementById('f-fecha').value=todayS();
+    document.getElementById('new-title').textContent='Ingresar nuevo report';
+  }
+}
+
+function editReport(id){
+  const r=reports.find(x=>x.id===id);if(!r)return;
+  show('new');
+  setTimeout(()=>{
+    document.getElementById('new-title').textContent='Editar report';
+    document.getElementById('f-id').value=r.id;
+    document.getElementById('f-fecha').value=r.fecha;
+    document.getElementById('f-turno').value=r.turno;
+    document.getElementById('f-folio').value=r.folio||'';
+    document.getElementById('f-eq').value=r.equipo;
+    document.getElementById('f-op').value=r.operador;
+    document.getElementById('f-hi').value=r.hi;
+    document.getElementById('f-hf').value=r.hf;
+    document.getElementById('f-hef').value=r.hef||'';
+    document.getElementById('f-obs').value=r.obs||'';
+    document.getElementById('f-dif').value=r.dif;
+    if(r.foto)document.getElementById('f-foto-prev').innerHTML=`<img src="${r.foto}" class="foto-full"><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button>`;
+    const f=document.getElementById('form-new');
+    if(!document.getElementById('btn-del-rep')){
+      const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar report';b.onclick=()=>delReport(r.id);
+      f.querySelector('div[style*="flex-end"]').prepend(b);
+    }
+    validate();
+  },50);
+}
+
+function delReport(id){if(confirm('¿Eliminar este report?')){reports=reports.filter(r=>r.id!==id);save();clearForm();show('grid');renderGrid()}}
+function quitFoto(){document.getElementById('f-foto-prev').innerHTML='';document.getElementById('f-foto').value=''}
+
+let fotoData=null;
+function compFoto(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      const maxW=1200;
+      const sc=Math.min(1,maxW/img.width);
+      c.width=img.width*sc;c.height=img.height*sc;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      fotoData=c.toDataURL('image/jpeg',0.7);
+      const kb=Math.round(fotoData.length*0.75/1024);
+      document.getElementById('f-foto-prev').innerHTML=`<img src="${fotoData}" class="foto-full"><div class="small">Tamaño comprimido: ~${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button>`;
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function onEqChange(){
+  const p=document.getElementById('f-eq').value;
+  const e=equipos.find(x=>x.patente===p);
+  if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horometro_actual||'';
+  calcDif();
+}
+
+function calcDif(){
+  const hi=parseFloat(document.getElementById('f-hi').value)||0;
+  const hf=parseFloat(document.getElementById('f-hf').value)||0;
+  document.getElementById('f-dif').value=(hf-hi).toFixed(1);
+  validate();
+}
+
+function validate(){
+  const msgs=[];
+  const id=document.getElementById('f-id').value;
+  const hi=parseFloat(document.getElementById('f-hi').value);
+  const hf=parseFloat(document.getElementById('f-hf').value);
+  const hef=parseFloat(document.getElementById('f-hef').value);
+  const eq=document.getElementById('f-eq').value;
+  const fecha=document.getElementById('f-fecha').value;
+  const turno=document.getElementById('f-turno').value;
+  const folio=document.getElementById('f-folio').value;
+  const hoy=todayS();
+  
+  if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
+  if(!isNaN(hi) && !isNaN(hf) && hf<hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
+  if(!isNaN(hef)&&!isNaN(hi)&&!isNaN(hf)&&hef>(hf-hi))msgs.push({t:'err',m:'⊘ Horas efectivas no pueden superar la diferencia'});
+  if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&String(r.id)!==String(id)))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
+  if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&String(r.id)!==String(id)))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
+  
+  // VALIDACIÓN CRONOLÓGICA ESTRICTA (Nueva funcionalidad)
+  if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
+    const repsEq = reports.filter(r => r.equipo === eq && String(r.id) !== String(id));
+    
+    const mayorEnPasado = repsEq.find(r => r.fecha < fecha && r.hf > hi);
+    if (mayorEnPasado) {
+      msgs.push({ t: 'err', m: `⊘ Incoherencia: El ${fmtD(mayorEnPasado.fecha)} terminó con ${mayorEnPasado.hf}h. No puedes iniciar con ${hi}h.` });
+    }
+    
+    const menorEnFuturo = repsEq.find(r => r.fecha > fecha && r.hi < hf);
+    if (menorEnFuturo) {
+      msgs.push({ t: 'err', m: `⊘ Incoherencia: El ${fmtD(menorEnFuturo.fecha)} ya partió con ${menorEnFuturo.hi}h. No puedes terminar con ${hf}h.` });
+    }
+  }
+
+  if(!isNaN(hi)&&eq&&!id){
+    const e=equipos.find(x=>x.patente===eq);
+    if(e&&e.horometro_actual&&Math.abs(hi-e.horometro_actual)>2)msgs.push({t:'warn',m:`⚠ Horóm. inicial (${hi}) difiere del último conocido (${e.horometro_actual})`});
+  }
+  if(!isNaN(hi)&&!isNaN(hf)){const d=hf-hi;if(d>0&&(d<2||d>14))msgs.push({t:'warn',m:`⚠ Diferencia ${d.toFixed(1)}h fuera del rango 2-14h`})}
+  if(!folio)msgs.push({t:'warn',m:'⚠ Report sin folio'});
+  
+  document.getElementById('f-msgs').innerHTML=msgs.map(x=>`<div class="${x.t}">${x.m}</div>`).join('');
+  const hasErr=msgs.some(m=>m.t==='err');
+  document.querySelector('#form-new button[type=submit]').disabled=hasErr;
+  return !hasErr;
+}
+
+document.addEventListener('input',e=>{if(e.target.closest('#form-new'))validate()});document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate()});
+
+function saveReport(e){
+  e.preventDefault();if(!validate())return;
+  const id=document.getElementById('f-id').value;
+  const r={
+    id:id?Number(id):Date.now(),
+    fecha:document.getElementById('f-fecha').value,
+    turno:document.getElementById('f-turno').value,
+    folio:document.getElementById('f-folio').value,
+    equipo:document.getElementById('f-eq').value,
+    operador:document.getElementById('f-op').value,
+    hi:parseFloat(document.getElementById('f-hi').value),
+    hf:parseFloat(document.getElementById('f-hf').value),
+    dif:parseFloat(document.getElementById('f-dif').value),
+    hef:parseFloat(document.getElementById('f-hef').value)||0,
+    obs:document.getElementById('f-obs').value,
+    foto:fotoData||(id?reports.find(x=>x.id===Number(id))?.foto:null),
+    ts:new Date().toISOString()
+  };
+  if(id){reports=reports.map(x=>x.id===Number(id)?r:x)}else{reports.push(r)}
+  const eq=equipos.find(x=>x.patente===r.equipo);
+  if(eq&&r.hf>(eq.horometro_actual||0))eq.horometro_actual=r.hf;
+  save();
+  alert('Report '+(id?'actualizado':'guardado')+' ✓');
+  clearForm();
+}
+
+function clearForm(){
+  document.getElementById('form-new').reset();
+  document.getElementById('f-id').value='';
+  document.getElementById('f-msgs').innerHTML='';
+  document.getElementById('f-foto-prev').innerHTML='';
+  fotoData=null;
+  const b=document.getElementById('btn-del-rep');if(b)b.remove();
+  initNew();
+}
+
+function initCons(){const p=defaultPeriod();document.getElementById('c-ini').value=p.ini;document.getElementById('c-fin').value=p.fin;renderCons()}
+
+function renderCons(){
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  if(!ini||!fin)return;
+  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
+  
+  const porProv={};
+  equipos.forEach(e=>{
+    const p=e.proveedor||'Sin proveedor';
+    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0};
+    porProv[p].equipos++;
+  });
+  reps.forEach(r=>{
+    const e=equipos.find(x=>x.patente===r.equipo);
+    const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';
+    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0};
+    porProv[p].reports++;
+    porProv[p].horas+=Number(r.dif||0);
+    if(r.foto)porProv[p].conFoto++;
+  });
+  
+  const porEq={};
+  equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,conFoto:0}});
+  reps.forEach(r=>{if(porEq[r.equipo]){porEq[r.equipo].reports++;porEq[r.equipo].horas+=Number(r.dif||0);if(r.foto)porEq[r.equipo].conFoto++}});
+  
+  let totH=0,totR=0,totF=0;
+  Object.values(porProv).forEach(p=>{totH+=p.horas;totR+=p.reports;totF+=p.conFoto});
+  
+  let html=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Total horas</div><div class="val">${totH.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div>
+  <div class="stat"><div class="lbl">Con respaldo foto</div><div class="val">${totF}</div><div class="sub">${totR?Math.round(totF*100/totR):0}%</div></div>
+  <div class="stat"><div class="lbl">Proveedores</div><div class="val">${Object.keys(porProv).length}</div></div>
+  </div>`;
+  
+  html+='<h3>Consolidado por proveedor</h3><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Con foto</th></tr></thead><tbody>';
+  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td>${d.conFoto}/${d.reports}</td></tr>`});
+  html+='</tbody></table>';
+  
+  html+='<h3 style="margin-top:18px">Detalle por equipo</h3><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Con foto</th></tr></thead><tbody>';
+  Object.values(porEq).filter(x=>x.reports>0).sort((a,b)=>b.horas-a.horas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo}</td><td>${x.eq.proveedor||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td>${x.conFoto}/${x.reports}</td></tr>`});
+  html+='</tbody></table>';
+  
+  document.getElementById('cons-body').innerHTML=html;
+}
+
+function exportExcel(){
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
+  const wb=XLSX.utils.book_new();
+  
+  const filas=reps.map(r=>{
+    const e=equipos.find(x=>x.patente===r.equipo);
+    return {Fecha:r.fecha,Turno:r.turno,Equipo:r.equipo,Tipo:e?e.tipo:'',Proveedor:e?e.proveedor:'',Folio:r.folio,Operador:r.operador,HorómInicial:r.hi,HorómFinal:r.hf,Diferencia:r.dif,HorasEfectivas:r.hef,Observaciones:r.obs,TieneFoto:r.foto?'Sí':'No'};
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),'General');
+  
+  const provsSet=[...new Set(equipos.map(e=>e.proveedor||'Sin proveedor'))];
+  provsSet.forEach(p=>{
+    const fp=filas.filter(f=>f.Proveedor===p);
+    if(fp.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp),('Prov '+p).slice(0,31));
+  });
+  
+  const res={};
+  filas.forEach(f=>{res[f.Proveedor]=res[f.Proveedor]||{Proveedor:f.Proveedor,Reports:0,Horas:0};res[f.Proveedor].Reports++;res[f.Proveedor].Horas+=Number(f.Diferencia||0)});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(res)),'Resumen Proveedor');
+  
+  const aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
+  if(aus.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(aus),'Ausencias');
+  
+  XLSX.writeFile(wb,`Consolidado_${ini}_a_${fin}.xlsx`);
+}
+
+// NUEVA FUNCIÓN PARA EXPORTAR GALERÍA VISUAL (PDF)
+function exportVisual() {
+  const ini = document.getElementById('c-ini').value;
+  const fin = document.getElementById('c-fin').value;
+  const reps = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
+
+  if (reps.length === 0) {
+    alert('No hay reports con foto en este período.');
+    return;
+  }
+
+  let html = `<html><head><title>Galería Fotográfica ${ini} a ${fin}</title>
+    <style>
+      body { font-family: sans-serif; padding: 20px; }
+      .card { border: 1px solid #ccc; margin-bottom: 20px; padding: 15px; page-break-inside: avoid; }
+      img { max-height: 400px; max-width: 100%; border-radius: 4px; margin-top: 10px; }
+      .meta { font-size: 14px; color: #444; margin-bottom: 8px; }
+    </style></head><body>
+    <h2>Respaldo Fotográfico de Reports - Rentamaq</h2>
+    <p style="margin-bottom:20px">Período: ${fmtD(ini)} al ${fmtD(fin)}</p>`;
+
+  reps.forEach(r => {
+    html += `<div class="card">
+      <div class="meta"><b>Equipo:</b> ${r.equipo} | <b>Fecha:</b> ${fmtD(r.fecha)} | <b>Turno:</b> ${r.turno}</div>
+      <div class="meta"><b>Folio:</b> ${r.folio || 'N/A'} | <b>Operador:</b> ${r.operador} | <b>Horómetro:</b> ${r.hi} → ${r.hf}</div>
+      ${r.obs ? `<div class="meta"><b>Obs:</b> ${r.obs}</div>` : ''}
+      <img src="${r.foto}">
+    </div>`;
+  });
+
+  html += `<script>window.print();<\/script></body></html>`;
+  
+  const ventana = window.open('', '_blank');
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
+function renderEquipos(){
+  const tb=document.getElementById('t-eq');
+  tb.innerHTML=equipos.map(e=>`<tr><td><b>${e.patente}</b></td><td>${e.tipo}</td><td><select onchange="setProv('${e.patente}',this.value)">${provs.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td><td>${e.horometro_actual||'—'}</td><td>${e.estado}</td><td></td></tr>`).join('');
+}
+function setProv(pat,p){const e=equipos.find(x=>x.patente===pat);if(e){e.proveedor=p;save()}}
+
+function openProvs(){
+  document.getElementById('modal-box').innerHTML=`<h2>Proveedores</h2>
+  <div id="prov-list" style="margin:12px 0">${provs.map((p,i)=>`<div style="display:flex;gap:6px;margin:4px 0"><input value="${p}" id="p-${i}" style="flex:1"><button class="btn btn-dang btn-sm" onclick="delProv(${i})">Quitar</button></div>`).join('')}</div>
+  <div style="display:flex;gap:6px"><input id="new-prov" placeholder="Nuevo proveedor"><button class="btn btn-sm" onclick="addProv()">Agregar</button></div>
+  <div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn" onclick="saveProvs()">Guardar</button></div>`;
+  document.getElementById('modal').classList.add('show');
+}
+function addProv(){const v=document.getElementById('new-prov').value.trim();if(v&&!provs.includes(v)){provs.push(v);openProvs()}}
+function delProv(i){provs.splice(i,1);openProvs()}
+function saveProvs(){provs=provs.map((_,i)=>document.getElementById('p-'+i).value.trim()).filter(Boolean);save();closeModal();renderEquipos();renderDash()}
+
+function renderErr(){
+  const folios={},dups=[],saltos=[];
+  reports.forEach(r=>{const k=r.equipo+'|'+r.folio;if(r.folio&&folios[k])dups.push({eq:r.equipo,folio:r.folio});if(r.folio)folios[k]=true});
+  const porEq={};
+  reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
+  Object.keys(porEq).forEach(eq=>{
+    const rs=porEq[eq].sort((a,b)=>(a.fecha+a.turno).localeCompare(b.fecha+b.turno));
+    for(let i=1;i<rs.length;i++){const gap=rs[i].hi-rs[i-1].hf;if(Math.abs(gap)>2)saltos.push({eq,fecha:rs[i].fecha,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})}
+  });
+  const sinF=reports.filter(r=>!r.folio).length;
+  const sinFoto=reports.filter(r=>!r.foto).length;
+  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
+  <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
+  <div class="stat"><div class="lbl">Sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
+  <div class="stat"><div class="lbl">Saltos de horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
+  </div>
+  <h3 style="margin-top:14px">Saltos detectados</h3>
+  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha</th><th>Anterior</th><th>Actual</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha}</td><td>${s.prev}</td><td>${s.curr}</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}
+  <h3 style="margin-top:14px">Folios duplicados</h3>
+  ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
+}
+
+function renderCfg(){
+  document.getElementById('cfg-stats').innerHTML=`Equipos: ${equipos.length}<br>Proveedores: ${provs.length}<br>Reports: ${reports.length}<br>Ausencias: ${ausencias.length}<br>Tamaño aprox: ${Math.round(JSON.stringify({reports,equipos,provs,ausencias}).length/1024)} KB`;
+}
+
+function backup(){
+  const data={version:2,fecha:new Date().toISOString(),reports,equipos,provs,ausencias};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`respaldo_reportabilidad_${todayS()}.json`;a.click();
+}
+
+function restore(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(confirm(`Restaurar ${d.reports?.length||0} reports, ${d.equipos?.length||0} equipos, ${d.ausencias?.length||0} ausencias? Se sobrescriben los datos actuales.`)){
+        reports=d.reports||[];equipos=d.equipos||equipos;provs=d.provs||provs;ausencias=d.ausencias||[];
+        save();alert('Restaurado ✓');renderCfg();
+      }
+    }catch(err){alert('Archivo inválido: '+err.message)}
+  };
+  r.readAsText(f);
+}
+
+function wipe(){localStorage.clear();reports=[];equipos=EQUIPOS_DEFAULT;provs=PROVS_DEFAULT;ausencias=[];save();renderCfg();alert('Datos borrados')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+
+// INICIALIZACIÓN
+initGrid();
+applyRoles(); // Llama a la validación de roles al arrancar
+</script>
+</body>
+</html>
