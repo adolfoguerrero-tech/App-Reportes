@@ -2,68 +2,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rentamaq Master v3.5</title>
+    <title>Rentamaq Master v3.7 - Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
-        .nav{background:#1F4E78;color:#fff;padding:10px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 4px rgba(0,0,0,.1)}
-        .nav h1{font-size:15px;font-weight:500;margin-right:16px}
-        .nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px}
-        .nav button.active{background:#fff;color:#1F4E78}
-        .container{padding:20px;max-width:1400px;margin:0 auto}
-        .card{background:#fff;border-radius:8px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:14px}
-        .stat{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:center}
-        .stat .lbl{font-size:10px;color:#888;text-transform:uppercase}
-        .stat .val{font-size:22px;font-weight:bold;color:#1F4E78}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        th{background:#f0f2f5;padding:9px;text-align:left;color:#555}
-        td{padding:8px 9px;border-bottom:1px solid #eee}
-        .badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
-        .b-ok{background:#D4EDDA;color:#155724}.b-warn{background:#FFF3CD;color:#856404}
-        input,select,textarea{width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:5px;margin-bottom:10px}
-        label{display:block;font-size:11px;font-weight:bold;color:#555;margin-bottom:3px}
-        .btn{background:#1F4E78;color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-weight:bold}
-        .btn-sec{background:#fff;color:#555;border:1px solid #ddd}
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+        .nav{background:#1F4E78;color:#fff;padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+        .nav h1{font-size:16px;margin-right:15px}
+        .nav button{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+        .nav button.active{background:#fff;color:#1F4E78;font-weight:bold}
+        .container{padding:15px;max-width:1400px;margin:0 auto}
+        .card{background:#fff;border-radius:10px;padding:20px;margin-bottom:15px;box-shadow:0 2px 5px rgba(0,0,0,0.05)}
+        .stats{display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:12px;margin-bottom:15px}
+        .stat{background:#fff;padding:15px;border-radius:10px;text-align:center;border-bottom:4px solid #1F4E78}
+        .stat .lbl{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:5px}
+        .stat .val{font-size:24px;font-weight:bold;color:#1F4E78}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        th{background:#f8f9fa;padding:12px;text-align:left;color:#555;font-size:11px;border-bottom:2px solid #eee}
+        td{padding:12px;border-bottom:1px solid #f0f0f0}
+        input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;font-size:14px}
+        label{display:block;font-size:11px;font-weight:bold;color:#444;margin-bottom:4px}
+        .btn{background:#1F4E78;color:#fff;border:none;padding:12px 20px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:13px}
+        .btn-sec{background:#6c757d;color:#fff}
+        .btn-aus{background:#BA7517;color:#fff}
+        .btn-dang{background:#c33;color:#fff}
         .hidden{display:none}
-        .cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:6px;cursor:pointer}
-        .cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:6px;cursor:pointer}
-        .cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:6px;cursor:pointer}
-        .cell-fut{background:#f8f8f8;color:#aaa;padding:6px;text-align:center}
-        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+        .cell-ok{background:#EAF3DE;border-left:4px solid #639922;padding:8px;cursor:pointer;border-radius:4px}
+        .cell-just{background:#E6F1FB;border-left:4px solid #378ADD;padding:8px;cursor:pointer;border-radius:4px}
+        .cell-miss{background:#FCEBEB;border-left:4px solid #E24B4A;padding:8px;cursor:pointer;border-radius:4px}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;padding:15px}
         .modal.show{display:flex}
-        .modal-box{background:#fff;border-radius:8px;max-width:500px;width:90%;padding:20px;max-height:90vh;overflow-y:auto}
-        .cloud-indicator{background:#639922;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:5px}
+        .modal-box{background:#fff;border-radius:12px;max-width:500px;width:100%;padding:25px;box-shadow:0 10px 25px rgba(0,0,0,0.2)}
+        .cloud-indicator{background:#639922;color:white;padding:3px 8px;border-radius:12px;font-size:10px;margin-left:8px}
     </style>
 </head>
 <body>
 
 <div class="nav">
-    <h1>Rentamaq <span class="cloud-indicator">Cloud OK</span></h1>
-    <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
-    <button onclick="show('grid')" id="n-grid">Grilla Equipo</button>
-    <button onclick="show('new')" id="n-new">Nuevo Report</button>
-    <button onclick="show('cons')" id="n-cons">Consolidados</button>
-    <button onclick="show('equipos')" id="n-equipos">Equipos</button>
+    <h1>Rentamaq <span id="cloud-status" class="cloud-indicator">Conectado</span></h1>
+    <button onclick="showView('dash')" id="n-dash" class="active">Dashboard</button>
+    <button onclick="showView('grid')" id="n-grid">Grilla Equipo</button>
+    <button onclick="showView('new')" id="n-new">Nuevo Report</button>
+    <button onclick="showView('cons')" id="n-cons">Consolidados</button>
+    <button onclick="showView('equipos')" id="n-equipos">Equipos</button>
     <button onclick="toggleAdmin()" id="n-admin" style="margin-left:auto; background:#BA7517">Admin</button>
 </div>
 
 <div class="container">
     <div id="view-dash">
         <div class="stats">
-            <div class="stat"><div class="lbl">Total Horas</div><div class="val" id="s-hrs">0</div></div>
-            <div class="stat"><div class="lbl">Equipos</div><div class="val" id="s-eq">0</div></div>
-            <div class="stat"><div class="lbl">Reports</div><div class="val" id="s-rep">0</div></div>
+            <div class="stat"><div class="lbl">Horas Flota</div><div id="s-hrs" class="val">0</div></div>
+            <div class="stat"><div class="lbl">Equipos</div><div id="s-eq" class="val">0</div></div>
+            <div class="stat"><div class="lbl">Reportes</div><div id="s-rep" class="val">0</div></div>
         </div>
         <div class="card">
             <input type="text" id="fltr" placeholder="Filtrar patente o tipo..." oninput="renderDash()">
             <table id="t-dash">
-                <thead><tr><th>Patente</th><th>Tipo</th><th>Horómetro</th><th>Reports</th><th>Estado</th></tr></thead>
+                <thead><tr><th>Patente</th><th>Tipo</th><th>Horo Actual</th><th>Estado</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -71,8 +71,8 @@
 
     <div id="view-grid" class="hidden">
         <div class="card">
-            <div style="display:flex;gap:10px;margin-bottom:15px">
-                <select id="sel-eq" onchange="renderGrid()"></select>
+            <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap">
+                <select id="sel-eq" onchange="renderGrid()" style="flex:1"></select>
                 <input type="date" id="per-ini" onchange="renderGrid()">
                 <input type="date" id="per-fin" onchange="renderGrid()">
             </div>
@@ -81,25 +81,24 @@
     </div>
 
     <div id="view-new" class="hidden">
-        <div class="card" style="max-width:600px;margin:auto">
-            <h2 id="form-title">Ingresar Report</h2>
+        <div class="card" style="max-width:600px; margin:auto">
+            <h2 id="f-title" style="margin-bottom:15px">Ingresar Reporte</h2>
             <form onsubmit="saveReport(event)">
                 <input type="hidden" id="f-id">
-                <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <label>Equipo</label><select id="f-eq" required onchange="cargarHoroInicial()"></select>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
                     <div><label>Fecha</label><input type="date" id="f-fecha" required></div>
                     <div><label>Turno</label><select id="f-turno"><option>Día</option><option>Noche</option></select></div>
                 </div>
                 <label>Operador</label><input type="text" id="f-op" required>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                    <div><label>H. Inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
-                    <div><label>H. Final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
+                    <div><label>Horo Inicial</label><input type="number" step="0.1" id="f-hi" required></div>
+                    <div><label>Horo Final</label><input type="number" step="0.1" id="f-hf" required></div>
                 </div>
                 <label>Folio</label><input type="text" id="f-folio">
-                <label>Foto Report</label><input type="file" id="f-foto" accept="image/*" onchange="compFoto(event)">
+                <label>Foto Reporte</label><input type="file" id="f-foto" accept="image/*" onchange="previewImg(event)">
                 <div id="prev-foto"></div>
-                <div id="f-msgs"></div>
-                <div style="text-align:right;margin-top:10px">
+                <div style="text-align:right; margin-top:15px">
                     <button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
                     <button type="submit" class="btn" id="btn-save">Guardar</button>
                 </div>
@@ -109,11 +108,11 @@
 
     <div id="view-cons" class="hidden">
         <div class="card">
-            <div style="display:flex;gap:10px;margin-bottom:15px">
+            <div style="display:flex; gap:10px; margin-bottom:15px">
                 <input type="date" id="c-ini">
                 <input type="date" id="c-fin">
-                <button class="btn" onclick="exportExcel()">Excel</button>
-                <button class="btn btn-sec" onclick="exportarFotosZip()">ZIP Fotos</button>
+                <button class="btn" onclick="exportExcel()">Exportar Excel</button>
+                <button class="btn btn-sec" onclick="exportarFotosZip()">Descargar Fotos</button>
             </div>
             <div id="cons-body"></div>
         </div>
@@ -121,8 +120,11 @@
 
     <div id="view-equipos" class="hidden">
         <div class="card">
-            <button class="btn" onclick="openEqForm()">+ Nuevo Equipo</button>
-            <table id="t-eq" style="margin-top:10px">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <h2>Flota Registrada</h2>
+                <button class="btn" onclick="abrirModalEq()">+ Nuevo Equipo</button>
+            </div>
+            <table id="t-eq">
                 <thead><tr><th>Patente</th><th>Tipo</th><th>Horómetro</th><th>Acción</th></tr></thead>
                 <tbody></tbody>
             </table>
@@ -130,9 +132,12 @@
     </div>
 </div>
 
-<div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-box" id="modal-box"></div></div>
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" id="modal-content"></div>
+</div>
 
 <script>
+// CONFIGURACIÓN
 const firebaseConfig = {
     apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
     authDomain: "app-reportabilidad.firebaseapp.com",
@@ -146,19 +151,25 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-let reports = [], equipos = [], ausencias = [], fotoData = null, isAdmin = false;
+let reports = [], equipos = [], ausencias = [], isAdmin = false, fotoBase64 = null;
 
-// SINCRONIZACIÓN
+// CARGA DE DATOS
 db.collection("equipos").onSnapshot(s => {
     equipos = s.docs.map(d => d.data());
-    renderDash(); renderEquipos();
-    document.getElementById('f-eq').innerHTML = '<option value="">— Seleccionar —</option>' + equipos.map(e => `<option value="${e.patente}">${e.patente}</option>`).join('');
-    document.getElementById('sel-eq').innerHTML = equipos.map(e => `<option value="${e.patente}">${e.patente}</option>`).join('');
+    renderDash(); renderEquipos(); llenarSelects();
 });
-db.collection("reportes").onSnapshot(s => { reports = s.docs.map(d => d.data()); renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid(); });
-db.collection("ausencias").onSnapshot(s => { ausencias = s.docs.map(d => d.data()); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid(); });
 
-function show(v){
+db.collection("reportes").onSnapshot(s => {
+    reports = s.docs.map(d => d.data());
+    renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid();
+});
+
+db.collection("ausencias").onSnapshot(s => {
+    ausencias = s.docs.map(d => d.data());
+    if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid();
+});
+
+function showView(v){
     document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
     document.getElementById('view-'+v).classList.remove('hidden');
@@ -173,105 +184,160 @@ function renderDash(){
     const f = document.getElementById('fltr').value.toLowerCase();
     const hoy = todayS();
     let totalH = 0;
-    document.querySelector('#t-dash tbody').innerHTML = equipos.filter(e => e.patente.toLowerCase().includes(f)).map(e => {
+    const filtered = equipos.filter(e => e.patente.toLowerCase().includes(f));
+    
+    document.querySelector('#t-dash tbody').innerHTML = filtered.map(e => {
         const rs = reports.filter(r => r.equipo === e.patente);
         const hasToday = rs.some(r => r.fecha === hoy);
-        const hrs = rs.reduce((a, b) => a + (b.hf - b.hi), 0);
+        const hrs = rs.reduce((a, b) => a + (parseFloat(b.hf) - parseFloat(b.hi)), 0);
         totalH += hrs;
-        return `<tr onclick="openGridFor('${e.patente}')" style="cursor:pointer"><td><b>${e.patente}</b></td><td>${e.tipo}</td><td>${e.horo}</td><td>${rs.length}</td><td><span class="badge ${hasToday?'b-ok':'b-warn'}">${hasToday?'Al día':'Pendiente'}</span></td></tr>`;
+        return `<tr onclick="irAGrilla('${e.patente}')" style="cursor:pointer">
+            <td><b>${e.patente}</b></td>
+            <td>${e.tipo}</td>
+            <td>${e.horo}</td>
+            <td><span class="badge" style="background:${hasToday?'#d4edda':'#fff3cd'}; color:${hasToday?'#155724':'#856404'}">
+                ${hasToday?'REPORTADO':'PENDIENTE'}</span></td>
+        </tr>`;
     }).join('');
+    
     document.getElementById('s-hrs').textContent = totalH.toFixed(1);
     document.getElementById('s-eq').textContent = equipos.length;
     document.getElementById('s-rep').textContent = reports.length;
 }
 
 // GRILLA
-function openGridFor(p){ document.getElementById('sel-eq').value=p; show('grid'); renderGrid(); }
+function irAGrilla(p){ document.getElementById('sel-eq').value=p; showView('grid'); renderGrid(); }
+
 function renderGrid(){
     const pat = document.getElementById('sel-eq').value;
+    if(!pat) return;
     const ini = document.getElementById('per-ini').value || todayS();
     const fin = document.getElementById('per-fin').value || todayS();
     const d1 = new Date(ini+'T00:00'), d2 = new Date(fin+'T00:00');
+    
     let html = `<table><thead><tr><th>Fecha</th><th>Día</th><th>Noche</th></tr></thead><tbody>`;
     for(let d = new Date(d1); d <= d2; d.setDate(d.getDate()+1)){
         const fs = d.toISOString().split('T')[0];
         const cell = (t) => {
             const r = reports.find(x => x.equipo === pat && x.fecha === fs && x.turno === t);
             const a = ausencias.find(x => x.equipo === pat && x.fecha === fs && x.turno === t);
-            if(r) return `<td><div class="cell-ok" onclick="editReport('${r.id}')"><b>${r.hf-r.hi}h</b><br><small>${r.folio||'S/F'}</small></div></td>`;
-            if(a) return `<td><div class="cell-just" onclick="editAusencia('${a.id}')"><b>AUS</b><br><small>${a.motivo}</small></div></td>`;
-            if(fs > todayS()) return `<td><div class="cell-fut">-</div></td>`;
-            return `<td><div class="cell-miss" onclick="promptMissing('${pat}','${fs}','${t}')"><b>FALTA</b></div></td>`;
+            if(r) return `<td><div class="cell-ok" onclick="editarReport('${r.id}')"><b>${(r.hf-r.hi).toFixed(1)}h</b><br><small>${r.folio||'SF'}</small></div></td>`;
+            if(a) return `<td><div class="cell-just" onclick="borrarAusencia('${a.id}')"><b>AUSENTE</b><br><small>${a.motivo}</small></div></td>`;
+            if(fs > todayS()) return `<td><div style="color:#ccc; text-align:center">-</div></td>`;
+            return `<td><div class="cell-miss" onclick="opcionesFaltante('${pat}','${fs}','${t}')"><b>FALTA</b></div></td>`;
         };
         html += `<tr><td>${fmtD(fs)}</td>${cell('Día')}${cell('Noche')}</tr>`;
     }
     document.getElementById('grid-body').innerHTML = html + `</tbody></table>`;
 }
 
-function promptMissing(p, f, t){
-    document.getElementById('modal-box').innerHTML = `<h3>Gestionar Turno</h3><p>${p} - ${f} (${t})</p><br><button class="btn" onclick="goNew('${p}','${f}','${t}')">Ingresar Report</button> <button class="btn btn-sec" onclick="goAus('${p}','${f}','${t}')">Justificar Ausencia</button>`;
+// JUSTIFICACIONES
+function opcionesFaltante(p, f, t){
+    document.getElementById('modal-content').innerHTML = `
+        <h3>Gestionar Turno Vacío</h3><br><p>${p} | ${f} | ${t}</p><br>
+        <button class="btn" style="width:100%; margin-bottom:10px" onclick="irAReportar('${p}','${f}','${t}')">Ingresar Reporte</button>
+        <button class="btn btn-aus" style="width:100%" onclick="abrirFormAusencia('${p}','${f}','${t}')">Justificar Ausencia</button>
+    `;
     document.getElementById('modal').classList.add('show');
 }
-function goNew(p,f,t){ closeModal(); clearForm(); document.getElementById('f-eq').value=p; document.getElementById('f-fecha').value=f; document.getElementById('f-turno').value=t; onEqChange(); show('new'); }
+
+function abrirFormAusencia(p, f, t){
+    document.getElementById('modal-content').innerHTML = `
+        <h3>Justificar Ausencia</h3><br>
+        <label>Motivo</label>
+        <select id="a-mot">
+            <option>Mantención Programada</option>
+            <option>Falla Mecánica</option>
+            <option>Sin Operador</option>
+            <option>Clima Detenido</option>
+            <option>Stand-by / No solicitado</option>
+        </select>
+        <button class="btn" style="width:100%" onclick="guardarAusencia('${p}','${f}','${t}')">Guardar Justificación</button>
+    `;
+}
+
+async function guardarAusencia(p, f, t){
+    const id = "aus_"+Date.now();
+    await db.collection("ausencias").doc(id).set({ id, equipo: p, fecha: f, turno: t, motivo: document.getElementById('a-mot').value });
+    closeModal();
+}
+
+async function borrarAusencia(id){ if(confirm("¿Eliminar esta justificación?")) await db.collection("ausencias").doc(id).delete(); }
 
 // REPORTES
-function onEqChange(){ const e = equipos.find(x => x.patente === document.getElementById('f-eq').value); if(e) document.getElementById('f-hi').value = e.horo; }
-function calcDif(){ document.getElementById('f-hf').value && (document.getElementById('f-hi').value) && (document.getElementById('f-msgs').innerHTML = ""); }
+function llenarSelects(){
+    const opts = '<option value="">— Seleccionar —</option>' + equipos.map(e => `<option value="${e.patente}">${e.patente} (${e.tipo})</option>`).join('');
+    document.getElementById('f-eq').innerHTML = opts;
+    document.getElementById('sel-eq').innerHTML = opts;
+}
 
-function compFoto(e){
+function irAReportar(p, f, t){
+    closeModal(); clearForm();
+    document.getElementById('f-eq').value = p;
+    document.getElementById('f-fecha').value = f;
+    document.getElementById('f-turno').value = t;
+    cargarHoroInicial();
+    showView('new');
+}
+
+function cargarHoroInicial(){
+    const e = equipos.find(x => x.patente === document.getElementById('f-eq').value);
+    if(e) document.getElementById('f-hi').value = e.horo;
+}
+
+function previewImg(e){
+    const file = e.target.files[0];
     const reader = new FileReader();
     reader.onload = ev => {
-        const img = new Image();
-        img.onload = () => {
-            const c = document.createElement('canvas'); const sc = Math.min(1, 800/img.width);
-            c.width = img.width*sc; c.height = img.height*sc;
-            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-            fotoData = c.toDataURL('image/jpeg', 0.6);
-            document.getElementById('prev-foto').innerHTML = `<img src="${fotoData}" style="width:100px;margin-top:10px">`;
-        };
-        img.src = ev.target.result;
+        document.getElementById('prev-foto').innerHTML = `<img src="${ev.target.result}" style="max-width:100px; margin-top:10px">`;
+        fotoBase64 = ev.target.result;
     };
-    reader.readAsDataURL(e.target.files[0]);
+    reader.readAsDataURL(file);
 }
 
 async function saveReport(ev){
     ev.preventDefault();
-    const hi = parseFloat(document.getElementById('f-hi').value), hf = parseFloat(document.getElementById('f-hf').value);
-    const pat = document.getElementById('f-eq').value, fec = document.getElementById('f-fecha').value;
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true; btn.textContent = "Guardando...";
     
-    // VALIDACIÓN CRONOLÓGICA
-    const pasados = reports.filter(r => r.equipo === pat && r.fecha < fec);
-    const futuros = reports.filter(r => r.equipo === pat && r.fecha > fec);
-    if(pasados.some(r => r.hf > hi)) return alert("Error: Horómetro inicial menor a reportes pasados.");
-    if(futuros.some(r => r.hi < hf)) return alert("Error: Horómetro final mayor a reportes futuros.");
-    if(hf < hi) return alert("H. Final no puede ser menor a Inicial.");
+    const id = document.getElementById('f-id').value || "rep_"+Date.now();
+    const pat = document.getElementById('f-eq').value;
+    const hf = parseFloat(document.getElementById('f-hf').value);
+    const hi = parseFloat(document.getElementById('f-hi').value);
+    const fec = document.getElementById('f-fecha').value;
 
-    const id = document.getElementById('f-id').value || Date.now().toString();
-    document.getElementById('btn-save').disabled = true;
-    
+    // Validación Pro
+    const pasados = reports.filter(r => r.equipo === pat && r.fecha < fec);
+    if(pasados.some(r => r.hf > hi)) { btn.disabled=false; btn.textContent="Guardar"; return alert("Error: Horómetro inicial incoherente con reportes pasados."); }
+    if(hf < hi) { btn.disabled=false; btn.textContent="Guardar"; return alert("Horómetro final no puede ser menor al inicial."); }
+
     let url = reports.find(r => r.id === id)?.foto || "";
-    if(fotoData){
+    const file = document.getElementById('f-foto').files[0];
+    if(file){
         const ref = storage.ref(`fotos/${id}.jpg`);
-        await ref.putString(fotoData, 'data_url');
+        await ref.put(file);
         url = await ref.getDownloadURL();
     }
 
-    const data = { id, equipo: pat, fecha: fec, turno: document.getElementById('f-turno').value, hi, hf, operador: document.getElementById('f-op').value, folio: document.getElementById('f-folio').value, foto: url };
+    const data = {
+        id, equipo: pat, fecha: fec,
+        turno: document.getElementById('f-turno').value, operador: document.getElementById('f-op').value,
+        hi, hf, folio: document.getElementById('f-folio').value, foto: url
+    };
+
     await db.collection("reportes").doc(id).set(data);
     
-    // Actualizar horómetro del equipo si es el más reciente
-    const ultimo = reports.filter(r => r.equipo === pat).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
-    if(!ultimo || fec >= ultimo.fecha) await db.collection("equipos").doc(pat).update({ horo: hf });
+    // Actualizar equipo solo si es la fecha más reciente
+    const masNuevos = reports.filter(r => r.equipo === pat && r.fecha > fec);
+    if(masNuevos.length === 0) await db.collection("equipos").doc(pat).update({ horo: hf });
 
-    alert("Guardado OK"); clearForm(); show('dash');
+    alert("Reporte guardado ✓");
+    clearForm(); showView('dash');
 }
 
-function clearForm(){ document.getElementById('f-id').value=""; document.getElementById('prev-foto').innerHTML=""; fotoData=null; document.getElementById('btn-save').disabled=false; }
-
-function editReport(id){
+function editarReport(id){
     const r = reports.find(x => x.id === id);
     if(!r) return;
-    clearForm();
     document.getElementById('f-id').value = r.id;
     document.getElementById('f-eq').value = r.equipo;
     document.getElementById('f-fecha').value = r.fecha;
@@ -280,70 +346,91 @@ function editReport(id){
     document.getElementById('f-hf').value = r.hf;
     document.getElementById('f-op').value = r.operador;
     document.getElementById('f-folio').value = r.folio;
-    if(r.foto) document.getElementById('prev-foto').innerHTML = `<img src="${r.foto}" style="width:100px">`;
-    show('new');
+    if(r.foto) document.getElementById('prev-foto').innerHTML = `<img src="${r.foto}" style="max-width:100px">`;
+    showView('new');
 }
 
-// ADMIN EQUIPOS
-function renderEquipos(){
-    document.querySelector('#t-eq tbody').innerHTML = equipos.map(e => `<tr><td>${e.patente}</td><td>${e.tipo}</td><td>${e.horo}</td><td><button onclick="delEq('${e.patente}')">Eliminar</button></td></tr>`).join('');
+function clearForm(){ 
+    document.getElementById('f-id').value=""; 
+    document.getElementById('f-title').textContent = "Ingresar Reporte";
+    document.getElementById('prev-foto').innerHTML=""; 
+    document.getElementById('btn-save').disabled = false;
+    document.getElementById('btn-save').textContent = "Guardar";
+    fotoBase64 = null;
 }
-function openEqForm(){
-    document.getElementById('modal-box').innerHTML = `<h3>Nuevo Equipo</h3><label>Patente</label><input id="m-p"><label>Tipo</label><input id="m-t"><label>Horo</label><input type="number" id="m-h"><button class="btn" onclick="saveEq()">Guardar</button>`;
+
+// EQUIPOS
+function renderEquipos(){
+    document.querySelector('#t-eq tbody').innerHTML = equipos.map(e => `<tr>
+        <td><b>${e.patente}</b></td><td>${e.tipo}</td><td>${e.horo}</td>
+        <td><button onclick="borrarEq('${e.patente}')" class="btn btn-dang btn-sm" style="padding:4px 8px">X</button></td>
+    </tr>`).join('');
+}
+
+function abrirModalEq(){
+    document.getElementById('modal-content').innerHTML = `
+        <h3>Nuevo Equipo</h3><br>
+        <label>Patente</label><input type="text" id="m-p" placeholder="VGTX-44">
+        <label>Tipo</label><input type="text" id="m-t" placeholder="Excavadora, Camión...">
+        <label>Horómetro Base</label><input type="number" step="0.1" id="m-h">
+        <button class="btn" style="width:100%" onclick="guardarEquipo()">Registrar Equipo</button>
+    `;
     document.getElementById('modal').classList.add('show');
 }
-async function saveEq(){
+
+async function guardarEquipo(){
     const p = document.getElementById('m-p').value.toUpperCase();
-    await db.collection("equipos").doc(p).set({ patente: p, tipo: document.getElementById('m-t').value, horo: parseFloat(document.getElementById('m-h').value), estado: 'Activo' });
+    const t = document.getElementById('m-t').value.toUpperCase();
+    const h = parseFloat(document.getElementById('m-h').value) || 0;
+    if(!p || !t) return alert("Completa los datos");
+    await db.collection("equipos").doc(p).set({ patente: p, tipo: t, horo: h });
     closeModal();
 }
-async function delEq(p){ if(confirm("¿Eliminar?")) await db.collection("equipos").doc(p).delete(); }
 
-// AUSENCIAS
-function goAus(p, f, t){
-    document.getElementById('modal-box').innerHTML = `<h3>Justificar Ausencia</h3><label>Motivo</label><select id="a-mot"><option>Mantención</option><option>Sin Operador</option><option>Clima</option><option>No requerido</option></select><button class="btn" onclick="saveAus('${p}','${f}','${t}')">Guardar</button>`;
-}
-async function saveAus(equipo, fecha, turno){
-    const id = Date.now().toString();
-    await db.collection("ausencias").doc(id).set({ id, equipo, fecha, turno, motivo: document.getElementById('a-mot').value });
-    closeModal();
-}
-async function editAusencia(id){ if(confirm("¿Eliminar esta justificación?")) await db.collection("ausencias").doc(id).delete(); }
+async function borrarEq(p){ if(confirm("¿Eliminar equipo "+p+"?")) await db.collection("equipos").doc(p).delete(); }
 
-// EXPORTACIÓN
-async function exportarFotosZip() {
-    const ini = document.getElementById('c-ini').value, fin = document.getElementById('c-fin').value;
-    const filtered = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
-    if(!filtered.length) return alert("Sin fotos");
-    const zip = new JSZip();
-    for(let r of filtered){
-        const blob = await fetch(r.foto).then(res => res.blob());
-        zip.folder(r.equipo).file(`${r.fecha}_${r.turno}.jpg`, blob);
-    }
-    zip.generateAsync({type:"blob"}).then(c => { const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download="fotos.zip"; a.click(); });
+// ADMIN & EXPORT
+function toggleAdmin(){ if(prompt("Contraseña:")==="admin123"){ isAdmin=true; applyRoles(); } }
+function applyRoles(){
+    document.getElementById('n-cons').style.display = isAdmin?'inline-block':'none';
+    document.getElementById('n-equipos').style.display = isAdmin?'inline-block':'none';
 }
 
 function exportExcel(){
     const ini = document.getElementById('c-ini').value, fin = document.getElementById('c-fin').value;
-    const data = reports.filter(r => r.fecha >= ini && r.fecha <= fin).map(r => ({ Fecha: r.fecha, Turno: r.turno, Equipo: r.equipo, H_Ini: r.hi, H_Fin: r.hf, Horas: r.hf-r.hi, Operador: r.operador, Folio: r.folio, Link: r.foto }));
+    const data = reports.filter(r => r.fecha >= ini && r.fecha <= fin).map(r => ({
+        Fecha: r.fecha, Turno: r.turno, Equipo: r.equipo, Horas: (r.hf-r.hi).toFixed(1), Operador: r.operador, Folio: r.folio, Link: r.foto
+    }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Reports");
-    XLSX.writeFile(wb, "Reporte_Rentamaq.xlsx");
+    XLSX.writeFile(wb, "Consolidado_Rentamaq.xlsx");
 }
 
-function toggleAdmin(){ if(prompt("Pass:")==="admin123"){ isAdmin=true; applyRoles(); show('dash'); } }
-function applyRoles(){
-    const isA = isAdmin;
-    document.getElementById('n-cons').style.display = isA?'inline-block':'none';
-    document.getElementById('n-equipos').style.display = isA?'inline-block':'none';
-    document.getElementById('n-admin').textContent = isA?'Admin OK':'Admin';
+async function exportarFotosZip(){
+    const ini = document.getElementById('c-ini').value, fin = document.getElementById('c-fin').value;
+    const filtered = reports.filter(r => r.fecha >= ini && r.fecha <= fin && r.foto);
+    if(filtered.length === 0) return alert("Sin fotos en el período");
+    alert("Generando ZIP con fotos, espera un momento...");
+    const zip = new JSZip();
+    for(let r of filtered){
+        try {
+            const res = await fetch(r.foto);
+            const blob = await res.blob();
+            zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_folio_${r.folio||'SF'}.jpg`, blob);
+        } catch(e) { console.warn("Error bajando foto", e); }
+    }
+    zip.generateAsync({type:"blob"}).then(c => {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(c); a.download="Fotos_Equipos.zip"; a.click();
+    });
 }
+
 function closeModal(){ document.getElementById('modal').classList.remove('show'); }
 
-// Inicio
-show('dash');
+// INICIO
+document.getElementById('f-fecha').value = todayS();
+document.getElementById('per-ini').value = todayS();
+document.getElementById('per-fin').value = todayS();
 applyRoles();
 </script>
 </body>
 </html>
-
