@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rentamaq Reportabilidad v4</title>
+<title>Rentamaq Reportabilidad v4.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -29,7 +29,7 @@ h3{font-size:13px;margin-bottom:8px;color:#444;font-weight:500}
 .stat{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:3px solid #1F4E78}
 .stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
 .stat .val{font-size:22px;font-weight:500;color:#1F4E78;margin-top:3px}
-.stat .sub{font-size:10px;color:#aaa;margin-top:2px}
+.stat .sub{font-size:10px;color:#aaa;margin-top:2px;font-weight:bold}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
 td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top}
@@ -328,7 +328,27 @@ function show(v){
 
 function todayS(){return new Date().toISOString().slice(0,10)}
 function fmtD(d){return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
-function defaultPeriod(){const h=new Date();return {ini:new Date(h.getFullYear(),h.getMonth()-1,21).toISOString().slice(0,10),fin:new Date(h.getFullYear(),h.getMonth(),20).toISOString().slice(0,10)}}
+
+// ============ LÓGICA DE MES COMERCIAL ============
+function defaultPeriod() {
+  const d = new Date();
+  let mesIni = d.getMonth();
+  let añoIni = d.getFullYear();
+  
+  if (d.getDate() <= 20) {
+    mesIni = mesIni - 1; 
+  }
+  
+  const fIni = new Date(añoIni, mesIni, 21);
+  const fFin = new Date(añoIni, mesIni + 1, 20);
+  
+  const pad = (n) => n < 10 ? '0'+n : n;
+  return {
+    ini: `${fIni.getFullYear()}-${pad(fIni.getMonth()+1)}-21`,
+    fin: `${fFin.getFullYear()}-${pad(fFin.getMonth()+1)}-20`
+  };
+}
+
 function eqByPat(p){return equipos.find(e=>e.patente===p)}
 
 // ============ DASHBOARD ============
@@ -367,7 +387,7 @@ function renderDash(){
   document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Horas</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
   
   document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
-  document.getElementById('s-hrs-sub').textContent='período vigente';
+  document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
   document.getElementById('s-eq').textContent=lista.length;
   document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
   document.getElementById('s-rep').textContent=totRep;
