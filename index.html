@@ -1,357 +1,880 @@
-<!DOCTYPE html><html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rentamaq Master v3.8 - Analista Pro</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:12px}
-        .nav{background:#1F4E78;color:#fff;padding:12px 20px;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:50}
-        .nav button{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:8px 12px;border-radius:6px;cursor:pointer}
-        .nav button.active{background:#fff;color:#1F4E78;font-weight:bold}
-        .container{padding:15px;max-width:1400px;margin:0 auto}
-        .card{background:#fff;border-radius:10px;padding:15px;margin-bottom:15px;box-shadow:0 2px 5px rgba(0,0,0,0.05)}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:15px}
-        .stat{background:#fff;padding:15px;border-radius:10px;text-align:center;border-bottom:4px solid #1F4E78}
-        .stat .lbl{font-size:9px;color:#888;text-transform:uppercase}
-        .stat .val{font-size:20px;font-weight:bold;color:#1F4E78}
-        table{width:100%;border-collapse:collapse}
-        th{background:#f8f9fa;padding:10px;text-align:left;color:#555;font-size:10px;border-bottom:2px solid #eee}
-        td{padding:10px;border-bottom:1px solid #f0f0f0}
-        input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;font-size:13px}
-        label{display:block;font-size:10px;font-weight:bold;color:#444;margin-bottom:3px}
-        .btn{background:#1F4E78;color:#fff;border:none;padding:12px 20px;border-radius:6px;cursor:pointer;font-weight:bold}
-        .btn-sec{background:#6c757d}
-        .hidden{display:none}
-        .badge{padding:2px 6px;border-radius:8px;font-size:9px;font-weight:bold}
-        .bg-red{background:#FCEBEB;color:#E24B4A}
-        .bg-orange{background:#FFF3CD;color:#856404}
-        .bg-green{background:#EAF3DE;color:#639922}
-        .cell-ok{background:#f9fff0;border-left:3px solid #639922;padding:5px;cursor:pointer}
-    </style>
-</head>
+
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rentamaq Reportabilidad v4</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+.nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+.nav h1{font-size:15px;margin-right:12px;font-weight:500}
+.nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.nav button:hover{background:rgba(255,255,255,.2)}
+.nav button.active{background:#fff;color:#1F4E78;font-weight:500}
+.nav .spacer{flex:1}
+.pill{padding:3px 8px;border-radius:10px;font-size:10px;margin-left:6px}
+.pill-ok{background:#22c55e;color:#fff}
+.pill-off{background:#ef4444;color:#fff}
+.pill-wait{background:#eab308;color:#fff}
+.container{padding:16px;max-width:1500px;margin:0 auto}
+.card{background:#fff;border-radius:8px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+h2{font-size:16px;margin-bottom:10px;color:#1F4E78;font-weight:500}
+h3{font-size:13px;margin-bottom:8px;color:#444;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:3px solid #1F4E78}
+.stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.stat .val{font-size:22px;font-weight:500;color:#1F4E78;margin-top:3px}
+.stat .sub{font-size:10px;color:#aaa;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
+td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top}
+.clickable:hover{background:#fafbfc;cursor:pointer}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
+.b-ok{background:#D4EDDA;color:#155724}.b-warn{background:#FFF3CD;color:#856404}
+.b-alert{background:#FAEEDA;color:#633806}.b-crit{background:#F8D7DA;color:#721C24}
+.b-info{background:#D1ECF1;color:#0C5460}.b-draft{background:#E2E3E5;color:#383D41}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1F4E78}
+label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;margin-top:9px}
+.btn{background:#1F4E78;color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500}
+.btn:hover{background:#163A5C}.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-sec{background:#fff;color:#555;border:1px solid #ddd}
+.btn-sec:hover{background:#f5f5f5}
+.btn-dang{background:#c33;color:#fff;border:none}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-warn{background:#BA7517;color:#fff;border:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.err{background:#F8D7DA;color:#721C24;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.warn{background:#FFF3CD;color:#856404;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.ok{background:#D4EDDA;color:#155724;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:7px;cursor:pointer;border-radius:3px}
+.cell-signed{background:#D4EDDA;border-left:3px solid #198754;padding:7px;cursor:pointer;border-radius:3px}
+.cell-draft{background:#FFF3CD;border-left:3px solid #BA7517;padding:7px;cursor:pointer;border-radius:3px}
+.cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:7px;cursor:pointer;border-radius:3px}
+.cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:7px;cursor:pointer;border-radius:3px}
+.cell-fut{background:#f8f8f8;color:#aaa;padding:7px;text-align:center;border-radius:3px}
+.cell-ok small,.cell-signed small,.cell-draft small,.cell-just small,.cell-miss small{font-size:10px;display:block;color:#555;margin-top:2px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+.modal.show{display:flex}
+.modal-box{background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow-y:auto}
+.hidden{display:none}
+.small{font-size:11px;color:#888}
+.foto-full{max-width:100%;max-height:300px;border-radius:5px;margin-top:8px;border:1px solid #ddd}
+.row-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.empty{text-align:center;padding:40px;color:#aaa}
+.loader{text-align:center;padding:40px;color:#888}
+.login-box{max-width:380px;margin:80px auto;padding:30px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.toast{position:fixed;bottom:20px;right:20px;background:#1F4E78;color:#fff;padding:12px 18px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:200;animation:slideIn .3s ease}
+.toast.err{background:#c33}.toast.ok{background:#22c55e}
+@keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+.pill-foto{background:#D4EDDA;color:#155724;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
+.pill-nofoto{background:#FFF3CD;color:#856404;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
+.tab-estado{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;text-transform:uppercase}
+</style></head>
 <body>
 
+<!-- LOGIN -->
+<div id="login-view" class="hidden">
+<div class="login-box">
+<h2 style="text-align:center;margin-bottom:20px">Reportabilidad Rentamaq</h2>
+<form onsubmit="doLogin(event)">
+<label>Correo</label><input type="email" id="li-email" required>
+<label>Contraseña</label><input type="password" id="li-pass" required>
+<div id="li-err" style="margin-top:10px"></div>
+<button type="submit" class="btn" style="width:100%;margin-top:14px">Ingresar</button>
+</form>
+<p class="small" style="text-align:center;margin-top:16px">Solicita acceso al administrador del sistema</p>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
 <div class="nav">
-    <h2 style="margin-right:20px;font-size:18px">Rentamaq <small style="font-size:10px;opacity:0.8">v3.8 Analista</small></h2>
-    <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
-    <button onclick="show('grid')" id="n-grid">Grilla</button>
-    <button onclick="show('new')" id="n-new">Reportar</button>
-    <button onclick="show('cons')" id="n-cons">Consolidados</button>
-    <button onclick="show('equipos')" id="n-equipos">Flota</button>
+<h1>Rentamaq <span id="cloud-status" class="pill pill-wait">Conectando...</span></h1>
+<button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
+<button onclick="show('grid')" id="n-grid">Grilla</button>
+<button onclick="show('new')" id="n-new">Nuevo Report</button>
+<button onclick="show('cons')" id="n-cons">Consolidados</button>
+<button onclick="show('lotes')" id="n-lotes">Lotes Firma</button>
+<button onclick="show('equipos')" id="n-equipos">Equipos</button>
+<button onclick="show('err')" id="n-err">Diagnóstico</button>
+<div class="spacer"></div>
+<span id="user-label" class="small" style="color:#fff;margin-right:10px"></span>
+<button onclick="doLogout()" class="btn-sec" style="color:#333">Salir</button>
 </div>
 
 <div class="container">
-    <div id="view-dash">
-        <div class="stats">
-            <div class="stat"><div class="lbl">H. Motor (Mes)</div><div id="s-hrs" class="val">0</div></div>
-            <div class="stat"><div class="lbl">H. Efectivas (Mes)</div><div id="s-hef" class="val">0</div></div>
-            <div class="stat"><div class="lbl">Sin Foto</div><div id="s-nofoto" class="val" style="color:#BA7517">0</div></div>
-            <div class="stat"><div class="lbl">Turnos Faltantes (7d)</div><div id="s-miss" class="val" style="color:#c33">0</div></div>
-        </div>
-        <div class="card">
-            <h3>Estado de Reportabilidad por Equipo</h3>
-            <table id="t-dash" style="margin-top:10px">
-                <thead>
-                    <tr>
-                        <th>Patente</th>
-                        <th>Tipo</th>
-                        <th>Horo Actual</th>
-                        <th>H. Mes</th>
-                        <th>Sin Foto</th>
-                        <th>Faltantes (7d)</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
 
-    <div id="view-grid" class="hidden">
-        <div class="card">
-            <div style="display:flex; gap:10px; margin-bottom:15px">
-                <select id="sel-eq" onchange="renderGrid()" style="flex:2"></select>
-                <input type="date" id="per-ini" onchange="renderGrid()" style="flex:1">
-                <input type="date" id="per-fin" onchange="renderGrid()" style="flex:1">
-            </div>
-            <div id="grid-body" style="overflow-x:auto"></div>
-        </div>
-    </div>
+<div id="view-dash">
+<h2>Panel de control</h2>
+<div class="stats">
+<div class="stat"><div class="lbl">Horas período</div><div class="val" id="s-hrs">—</div><div class="sub" id="s-hrs-sub"></div></div>
+<div class="stat"><div class="lbl">Equipos</div><div class="val" id="s-eq">—</div><div class="sub" id="s-eq-sub"></div></div>
+<div class="stat"><div class="lbl">Reports</div><div class="val" id="s-rep">—</div><div class="sub" id="s-rep-sub"></div></div>
+<div class="stat"><div class="lbl">Con foto firmada</div><div class="val" id="s-firm" style="color:#198754">—</div><div class="sub" id="s-firm-sub"></div></div>
+<div class="stat"><div class="lbl">Ausencias</div><div class="val" id="s-aus" style="color:#378ADD">—</div></div>
+<div class="stat"><div class="lbl">Sin registrar</div><div class="val" id="s-miss" style="color:#E24B4A">—</div></div>
+</div>
+<div class="card">
+<div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
+<h3>Equipos de la flota</h3>
+<div class="row-flex">
+<select id="fltr-prov" onchange="renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
+<select id="fltr-tipo" onchange="renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
+<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="renderDash()">
+</div>
+</div>
+<div id="dash-table"><div class="loader">Cargando...</div></div>
+</div>
+</div>
 
-    <div id="view-new" class="hidden">
-        <div class="card" style="max-width:600px; margin:auto">
-            <h2 id="f-title" style="margin-bottom:15px">Ingresar Reporte</h2>
-            <form onsubmit="saveReport(event)">
-                <input type="hidden" id="f-id">
-                <label>Equipo</label><select id="f-eq" required onchange="cargarHoroInicial()"></select>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-                    <div><label>Fecha</label><input type="date" id="f-fecha" required></div>
-                    <div><label>Turno</label><select id="f-turno"><option>Día</option><option>Noche</option></select></div>
-                </div>
-                <label>Operador</label><input type="text" id="f-op" required>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px">
-                    <div><label>H. Inicial</label><input type="number" step="0.1" id="f-hi" required></div>
-                    <div><label>H. Final</label><input type="number" step="0.1" id="f-hf" required></div>
-                    <div><label>H. Efectivas</label><input type="number" step="0.1" id="f-hef" required placeholder="HEF"></div>
-                </div>
-                <label>Folio Hoja</label><input type="text" id="f-folio">
-                <label>Observaciones del Turno</label><textarea id="f-obs" rows="2" placeholder="Describa fallas, esperas o novedades..."></textarea>
-                <label>Foto Reporte (Obligatorio para EDP)</label><input type="file" id="f-foto" accept="image/*" onchange="previewImg(event)">
-                <div id="prev-foto"></div>
-                <div style="display:flex; gap:10px; margin-top:15px">
-                    <button type="button" class="btn btn-sec" onclick="clearForm(); show('dash')">Cancelar</button>
-                    <button type="submit" class="btn" id="btn-save" style="flex:1">Guardar Reporte</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div id="view-grid" class="hidden">
+<div class="card">
+<div class="row-flex" style="margin-bottom:12px">
+<h2 style="margin:0">Grilla por equipo</h2>
+<select id="sel-eq" onchange="renderGrid()" style="max-width:240px"></select>
+<input type="date" id="per-ini" onchange="renderGrid()" style="max-width:150px">
+<input type="date" id="per-fin" onchange="renderGrid()" style="max-width:150px">
+</div>
+<div id="grid-body"></div>
+</div>
+</div>
 
-    <div id="view-cons" class="hidden">
-        <div class="card">
-            <div style="display:flex; gap:10px; margin-bottom:15px">
-                <input type="date" id="c-ini">
-                <input type="date" id="c-fin">
-                <button class="btn" onclick="exportExcel()">Exportar Excel</button>
-            </div>
-            <div id="cons-body"></div>
-        </div>
-    </div>
+<div id="view-new" class="hidden">
+<div class="card" style="max-width:720px;margin:0 auto">
+<h2 id="new-title">Ingresar nuevo report</h2>
+<form id="form-new" onsubmit="saveReport(event)">
+<input type="hidden" id="f-id">
+<div class="grid3">
+<div><label>Fecha</label><input type="date" id="f-fecha" required></div>
+<div><label>Turno</label><select id="f-turno" required><option value="">—</option><option>Día</option><option>Noche</option></select></div>
+<div><label>Folio papel</label><input id="f-folio" placeholder="Ej: 34477"></div>
+</div>
+<label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
+<label>Operador</label><input id="f-op" required>
+<div class="grid3">
+<div><label>Horóm. inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
+<div><label>Horóm. final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
+<div><label>Diferencia</label><input id="f-dif" disabled style="background:#f5f5f5"></div>
+</div>
+<label>Horas efectivas (opcional)</label><input type="number" step="0.1" id="f-hef">
+<label>Foto del report firmado (opcional)</label>
+<input type="file" id="f-foto" accept="image/*" onchange="compFoto(event)">
+<div id="f-foto-prev"></div>
+<label>Estado</label>
+<select id="f-estado"><option value="Borrador">Borrador (sin firmar)</option><option value="En firma Teck">En firma Teck</option><option value="Firmado">Firmado + foto</option></select>
+<label>Observaciones</label><textarea id="f-obs" rows="2"></textarea>
+<div id="f-msgs" style="margin-top:10px"></div>
+<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+<button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
+<button type="submit" class="btn" id="btn-save">Guardar</button>
+</div>
+</form>
+</div>
+</div>
 
-    <div id="view-equipos" class="hidden">
-        <div class="card">
-            <button class="btn" onclick="abrirModalEq()">+ Agregar Equipo</button>
-            <table id="t-eq" style="margin-top:15px">
-                <thead><tr><th>Patente</th><th>Tipo</th><th>Horómetro</th><th>Acción</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
+<div id="view-cons" class="hidden">
+<h2>Consolidados del período</h2>
+<div class="card">
+<div class="row-flex" style="margin-bottom:12px">
+<label style="margin:0">Período:</label>
+<input type="date" id="c-ini" onchange="renderCons()">
+<input type="date" id="c-fin" onchange="renderCons()">
+<button class="btn" onclick="exportExcel()">Excel completo</button>
+<button class="btn btn-sec" onclick="exportFotosZip()">Descargar fotos ZIP</button>
+</div>
+<div id="cons-body"></div>
+</div>
+</div>
+
+<div id="view-lotes" class="hidden">
+<div class="card">
+<div class="row-flex" style="justify-content:space-between;margin-bottom:12px">
+<h2 style="margin:0">Lotes enviados a firma Teck</h2>
+<button class="btn" onclick="nuevoLote()">+ Nuevo lote</button>
+</div>
+<div id="lotes-body"></div>
+</div>
+</div>
+
+<div id="view-equipos" class="hidden">
+<div class="card">
+<div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
+<h2 style="margin:0">Equipos y proveedores</h2>
+<div class="row-flex">
+<button class="btn btn-sec" onclick="openProvs()">Gestionar proveedores</button>
+<button class="btn" onclick="nuevoEquipo()">+ Equipo</button>
+</div>
+</div>
+<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horóm. actual</th><th>Estado</th><th></th></tr></thead><tbody id="t-eq"></tbody></table>
+</div>
+</div>
+
+<div id="view-err" class="hidden">
+<div class="card">
+<h2>Diagnóstico de errores</h2>
+<p class="small" style="margin-bottom:10px">Análisis automático sobre los reports ingresados.</p>
+<div id="err-body"></div>
+</div>
+</div>
+
+</div>
 </div>
 
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
-    <div class="modal-box" id="modal-content"></div>
+<div class="modal-box" id="modal-box"></div>
 </div>
+<div id="toast-container"></div>
 
 <script>
+// ============ CONFIG ============
 const firebaseConfig = {
-    apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
-    authDomain: "app-reportabilidad.firebaseapp.com",
-    projectId: "app-reportabilidad",
-    storageBucket: "app-reportabilidad.appspot.com",
-    messagingSenderId: "423911487944",
-    appId: "1:423911487944:web:abbf3c7464bb335bfc28fd"
+  apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
+  authDomain: "app-reportabilidad.firebaseapp.com",
+  projectId: "app-reportabilidad",
+  storageBucket: "app-reportabilidad.appspot.com",
+  messagingSenderId: "423911487944",
+  appId: "1:423911487944:web:abbf3c7464bb335bfc28fd"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
+const auth = firebase.auth();
 
-let reports = [], equipos = [], ausencias = [], fotoBase64 = null;
+const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
-// ESCUCHADORES NUBE
-db.collection("equipos").onSnapshot(s => { 
-    equipos = s.docs.map(d => d.data()); 
-    llenarSelects(); renderEquipos(); renderDash(); 
+let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
+let fotoData=null, currentUser=null;
+let unsubs=[];
+
+// ============ AUTH ============
+auth.onAuthStateChanged(u=>{
+  if(u){
+    currentUser=u;
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('user-label').textContent=u.email;
+    setStatus('ok','Conectado');
+    bootstrap();
+  } else {
+    currentUser=null;
+    unsubs.forEach(f=>f());unsubs=[];
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('login-view').classList.remove('hidden');
+  }
 });
-db.collection("reportes").onSnapshot(s => { 
-    reports = s.docs.map(d => d.data()); 
-    renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid();
-});
-db.collection("ausencias").onSnapshot(s => { 
-    ausencias = s.docs.map(d => d.data()); 
-    renderDash(); if(!document.getElementById('view-grid').classList.contains('hidden')) renderGrid();
-});
+
+function doLogin(e){
+  e.preventDefault();
+  const email=document.getElementById('li-email').value;
+  const pass=document.getElementById('li-pass').value;
+  auth.signInWithEmailAndPassword(email,pass).catch(err=>{
+    document.getElementById('li-err').innerHTML='<div class="err">'+err.message+'</div>';
+  });
+}
+function doLogout(){auth.signOut()}
+
+function setStatus(kind,txt){
+  const el=document.getElementById('cloud-status');
+  el.className='pill pill-'+(kind==='ok'?'ok':kind==='err'?'off':'wait');
+  el.textContent=txt;
+}
+
+function toast(msg,kind){
+  const t=document.createElement('div');t.className='toast '+(kind||'');t.textContent=msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+// ============ BOOTSTRAP ============
+function bootstrap(){
+  const handle=(col,tgt,cb)=>{
+    const u=db.collection(col).onSnapshot(s=>{
+      tgt.length=0;s.docs.forEach(d=>tgt.push({...d.data(),_id:d.id}));
+      if(cb)cb();
+    },err=>{toast('Error cargando '+col+': '+err.message,'err');setStatus('err','Error')});
+    unsubs.push(u);
+  };
+  handle('equipos',equipos,()=>{renderDash();llenarSelects();renderEquiposTab()});
+  handle('reportes',reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(!isHidden('cons'))renderCons();if(!isHidden('err'))renderErr()});
+  handle('ausencias',ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
+  handle('proveedores',provs,()=>{renderDash();renderEquiposTab()});
+  handle('lotes',lotes,()=>{if(!isHidden('lotes'))renderLotes()});
+  initGrid();initCons();
+  document.getElementById('f-fecha').value=todayS();
+}
+
+function isHidden(v){return document.getElementById('view-'+v).classList.contains('hidden')}
 
 function show(v){
-    document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById('view-'+v).classList.remove('hidden');
-    document.getElementById('n-'+v)?.classList.add('active');
+  ['dash','grid','new','cons','lotes','equipos','err'].forEach(x=>{
+    document.getElementById('view-'+x).classList.add('hidden');
+    document.getElementById('n-'+x)?.classList.remove('active');
+  });
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.getElementById('n-'+v)?.classList.add('active');
+  if(v==='dash')renderDash();
+  if(v==='grid')renderGrid();
+  if(v==='new')initNewForm();
+  if(v==='cons')renderCons();
+  if(v==='lotes')renderLotes();
+  if(v==='equipos')renderEquiposTab();
+  if(v==='err')renderErr();
 }
 
-function todayS(){ return new Date().toISOString().split('T')[0]; }
+function todayS(){return new Date().toISOString().slice(0,10)}
+function fmtD(d){return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
+function defaultPeriod(){const h=new Date();return {ini:new Date(h.getFullYear(),h.getMonth()-1,21).toISOString().slice(0,10),fin:new Date(h.getFullYear(),h.getMonth(),20).toISOString().slice(0,10)}}
+function eqByPat(p){return equipos.find(e=>e.patente===p)}
 
-// DASHBOARD ANALÍTICO
+// ============ DASHBOARD ============
 function renderDash(){
-    const hoy = new Date();
-    const hace7 = new Date(); hace7.setDate(hoy.getDate() - 6);
-    let totalH = 0, totalHEF = 0, totalNoFoto = 0, totalMiss = 0;
-
-    document.querySelector('#t-dash tbody').innerHTML = equipos.map(e => {
-        const r_mes = reports.filter(r => r.equipo === e.patente);
-        const h_mes = r_mes.reduce((a,b) => a + (b.hf - b.hi), 0);
-        const hef_mes = r_mes.reduce((a,b) => a + parseFloat(b.hef || 0), 0);
-        const no_foto = r_mes.filter(r => !r.foto).length;
-        
-        // Calcular Faltantes últimos 7 días
-        let faltantes = 0;
-        for(let i=0; i<7; i++){
-            let d = new Date(hace7); d.setDate(d.getDate() + i);
-            let fs = d.toISOString().split('T')[0];
-            ['Día','Noche'].forEach(t => {
-                const tiene = reports.find(r => r.equipo === e.patente && r.fecha === fs && r.turno === t);
-                const aus = ausencias.find(a => a.equipo === e.patente && a.fecha === fs && a.turno === t);
-                if(!tiene && !aus && fs <= todayS()) faltantes++;
-            });
-        }
-
-        totalH += h_mes; totalHEF += hef_mes; totalNoFoto += no_foto; totalMiss += faltantes;
-
-        return `<tr>
-            <td><b>${e.patente}</b></td>
-            <td>${e.tipo}</td>
-            <td>${e.horo}</td>
-            <td>${h_mes.toFixed(1)}</td>
-            <td class="${no_foto>0?'bg-orange':''}">${no_foto}</td>
-            <td class="${faltantes>0?'bg-red':''}">${faltantes}</td>
-            <td><span class="badge ${faltantes===0?'bg-green':'bg-red'}">${faltantes===0?'AL DÍA':'GAP'}</span></td>
-        </tr>`;
-    }).join('');
-
-    document.getElementById('s-hrs').textContent = totalH.toFixed(1);
-    document.getElementById('s-hef').textContent = totalHEF.toFixed(1);
-    document.getElementById('s-nofoto').textContent = totalNoFoto;
-    document.getElementById('s-miss').textContent = totalMiss;
-    document.getElementById('s-eq').textContent = equipos.length;
+  if(!currentUser)return;
+  const fp=document.getElementById('fltr-prov');
+  if(fp){const cur=fp.value;fp.innerHTML='<option value="">Todos proveedores</option>'+provs.map(p=>`<option ${p.nombre===cur?'selected':''}>${p.nombre}</option>`).join('')}
+  const ft=document.getElementById('fltr-tipo');
+  if(ft){const cur=ft.value;const tipos=[...new Set(equipos.map(e=>e.tipo))].sort();ft.innerHTML='<option value="">Todos tipos</option>'+tipos.map(t=>`<option ${t===cur?'selected':''}>${t}</option>`).join('')}
+  
+  const f=(document.getElementById('fltr')?.value||'').toLowerCase();
+  const fProv=document.getElementById('fltr-prov')?.value||'';
+  const fTipo=document.getElementById('fltr-tipo')?.value||'';
+  const per=defaultPeriod();
+  const repsP=reports.filter(r=>r.fecha>=per.ini&&r.fecha<=per.fin);
+  const ausP=ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin);
+  
+  let lista=equipos.filter(e=>(!fProv||e.proveedor===fProv)&&(!fTipo||e.tipo===fTipo)&&(!f||e.patente.toLowerCase().includes(f)));
+  
+  const repsPorEq={};repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
+  
+  let totHrs=0,totRep=0,firm=0,hoyN=0;
+  const hoy=todayS();
+  
+  const rows=lista.map(e=>{
+    const rs=repsPorEq[e.patente]||[];
+    const hrs=rs.reduce((a,b)=>a+Number(b.dif||(b.hf-b.hi)||0),0);
+    totHrs+=hrs;totRep+=rs.length;
+    firm+=rs.filter(r=>r.estado==='Firmado').length;
+    const tHoy=rs.some(r=>r.fecha===hoy);
+    if(tHoy)hoyN++;
+    const st=rs.length===0?'<span class="badge b-warn">Sin reports</span>':(tHoy?'<span class="badge b-ok">Al día</span>':'<span class="badge b-info">Con historial</span>');
+    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${st}</td></tr>`;
+  }).join('');
+  
+  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Horas</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
+  
+  document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
+  document.getElementById('s-hrs-sub').textContent='período vigente';
+  document.getElementById('s-eq').textContent=lista.length;
+  document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
+  document.getElementById('s-rep').textContent=totRep;
+  document.getElementById('s-firm').textContent=firm;
+  document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
+  document.getElementById('s-aus').textContent=ausP.length;
+  document.getElementById('s-miss').textContent='—';
 }
 
-// GRILLA CON DETALLES
+function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
+
+// ============ GRID ============
+function initGrid(){
+  const sel=document.getElementById('sel-eq');
+  sel.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
+  const p=defaultPeriod();
+  document.getElementById('per-ini').value=p.ini;
+  document.getElementById('per-fin').value=p.fin;
+}
+
+function llenarSelects(){
+  const opts='<option value="">— Seleccionar —</option>'+equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
+  const fe=document.getElementById('f-eq');if(fe)fe.innerHTML=opts;
+  const se=document.getElementById('sel-eq');if(se&&!se.options.length)se.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
+}
+
 function renderGrid(){
-    const pat = document.getElementById('sel-eq').value;
-    if(!pat) return;
-    const ini = document.getElementById('per-ini').value || todayS();
-    const fin = document.getElementById('per-fin').value || todayS();
-    const d1 = new Date(ini+'T00:00'), d2 = new Date(fin+'T00:00');
-    
-    let html = `<table><thead><tr><th>Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
-    for(let d = new Date(d1); d <= d2; d.setDate(d.getDate()+1)){
-        const fs = d.toISOString().split('T')[0];
-        const celda = (t) => {
-            const r = reports.find(x => x.equipo === pat && x.fecha === fs && x.turno === t);
-            const a = ausencias.find(x => x.equipo === pat && x.fecha === fs && x.turno === t);
-            if(r) return `<td><div class="cell-ok" onclick="editarReport('${r.id}')">
-                <b>${(r.hf-r.hi).toFixed(1)}h</b> | ${r.hef}h ef.<br>
-                <small>${r.foto?'📷':'🚫'} F:${r.folio||'SF'}</small>
-            </div></td>`;
-            if(a) return `<td><div class="cell-just" onclick="borrarAusencia('${a.id}')"><b>${a.motivo}</b></div></td>`;
-            if(fs > todayS()) return `<td><div style="color:#ccc;text-align:center">-</div></td>`;
-            return `<td><div class="cell-miss" onclick="opcionesFaltante('${pat}','${fs}','${t}')"><b>FALTA</b></div></td>`;
-        };
-        html += `<tr><td>${fs}</td>${celda('Día')}${celda('Noche')}</tr>`;
-    }
-    document.getElementById('grid-body').innerHTML = html + `</tbody></table>`;
-}
-
-// MODAL GESTION
-function opcionesFaltante(p, f, t){
-    document.getElementById('modal-content').innerHTML = `
-        <h3>Gestionar Turno</h3><br>
-        <button class="btn" style="width:100%; margin-bottom:10px" onclick="irAReportar('${p}','${f}','${t}')">Ingresar Reporte</button>
-        <button class="btn btn-sec" style="width:100%" onclick="abrirFormAusencia('${p}','${f}','${t}')">Justificar Ausencia</button>
-    `;
-    document.getElementById('modal').classList.add('show');
-}
-
-function abrirFormAusencia(p, f, t){
-    document.getElementById('modal-content').innerHTML = `
-        <h3>Justificar Ausencia</h3><br>
-        <select id="a-mot"><option>Mantención</option><option>Falla Mecánica</option><option>Clima</option><option>Sin Operador</option><option>Stand-by</option></select>
-        <button class="btn" style="width:100%" onclick="guardarAusencia('${p}','${f}','${t}')">Guardar</button>
-    `;
-}
-
-async function guardarAusencia(p, f, t){
-    await db.collection("ausencias").add({ equipo: p, fecha: f, turno: t, motivo: document.getElementById('a-mot').value });
-    closeModal();
-}
-
-// FORMULARIO
-function cargarHoroInicial(){
-    const e = equipos.find(x => x.patente === document.getElementById('f-eq').value);
-    if(e) document.getElementById('f-hi').value = e.horo;
-}
-
-function previewImg(e){
-    const reader = new FileReader();
-    reader.onload = ev => {
-        document.getElementById('prev-foto').innerHTML = `<img src="${ev.target.result}" style="max-width:100px;margin-top:10px">`;
-        fotoBase64 = ev.target.result;
+  const pat=document.getElementById('sel-eq').value;
+  const ini=document.getElementById('per-ini').value;
+  const fin=document.getElementById('per-fin').value;
+  if(!pat||!ini||!fin){document.getElementById('grid-body').innerHTML='<div class="empty">Seleccione equipo y período</div>';return}
+  const eq=eqByPat(pat);if(!eq){document.getElementById('grid-body').innerHTML='';return}
+  const d1=new Date(ini+'T00:00'),d2=new Date(fin+'T00:00');
+  const dias=[];for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1))dias.push(new Date(d));
+  const reps=reports.filter(r=>r.equipo===pat&&r.fecha>=ini&&r.fecha<=fin);
+  const aus=ausencias.filter(a=>a.equipo===pat&&a.fecha>=ini&&a.fecha<=fin);
+  const hoy=todayS();
+  let totHrs=0,reptN=0,ausN=0,missN=0,firmN=0;
+  
+  let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
+  html+=`<table><thead><tr><th style="width:110px">Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
+  
+  dias.forEach(d=>{
+    const fs=d.toISOString().slice(0,10);
+    const cell=(t)=>{
+      const r=reps.find(x=>x.fecha===fs&&x.turno===t);
+      const a=aus.find(x=>x.fecha===fs&&x.turno===t);
+      if(r){
+        const dif=r.dif||(r.hf-r.hi);
+        totHrs+=Number(dif||0);reptN++;
+        if(r.estado==='Firmado')firmN++;
+        const cls=r.estado==='Firmado'?'cell-signed':(r.estado==='Borrador'?'cell-draft':'cell-ok');
+        const foto=r.foto?'<span class="pill-foto">✓ foto</span>':'<span class="pill-nofoto">sin foto</span>';
+        const est=r.estado?`<span class="tab-estado" style="background:#eee">${r.estado}</span>`:'';
+        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · ${Number(dif).toFixed(1)}h ${foto}<small>${r.operador||''} · ${r.hi}→${r.hf} ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
+      }
+      if(a){ausN++;return `<td><div class="cell-just" onclick="editAus('${a._id}')"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
+      if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
+      missN++;
+      return `<td><div class="cell-miss" onclick="openAusForm('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>click para justificar o reportar</small></div></td>`;
     };
-    reader.readAsDataURL(e.target.files[0]);
+    html+=`<tr><td><b>${fmtD(fs)}</b></td>${cell('Día')}${cell('Noche')}</tr>`;
+  });
+  html+='</tbody></table>';
+  
+  const cab=`<div class="stats" style="grid-template-columns:repeat(5,1fr)">
+  <div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div>
+  <div class="stat"><div class="lbl">Firmados</div><div class="val" style="color:#198754">${firmN}</div></div>
+  <div class="stat"><div class="lbl">Justificados</div><div class="val" style="color:#378ADD">${ausN}</div></div>
+  <div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:#E24B4A">${missN}</div></div>
+  <div class="stat"><div class="lbl">Horas</div><div class="val">${totHrs.toFixed(1)}</div></div>
+  </div>`;
+  document.getElementById('grid-body').innerHTML=cab+html;
 }
 
-async function saveReport(ev){
-    ev.preventDefault();
-    const btn = document.getElementById('btn-save'); btn.disabled = true;
-    const id = document.getElementById('f-id').value || "rep_"+Date.now();
-    const pat = document.getElementById('f-eq').value;
-    const hf = parseFloat(document.getElementById('f-hf').value);
-    
-    let url = reports.find(r => r.id === id)?.foto || "";
-    if(document.getElementById('f-foto').files[0]){
-        const ref = storage.ref(`fotos/${id}.jpg`);
-        await ref.put(document.getElementById('f-foto').files[0]);
-        url = await ref.getDownloadURL();
-    }
-
-    const data = {
-        id, equipo: pat, fecha: document.getElementById('f-fecha').value,
-        turno: document.getElementById('f-turno').value, operador: document.getElementById('f-op').value,
-        hi: parseFloat(document.getElementById('f-hi').value), hf, 
-        hef: document.getElementById('f-hef').value, folio: document.getElementById('f-folio').value,
-        obs: document.getElementById('f-obs').value, foto: url
-    };
-
-    await db.collection("reportes").doc(id).set(data);
-    await db.collection("equipos").doc(pat).update({ horo: hf });
-
-    alert("Guardado ✓"); clearForm(); show('dash');
+// ============ AUSENCIAS ============
+function openAusForm(pat,fecha,turno,aid){
+  const a=aid?ausencias.find(x=>x._id===aid):null;
+  document.getElementById('modal-box').innerHTML=`
+  <h2 style="margin-bottom:10px">${a?'Editar':'Gestionar turno vacío'}</h2>
+  <p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>
+  ${!a?`<button class="btn" style="width:100%;margin-bottom:8px" onclick="irReportar('${pat}','${fecha}','${turno}')">Ingresar report</button>
+  <p class="small" style="text-align:center;margin:10px 0">— o —</p>`:''}
+  <label>Motivo de ausencia</label>
+  <select id="a-motivo">${MOTIVOS.map(m=>`<option ${a&&a.motivo===m?'selected':''}>${m}</option>`).join('')}</select>
+  <label>Descripción</label>
+  <textarea id="a-desc" rows="3">${a?a.descripcion||'':''}</textarea>
+  <label>Aplica descuento al cobro</label>
+  <select id="a-desc2"><option ${a&&a.descuento==='Sí'?'selected':''}>Sí</option><option ${a&&a.descuento==='No'?'selected':''}>No</option></select>
+  <label>Validado por (opcional)</label>
+  <input id="a-val" value="${a?a.validado||'':''}" placeholder="Nombre Teck">
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+  ${a?'<button class="btn btn-dang btn-sm" onclick="delAus(\''+a._id+'\')">Eliminar</button>':''}
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveAus('${pat}','${fecha}','${turno}','${a?a._id:''}')">Guardar justificación</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
 }
 
-function editarReport(id){
-    const r = reports.find(x => x.id === id);
-    if(!r) return;
-    document.getElementById('f-id').value = r.id;
-    document.getElementById('f-eq').value = r.equipo;
-    document.getElementById('f-fecha').value = r.fecha;
-    document.getElementById('f-turno').value = r.turno;
-    document.getElementById('f-hi').value = r.hi;
-    document.getElementById('f-hf').value = r.hf;
-    document.getElementById('f-hef').value = r.hef || "";
-    document.getElementById('f-op').value = r.operador;
-    document.getElementById('f-folio').value = r.folio || "";
-    document.getElementById('f-obs').value = r.obs || "";
-    if(r.foto) document.getElementById('prev-foto').innerHTML = `<img src="${r.foto}" style="max-width:100px">`;
+async function saveAus(pat,fecha,turno,id){
+  try{
+    const data={equipo:pat,fecha,turno,
+      motivo:document.getElementById('a-motivo').value,
+      descripcion:document.getElementById('a-desc').value,
+      descuento:document.getElementById('a-desc2').value,
+      validado:document.getElementById('a-val').value,
+      ts:new Date().toISOString(),usuario:currentUser.email};
+    if(id){await db.collection('ausencias').doc(id).update(data)}
+    else{await db.collection('ausencias').add(data)}
+    closeModal();toast('Ausencia guardada','ok');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+function editAus(id){const a=ausencias.find(x=>x._id===id);if(a)openAusForm(a.equipo,a.fecha,a.turno,id)}
+async function delAus(id){if(confirm('¿Eliminar ausencia?')){await db.collection('ausencias').doc(id).delete();closeModal();toast('Eliminada','ok')}}
+
+function irReportar(pat,fecha,turno){
+  closeModal();clearForm();
+  setTimeout(()=>{
+    document.getElementById('f-eq').value=pat;
+    document.getElementById('f-fecha').value=fecha;
+    document.getElementById('f-turno').value=turno;
+    onEqChange();
     show('new');
+  },100);
+}
+
+// ============ NEW REPORT ============
+function initNewForm(){
+  llenarSelects();
+  if(!document.getElementById('f-id').value){
+    document.getElementById('f-fecha').value=todayS();
+    document.getElementById('new-title').textContent='Ingresar nuevo report';
+  }
+}
+
+function editReport(id){
+  const r=reports.find(x=>x._id===id);if(!r)return;
+  show('new');
+  setTimeout(()=>{
+    document.getElementById('new-title').textContent='Editar report';
+    document.getElementById('f-id').value=r._id;
+    document.getElementById('f-fecha').value=r.fecha;
+    document.getElementById('f-turno').value=r.turno;
+    document.getElementById('f-folio').value=r.folio||'';
+    document.getElementById('f-eq').value=r.equipo;
+    document.getElementById('f-op').value=r.operador||'';
+    document.getElementById('f-hi').value=r.hi;
+    document.getElementById('f-hf').value=r.hf;
+    document.getElementById('f-hef').value=r.hef||'';
+    document.getElementById('f-obs').value=r.obs||'';
+    document.getElementById('f-estado').value=r.estado||'Borrador';
+    calcDif();
+    if(r.foto)document.getElementById('f-foto-prev').innerHTML=`<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button></div>`;
+    const f=document.getElementById('form-new');
+    if(!document.getElementById('btn-del-rep')){
+      const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);
+      f.querySelector('div[style*="flex-end"]').prepend(b);
+    }
+    validate();
+  },100);
+}
+
+async function delReport(id){
+  if(!confirm('¿Eliminar este report?'))return;
+  try{
+    const r=reports.find(x=>x._id===id);
+    if(r&&r.foto){try{await storage.refFromURL(r.foto).delete()}catch(e){}}
+    await db.collection('reportes').doc(id).delete();
+    clearForm();show('grid');toast('Report eliminado','ok');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
+
+function quitFoto(){
+  document.getElementById('f-foto-prev').innerHTML='';
+  document.getElementById('f-foto').value='';
+  fotoData={remove:true};
+}
+
+function compFoto(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      const maxW=1400;const sc=Math.min(1,maxW/img.width);
+      c.width=img.width*sc;c.height=img.height*sc;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      c.toBlob(blob=>{
+        fotoData={blob,preview:c.toDataURL('image/jpeg',0.75)};
+        const kb=Math.round(blob.size/1024);
+        document.getElementById('f-foto-prev').innerHTML=`<img src="${fotoData.preview}" class="foto-full"><div class="small">Comprimido: ${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar</button>`;
+      },'image/jpeg',0.75);
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function onEqChange(){
+  const p=document.getElementById('f-eq').value;
+  const e=eqByPat(p);
+  if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';
+  calcDif();
+}
+
+function calcDif(){
+  const hi=parseFloat(document.getElementById('f-hi').value)||0;
+  const hf=parseFloat(document.getElementById('f-hf').value)||0;
+  document.getElementById('f-dif').value=(hf-hi).toFixed(1);
+  validate();
+}
+
+function validate(){
+  const msgs=[];
+  const id=document.getElementById('f-id').value;
+  const hi=parseFloat(document.getElementById('f-hi').value);
+  const hf=parseFloat(document.getElementById('f-hf').value);
+  const hef=parseFloat(document.getElementById('f-hef').value);
+  const eq=document.getElementById('f-eq').value;
+  const fecha=document.getElementById('f-fecha').value;
+  const turno=document.getElementById('f-turno').value;
+  const folio=document.getElementById('f-folio').value;
+  const estado=document.getElementById('f-estado').value;
+  const hoy=todayS();
+  
+  if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
+  if(hi&&hf&&hf<hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
+  if(hef&&hi&&hf&&hef>(hf-hi))msgs.push({t:'err',m:'⊘ Horas efectivas superan la diferencia del horómetro'});
+  if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
+  if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
+  if(estado==='Firmado'&&!fotoData?.blob&&!reports.find(r=>r._id===id)?.foto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere foto adjunta'});
+  
+  if(hi&&eq&&!id){
+    const e=eqByPat(eq);
+    if(e&&e.horo&&Math.abs(hi-e.horo)>2)msgs.push({t:'warn',m:`⚠ Horóm. inicial (${hi}) difiere del último conocido (${e.horo})`});
+  }
+  if(hi&&hf){const d=hf-hi;if(d>0&&(d<2||d>14))msgs.push({t:'warn',m:`⚠ Diferencia ${d.toFixed(1)}h fuera del rango típico 2-14h`})}
+  if(!folio)msgs.push({t:'warn',m:'⚠ Report sin folio'});
+  
+  document.getElementById('f-msgs').innerHTML=msgs.map(x=>`<div class="${x.t}">${x.m}</div>`).join('');
+  const hasErr=msgs.some(m=>m.t==='err');
+  document.getElementById('btn-save').disabled=hasErr;
+  return !hasErr;
+}
+
+document.addEventListener('input',e=>{if(e.target.closest('#form-new'))validate()});
+document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate()});
+
+async function saveReport(e){
+  e.preventDefault();
+  if(!validate())return;
+  const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    const id=document.getElementById('f-id').value;
+    const pat=document.getElementById('f-eq').value;
+    const hi=parseFloat(document.getElementById('f-hi').value);
+    const hf=parseFloat(document.getElementById('f-hf').value);
+    
+    let fotoUrl=id?(reports.find(r=>r._id===id)?.foto||''):'';
+    if(fotoData?.remove)fotoUrl='';
+    if(fotoData?.blob){
+      const docId=id||db.collection('reportes').doc().id;
+      const ref=storage.ref(`fotos/${pat}/${docId}.jpg`);
+      await ref.put(fotoData.blob);
+      fotoUrl=await ref.getDownloadURL();
+    }
+    
+    const data={
+      fecha:document.getElementById('f-fecha').value,
+      turno:document.getElementById('f-turno').value,
+      folio:document.getElementById('f-folio').value,
+      equipo:pat,
+      operador:document.getElementById('f-op').value,
+      hi,hf,dif:hf-hi,
+      hef:parseFloat(document.getElementById('f-hef').value)||0,
+      obs:document.getElementById('f-obs').value,
+      foto:fotoUrl,
+      estado:document.getElementById('f-estado').value,
+      usuario:currentUser.email,
+      ts:new Date().toISOString()
+    };
+    
+    if(id){await db.collection('reportes').doc(id).update(data)}
+    else{await db.collection('reportes').add(data)}
+    
+    // Recalcular horo del equipo: el máximo hf de todos sus reports
+    const allR=[...reports.filter(r=>r.equipo===pat&&r._id!==id),{hf,fecha:data.fecha,turno:data.turno}];
+    const maxHf=allR.reduce((m,r)=>Math.max(m,Number(r.hf||0)),0);
+    await db.collection('equipos').doc(pat).update({horo:maxHf});
+    
+    toast('Report guardado ✓','ok');clearForm();show('grid');
+  }catch(e){toast('Error: '+e.message,'err');btn.disabled=false;btn.textContent='Guardar'}
+}
+
+function clearForm(){
+  document.getElementById('form-new').reset();
+  document.getElementById('f-id').value='';
+  document.getElementById('f-msgs').innerHTML='';
+  document.getElementById('f-foto-prev').innerHTML='';
+  fotoData=null;
+  const b=document.getElementById('btn-del-rep');if(b)b.remove();
+  document.getElementById('btn-save').disabled=false;
+  document.getElementById('btn-save').textContent='Guardar';
+  initNewForm();
+}
+
+// ============ CONSOLIDADOS ============
+function initCons(){const p=defaultPeriod();document.getElementById('c-ini').value=p.ini;document.getElementById('c-fin').value=p.fin}
+
+function renderCons(){
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  if(!ini||!fin)return;
+  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
+  const aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
+  
+  const porProv={};
+  equipos.forEach(e=>{const p=e.proveedor||'Sin proveedor';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0,firmados:0};porProv[p].equipos++});
+  reps.forEach(r=>{
+    const e=eqByPat(r.equipo);const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';
+    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0,firmados:0};
+    porProv[p].reports++;porProv[p].horas+=Number(r.dif||(r.hf-r.hi)||0);
+    if(r.foto)porProv[p].conFoto++;
+    if(r.estado==='Firmado')porProv[p].firmados++;
+  });
+  
+  const porEq={};
+  equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,conFoto:0,firmados:0,aus:0}});
+  reps.forEach(r=>{if(porEq[r.equipo]){porEq[r.equipo].reports++;porEq[r.equipo].horas+=Number(r.dif||(r.hf-r.hi)||0);if(r.foto)porEq[r.equipo].conFoto++;if(r.estado==='Firmado')porEq[r.equipo].firmados++}});
+  aus.forEach(a=>{if(porEq[a.equipo])porEq[a.equipo].aus++});
+  
+  let totH=0,totR=0,totF=0,totFirm=0;
+  Object.values(porProv).forEach(p=>{totH+=p.horas;totR+=p.reports;totF+=p.conFoto;totFirm+=p.firmados});
+  
+  let html=`<div class="stats" style="grid-template-columns:repeat(5,1fr)">
+  <div class="stat"><div class="lbl">Total horas</div><div class="val">${totH.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div>
+  <div class="stat"><div class="lbl">Firmados</div><div class="val" style="color:#198754">${totFirm}</div><div class="sub">${totR?Math.round(totFirm*100/totR):0}%</div></div>
+  <div class="stat"><div class="lbl">Con foto</div><div class="val">${totF}</div></div>
+  <div class="stat"><div class="lbl">Ausencias</div><div class="val" style="color:#378ADD">${aus.length}</div></div>
+  </div>`;
+  
+  html+='<h3>Consolidado por proveedor</h3><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Con foto</th></tr></thead><tbody>';
+  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td>${d.firmados}</td><td>${d.conFoto}/${d.reports}</td></tr>`});
+  html+='</tbody></table>';
+  
+  html+='<h3 style="margin-top:16px">Detalle por equipo</h3><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Ausencias</th></tr></thead><tbody>';
+  Object.values(porEq).filter(x=>x.reports>0||x.aus>0).sort((a,b)=>b.horas-a.horas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo||'—'}</td><td>${x.eq.proveedor||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td>${x.firmados}</td><td>${x.aus}</td></tr>`});
+  html+='</tbody></table>';
+  
+  document.getElementById('cons-body').innerHTML=html;
 }
 
 function exportExcel(){
-    const data = reports.map(r => ({
-        Fecha: r.fecha, Turno: r.turno, Equipo: r.equipo, H_Ini: r.hi, H_Fin: r.hf, 
-        Motor: (r.hf-r.hi).toFixed(1), Efectivas: r.hef, Operador: r.operador, 
-        Folio: r.folio, Observaciones: r.obs, Link: r.foto
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Reports");
-    XLSX.writeFile(wb, "Rentamaq_Pro_Export.xlsx");
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
+  const wb=XLSX.utils.book_new();
+  const filas=reps.map(r=>{const e=eqByPat(r.equipo);return{Fecha:r.fecha,Turno:r.turno,Equipo:r.equipo,Tipo:e?.tipo||'',Proveedor:e?.proveedor||'',Folio:r.folio||'',Operador:r.operador||'',HoromInicial:r.hi,HoromFinal:r.hf,Diferencia:Number(r.dif||(r.hf-r.hi)).toFixed(1),HorasEfectivas:r.hef||'',Estado:r.estado||'',Observaciones:r.obs||'',TieneFoto:r.foto?'Sí':'No',URLFoto:r.foto||''}});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),'Reports');
+  
+  const provsSet=[...new Set(equipos.map(e=>e.proveedor||'Sin proveedor'))];
+  provsSet.forEach(p=>{const fp=filas.filter(f=>f.Proveedor===p);if(fp.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp),('Prov_'+p).slice(0,31))});
+  
+  const res={};
+  filas.forEach(f=>{res[f.Proveedor]=res[f.Proveedor]||{Proveedor:f.Proveedor,Reports:0,Horas:0,Firmados:0};res[f.Proveedor].Reports++;res[f.Proveedor].Horas+=Number(f.Diferencia);if(f.Estado==='Firmado')res[f.Proveedor].Firmados++});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(res)),'Resumen_Proveedor');
+  
+  const au=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
+  if(au.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(au),'Ausencias');
+  
+  XLSX.writeFile(wb,`Consolidado_${ini}_a_${fin}.xlsx`);
+  toast('Excel generado','ok');
 }
 
-// INICIALIZACION
-function llenarSelects(){
-    const opts = '<option value="">— Seleccionar —</option>' + equipos.map(e => `<option value="${e.patente}">${e.patente}</option>`).join('');
-    document.getElementById('f-eq').innerHTML = opts;
-    document.getElementById('sel-eq').innerHTML = opts;
+async function exportFotosZip(){
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  const filt=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin&&r.foto);
+  if(!filt.length)return toast('Sin fotos en el período','err');
+  toast('Generando ZIP... puede tardar');
+  const zip=new JSZip();
+  for(const r of filt){
+    try{const res=await fetch(r.foto);const blob=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_${r.folio||'SF'}.jpg`,blob)}catch(e){console.warn(e)}
+  }
+  const c=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(c);a.download=`Fotos_${ini}_${fin}.zip`;a.click();
+  toast('ZIP listo','ok');
 }
-function clearForm(){ document.getElementById('f-id').value=""; document.getElementById('prev-foto').innerHTML=""; document.getElementById('btn-save').disabled=false; }
-function closeModal(){ document.getElementById('modal').classList.remove('show'); }
-function showView(v){ show(v); }
-document.getElementById('f-fecha').value = todayS();
+
+// ============ LOTES ============
+function renderLotes(){
+  let html='<table><thead><tr><th>#</th><th>Fecha despacho</th><th>Entregado a</th><th>Reports</th><th>Devueltos</th><th>Estado</th><th></th></tr></thead><tbody>';
+  html+=lotes.sort((a,b)=>b.fecha_despacho?.localeCompare(a.fecha_despacho||'')||0).map(l=>{
+    const cnt=reports.filter(r=>r.id_lote===l._id).length;
+    return `<tr><td><b>${l.numero||'—'}</b></td><td>${l.fecha_despacho||''}</td><td>${l.entregado_a||''}</td><td>${cnt}</td><td>${l.devueltos||0}</td><td><span class="badge b-${l.estado==='Cerrado'?'ok':(l.estado==='En firma'?'warn':'info')}">${l.estado||'—'}</span></td><td><button class="btn btn-sm btn-sec" onclick="editLote('${l._id}')">Editar</button></td></tr>`;
+  }).join('');
+  html+='</tbody></table>';
+  if(!lotes.length)html='<div class="empty">Sin lotes registrados</div>';
+  document.getElementById('lotes-body').innerHTML=html;
+}
+
+function nuevoLote(){
+  const num=lotes.length+1;
+  document.getElementById('modal-box').innerHTML=`<h2>Nuevo lote de firma</h2>
+  <label>Número</label><input id="l-num" value="${num}">
+  <label>Fecha despacho</label><input type="date" id="l-fec" value="${todayS()}">
+  <label>Entregado a (Teck)</label><input id="l-ent" placeholder="Nombre receptor">
+  <label>Observaciones</label><textarea id="l-obs" rows="2"></textarea>
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveLote('')">Crear</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+function editLote(id){
+  const l=lotes.find(x=>x._id===id);if(!l)return;
+  document.getElementById('modal-box').innerHTML=`<h2>Editar lote</h2>
+  <label>Número</label><input id="l-num" value="${l.numero||''}">
+  <label>Fecha despacho</label><input type="date" id="l-fec" value="${l.fecha_despacho||''}">
+  <label>Entregado a</label><input id="l-ent" value="${l.entregado_a||''}">
+  <label>Devueltos</label><input type="number" id="l-dev" value="${l.devueltos||0}">
+  <label>Estado</label><select id="l-est"><option ${l.estado==='Abierto'?'selected':''}>Abierto</option><option ${l.estado==='En firma'?'selected':''}>En firma</option><option ${l.estado==='Devuelto parcial'?'selected':''}>Devuelto parcial</option><option ${l.estado==='Cerrado'?'selected':''}>Cerrado</option></select>
+  <label>Observaciones</label><textarea id="l-obs" rows="2">${l.obs||''}</textarea>
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn btn-dang btn-sm" onclick="delLote('${id}')">Eliminar</button>
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveLote('${id}')">Guardar</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function saveLote(id){
+  const data={numero:document.getElementById('l-num').value,fecha_despacho:document.getElementById('l-fec').value,entregado_a:document.getElementById('l-ent').value,obs:document.getElementById('l-obs').value};
+  if(id){data.devueltos=parseInt(document.getElementById('l-dev').value)||0;data.estado=document.getElementById('l-est').value;await db.collection('lotes').doc(id).update(data)}
+  else{data.estado='Abierto';data.devueltos=0;await db.collection('lotes').add(data)}
+  closeModal();toast('Lote guardado','ok');
+}
+
+async function delLote(id){if(confirm('¿Eliminar lote?')){await db.collection('lotes').doc(id).delete();closeModal();toast('Eliminado','ok')}}
+
+// ============ EQUIPOS / PROVS ============
+function renderEquiposTab(){
+  const tb=document.getElementById('t-eq');if(!tb)return;
+  const provOpts=provs.map(p=>p.nombre);
+  tb.innerHTML=equipos.sort((a,b)=>a.patente.localeCompare(b.patente)).map(e=>`<tr><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td><select onchange="setProv('${e.patente}',this.value)"><option value="">—</option>${provOpts.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td><td>${e.horo||'—'}</td><td>${e.estado||'Activo'}</td><td><button class="btn btn-dang btn-sm" onclick="delEq('${e.patente}')">×</button></td></tr>`).join('');
+}
+
+async function setProv(pat,p){await db.collection('equipos').doc(pat).update({proveedor:p})}
+async function delEq(pat){if(confirm('¿Eliminar '+pat+'?'))await db.collection('equipos').doc(pat).delete()}
+
+function nuevoEquipo(){
+  document.getElementById('modal-box').innerHTML=`<h2>Nuevo equipo</h2>
+  <label>Patente</label><input id="ne-p">
+  <label>Tipo</label><input id="ne-t">
+  <label>Proveedor</label><select id="ne-pr"><option value="">—</option>${provs.map(p=>`<option>${p.nombre}</option>`).join('')}</select>
+  <label>Horómetro inicial</label><input type="number" step="0.1" id="ne-h">
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveNewEq()">Crear</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function saveNewEq(){
+  const p=document.getElementById('ne-p').value.trim().toUpperCase();
+  if(!p)return toast('Patente requerida','err');
+  if(eqByPat(p))return toast('Ya existe','err');
+  await db.collection('equipos').doc(p).set({patente:p,tipo:document.getElementById('ne-t').value,proveedor:document.getElementById('ne-pr').value,horo:parseFloat(document.getElementById('ne-h').value)||0,estado:'Activo'});
+  closeModal();toast('Equipo creado','ok');
+}
+
+function openProvs(){
+  document.getElementById('modal-box').innerHTML=`<h2>Proveedores</h2>
+  <div id="prov-list" style="margin:12px 0">${provs.map(p=>`<div style="display:flex;gap:6px;margin:4px 0;align-items:center"><span style="flex:1"><b>${p.nombre}</b></span><button class="btn btn-dang btn-sm" onclick="delProv('${p._id}')">×</button></div>`).join('')||'<p class="small">Sin proveedores</p>'}</div>
+  <div style="display:flex;gap:6px"><input id="new-prov" placeholder="Nombre proveedor"><button class="btn btn-sm" onclick="addProv()">+</button></div>
+  <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn btn-sec" onclick="closeModal()">Cerrar</button></div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function addProv(){const v=document.getElementById('new-prov').value.trim();if(v){await db.collection('proveedores').add({nombre:v});openProvs()}}
+async function delProv(id){if(confirm('¿Eliminar?')){await db.collection('proveedores').doc(id).delete();openProvs()}}
+
+// ============ DIAGNÓSTICO ============
+function renderErr(){
+  const folios={},dups=[],saltos=[];
+  reports.forEach(r=>{if(r.folio){const k=r.equipo+'|'+r.folio;if(folios[k])dups.push({eq:r.equipo,folio:r.folio});folios[k]=true}});
+  const porEq={};reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
+  Object.keys(porEq).forEach(eq=>{const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));for(let i=1;i<rs.length;i++){const gap=rs[i].hi-rs[i-1].hf;if(Math.abs(gap)>2)saltos.push({eq,fecha:rs[i].fecha,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})}});
+  const sinF=reports.filter(r=>!r.folio).length;
+  const sinFoto=reports.filter(r=>!r.foto&&r.estado==='Firmado').length;
+  
+  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
+  <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
+  <div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
+  <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
+  </div>
+  <h3 style="margin-top:14px">Saltos de horómetro</h3>
+  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha</th><th>Anterior</th><th>Actual</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha}</td><td>${s.prev}</td><td>${s.curr}</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}
+  <h3 style="margin-top:14px">Folios duplicados</h3>
+  ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('show')}
 </script>
-</body>
-</html>
+</body></html>
