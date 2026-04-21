@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rentamaq Reportabilidad v4.5 (Con Roles)</title>
+<title>Rentamaq Reportabilidad v4.6 (Logo Oficial)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -13,14 +13,13 @@
 body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
 .nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .nav h1{font-size:15px;margin-right:12px;font-weight:500;display:flex;align-items:center}
-.logo-nav{display:flex;height:24px;border-radius:2px;overflow:hidden;margin-right:8px}
-.logo-renta, .logo-maq{padding:0 8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;text-transform:uppercase}
-.logo-renta{background:#333;color:#fff} 
-.logo-maq{background:#BA7517;color:#333} 
+/* Estilos para el logo oficial como imagen */
+.logo-nav{height:22px;width:auto;margin-right:10px;object-fit:contain}
+.logo-login{display:block;max-width:260px;width:100%;height:auto;margin:0 auto 20px auto}
 .nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all 0.2s}
 .nav button:hover{background:rgba(255,255,255,.2)}
 .nav button.active{background:#fff;color:#1F4E78;font-weight:500}
-.nav button.hidden{display:none !important} /* Oculta pestañas prohibidas */
+.nav button.hidden{display:none !important}
 .nav .spacer{flex:1}
 .pill{padding:3px 8px;border-radius:10px;font-size:10px;margin-left:6px}
 .pill-ok{background:#22c55e;color:#fff}
@@ -73,8 +72,6 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .empty{text-align:center;padding:40px;color:#aaa}
 .loader{text-align:center;padding:40px;color:#888}
 .login-box{max-width:380px;margin:80px auto;padding:30px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-.logo-login{display:flex;height:40px;border-radius:4px;overflow:hidden;margin:0 auto 20px auto;justify-content:center;max-width:240px}
-.logo-login .logo-renta, .logo-login .logo-maq{padding:0 14px;font-size:22px}
 .toast{position:fixed;bottom:20px;right:20px;background:#1F4E78;color:#fff;padding:12px 18px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:200;animation:slideIn .3s ease}
 .toast.err{background:#c33}.toast.ok{background:#22c55e}
 @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -86,7 +83,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 
 <div id="login-view" class="hidden">
 <div class="login-box">
-<div class="logo-login"><div class="logo-renta">RENTA</div><div class="logo-maq">MAQ</div></div>
+<img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Rentamaq Logo" class="logo-login">
 <h2 style="text-align:center;margin-bottom:20px">Sistema de Reportabilidad</h2>
 <form onsubmit="doLogin(event)">
 <label>Correo</label><input type="email" id="li-email" required>
@@ -101,7 +98,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="app" class="hidden">
 <div class="nav">
 <h1>
-  <div class="logo-nav"><div class="logo-renta">RENTA</div><div class="logo-maq">MAQ</div></div>
+  <img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Rentamaq Logo" class="logo-nav">
   <span id="cloud-status" class="pill pill-wait">Conectando...</span>
 </h1>
 <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
@@ -257,7 +254,7 @@ const auth = firebase.auth();
 const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
 let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
-let fotoData=null, currentUser=null, userRole='operador'; // Por defecto todos son operadores
+let fotoData=null, currentUser=null, userRole='operador'; 
 let unsubs=[];
 
 // ============ AUTH CON ROLES ============
@@ -274,12 +271,10 @@ auth.onAuthStateChanged(async u=>{
       if (doc.exists && doc.data().rol === 'admin') {
         userRole = 'admin';
         document.getElementById('user-label').innerHTML = `⭐ Admin: ${u.email}`;
-        // Mostrar botones administrativos
         ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.remove('hidden'));
       } else {
         userRole = 'operador';
         document.getElementById('user-label').innerHTML = `👤 Operador: ${u.email}`;
-        // Ocultar botones administrativos por seguridad
         ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
       }
     } catch(e) {
@@ -344,7 +339,6 @@ function bootstrap(){
 function isHidden(v){return document.getElementById('view-'+v).classList.contains('hidden')}
 
 function show(v){
-  // Validar seguridad de navegación
   const restricted = ['cons', 'lotes', 'equipos', 'err'];
   if (restricted.includes(v) && userRole !== 'admin') {
     toast('Acceso denegado', 'err');
@@ -520,8 +514,14 @@ function openAusForm(pat,fecha,turno,aid){
 
 async function saveAus(pat,fecha,turno,id){
   try{
-    const data={equipo:pat,fecha,turno,motivo:document.getElementById('a-motivo').value,descripcion:document.getElementById('a-desc').value,descuento:document.getElementById('a-desc2').value,validado:document.getElementById('a-val').value,ts:new Date().toISOString(),usuario:currentUser.email};
-    if(id){await db.collection('ausencias').doc(id).update(data)}else{await db.collection('ausencias').add(data)}
+    const data={equipo:pat,fecha,turno,
+      motivo:document.getElementById('a-motivo').value,
+      descripcion:document.getElementById('a-desc').value,
+      descuento:document.getElementById('a-desc2').value,
+      validado:document.getElementById('a-val').value,
+      ts:new Date().toISOString(),usuario:currentUser.email};
+    if(id){await db.collection('ausencias').doc(id).update(data)}
+    else{await db.collection('ausencias').add(data)}
     closeModal();toast('Ausencia guardada','ok');
   }catch(e){toast('Error: '+e.message,'err')}
 }
@@ -538,7 +538,7 @@ function editReport(id){
     document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;document.getElementById('f-hef').value=r.hef||'';document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
     if(r.foto)document.getElementById('f-foto-prev').innerHTML=`<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button></div>`;
     const f=document.getElementById('form-new');
-    if(!document.getElementById('btn-del-rep')){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b);}
+    if(!document.getElementById('btn-del-rep') && userRole==='admin'){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b);}
     validate();
   },100);
 }
@@ -890,7 +890,6 @@ function renderErr(){
     const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
     for(let i=1;i<rs.length;i++){
       const gap=rs[i].hi-rs[i-1].hf;
-      // Auditoría sin tolerancia (0.1)
       if(Math.abs(gap)>0.1)saltos.push({eq,fecha:rs[i].fecha,turno:rs[i].turno,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})
     }
   });
