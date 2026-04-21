@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rentamaq Reportabilidad v4.1</title>
+<title>Rentamaq Reportabilidad v4.2 Completa</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -47,8 +47,6 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .btn-sec:hover{background:#f5f5f5}
 .btn-dang{background:#c33;color:#fff;border:none}
 .btn-sm{padding:4px 9px;font-size:11px}
-.btn-warn{background:#BA7517;color:#fff;border:none}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .err{background:#F8D7DA;color:#721C24;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
 .warn{background:#FFF3CD;color:#856404;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
@@ -204,20 +202,20 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="view-equipos" class="hidden">
 <div class="card">
 <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
-<h2 style="margin:0">Equipos y proveedores</h2>
+<h2 style="margin:0">Gestión de Flota</h2>
 <div class="row-flex">
 <button class="btn btn-sec" onclick="openProvs()">Gestionar proveedores</button>
-<button class="btn" onclick="nuevoEquipo()">+ Equipo</button>
+<button class="btn" onclick="nuevoEquipo()">+ Nuevo Equipo</button>
 </div>
 </div>
-<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horóm. actual</th><th>Estado</th><th></th></tr></thead><tbody id="t-eq"></tbody></table>
+<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horóm. actual</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="t-eq"></tbody></table>
 </div>
 </div>
 
 <div id="view-err" class="hidden">
 <div class="card">
-<h2>Diagnóstico de errores</h2>
-<p class="small" style="margin-bottom:10px">Análisis automático sobre los reports ingresados.</p>
+<h2>Diagnóstico Operacional</h2>
+<p class="small" style="margin-bottom:10px">Análisis automático sobre los reports ingresados para control de calidad.</p>
 <div id="err-body"></div>
 </div>
 </div>
@@ -329,7 +327,6 @@ function show(v){
 function todayS(){return new Date().toISOString().slice(0,10)}
 function fmtD(d){return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
 
-// ============ LÓGICA DE MES COMERCIAL ============
 function defaultPeriod() {
   const d = new Date();
   let mesIni = d.getMonth();
@@ -348,7 +345,6 @@ function defaultPeriod() {
     fin: `${fFin.getFullYear()}-${pad(fFin.getMonth()+1)}-20`
   };
 }
-
 function eqByPat(p){return equipos.find(e=>e.patente===p)}
 
 // ============ DASHBOARD ============
@@ -505,14 +501,15 @@ function editAus(id){const a=ausencias.find(x=>x._id===id);if(a)openAusForm(a.eq
 async function delAus(id){if(confirm('¿Eliminar ausencia?')){await db.collection('ausencias').doc(id).delete();closeModal();toast('Eliminada','ok')}}
 
 function irReportar(pat,fecha,turno){
-  closeModal();clearForm();
+  closeModal();
+  clearForm();
+  show('new');
   setTimeout(()=>{
     document.getElementById('f-eq').value=pat;
     document.getElementById('f-fecha').value=fecha;
     document.getElementById('f-turno').value=turno;
     onEqChange();
-    show('new');
-  },100);
+  }, 100);
 }
 
 // ============ NEW REPORT ============
@@ -621,6 +618,15 @@ function validate(){
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
   if(estado==='Firmado'&&!fotoData?.blob&&!reports.find(r=>r._id===id)?.foto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere foto adjunta'});
+  
+  // Auditoría Cronológica Estricta
+  if (eq && fecha && hi && hf) {
+    const repsEq = reports.filter(r => r.equipo === eq && r._id !== id);
+    const pasado = repsEq.find(r => r.fecha < fecha && parseFloat(r.hf) > hi);
+    if (pasado) msgs.push({t:'err', m:`⊘ Choque: El ${fmtD(pasado.fecha)} terminó con ${pasado.hf}h. No puedes partir con ${hi}h.`});
+    const futuro = repsEq.find(r => r.fecha > fecha && parseFloat(r.hi) < hf);
+    if (futuro) msgs.push({t:'err', m:`⊘ Choque: El ${fmtD(futuro.fecha)} partió con ${futuro.hi}h. No puedes terminar con ${hf}h.`});
+  }
   
   if(hi&&eq&&!id){
     const e=eqByPat(eq);
@@ -833,7 +839,33 @@ async function delLote(id){if(confirm('¿Eliminar lote?')){await db.collection('
 function renderEquiposTab(){
   const tb=document.getElementById('t-eq');if(!tb)return;
   const provOpts=provs.map(p=>p.nombre);
-  tb.innerHTML=equipos.sort((a,b)=>a.patente.localeCompare(b.patente)).map(e=>`<tr><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td><select onchange="setProv('${e.patente}',this.value)"><option value="">—</option>${provOpts.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td><td>${e.horo||'—'}</td><td>${e.estado||'Activo'}</td><td><button class="btn btn-dang btn-sm" onclick="delEq('${e.patente}')">×</button></td></tr>`).join('');
+  tb.innerHTML=equipos.sort((a,b)=>a.patente.localeCompare(b.patente)).map(e=>`<tr><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td><select onchange="setProv('${e.patente}',this.value)"><option value="">—</option>${provOpts.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td><td>${e.horo||'—'}</td><td>${e.estado||'Activo'}</td>
+  <td><button class="btn btn-sm" onclick="editEquipo('${e.patente}')">Editar</button> <button class="btn btn-dang btn-sm" onclick="delEq('${e.patente}')">×</button></td></tr>`).join('');
+}
+
+function editEquipo(pat){
+  const e=equipos.find(x=>x.patente===pat);
+  document.getElementById('modal-box').innerHTML=`<h2>Editar Equipo: ${pat}</h2>
+    <label>Patente</label><input id="ne-p" value="${e.patente}" disabled>
+    <label>Tipo de Maquinaria</label><input id="ne-t" value="${e.tipo}">
+    <label>Proveedor</label><select id="ne-pr"><option value="">—</option>${provs.map(p=>`<option ${e.proveedor===p.nombre?'selected':''}>${p.nombre}</option>`).join('')}</select>
+    <label>Horómetro Base/Actual</label><input type="number" step="0.1" id="ne-h" value="${e.horo}">
+    <label>Estado</label><select id="ne-st"><option ${e.estado==='Activo'?'selected':''}>Activo</option><option ${e.estado==='Inactivo'?'selected':''}>Inactivo</option></select>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="updateEq('${pat}')">Actualizar Datos</button>
+    </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function updateEq(pat){
+  await db.collection('equipos').doc(pat).update({
+    tipo:document.getElementById('ne-t').value,
+    proveedor:document.getElementById('ne-pr').value,
+    horo:parseFloat(document.getElementById('ne-h').value),
+    estado:document.getElementById('ne-st').value
+  });
+  closeModal(); toast('Equipo actualizado','ok');
 }
 
 async function setProv(pat,p){await db.collection('equipos').doc(pat).update({proveedor:p})}
