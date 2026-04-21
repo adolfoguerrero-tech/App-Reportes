@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rentamaq Reportabilidad v4.3 Completa</title>
+<title>Rentamaq Reportabilidad v4.5 (Con Roles)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -13,10 +13,14 @@
 body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
 .nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .nav h1{font-size:15px;margin-right:12px;font-weight:500;display:flex;align-items:center}
-.logo-nav{height:22px;margin-right:8px;border-radius:2px}
-.nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.logo-nav{display:flex;height:24px;border-radius:2px;overflow:hidden;margin-right:8px}
+.logo-renta, .logo-maq{padding:0 8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;text-transform:uppercase}
+.logo-renta{background:#333;color:#fff} 
+.logo-maq{background:#BA7517;color:#333} 
+.nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all 0.2s}
 .nav button:hover{background:rgba(255,255,255,.2)}
 .nav button.active{background:#fff;color:#1F4E78;font-weight:500}
+.nav button.hidden{display:none !important} /* Oculta pestañas prohibidas */
 .nav .spacer{flex:1}
 .pill{padding:3px 8px;border-radius:10px;font-size:10px;margin-left:6px}
 .pill-ok{background:#22c55e;color:#fff}
@@ -69,7 +73,8 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .empty{text-align:center;padding:40px;color:#aaa}
 .loader{text-align:center;padding:40px;color:#888}
 .login-box{max-width:380px;margin:80px auto;padding:30px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-.logo-login{max-width:200px;display:block;margin:0 auto 15px auto;border-radius:6px}
+.logo-login{display:flex;height:40px;border-radius:4px;overflow:hidden;margin:0 auto 20px auto;justify-content:center;max-width:240px}
+.logo-login .logo-renta, .logo-login .logo-maq{padding:0 14px;font-size:22px}
 .toast{position:fixed;bottom:20px;right:20px;background:#1F4E78;color:#fff;padding:12px 18px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:200;animation:slideIn .3s ease}
 .toast.err{background:#c33}.toast.ok{background:#22c55e}
 @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -81,7 +86,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 
 <div id="login-view" class="hidden">
 <div class="login-box">
-<img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Logo Rentamaq" class="logo-login">
+<div class="logo-login"><div class="logo-renta">RENTA</div><div class="logo-maq">MAQ</div></div>
 <h2 style="text-align:center;margin-bottom:20px">Sistema de Reportabilidad</h2>
 <form onsubmit="doLogin(event)">
 <label>Correo</label><input type="email" id="li-email" required>
@@ -96,18 +101,18 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="app" class="hidden">
 <div class="nav">
 <h1>
-  <img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Logo" class="logo-nav">
- <span id="cloud-status" class="pill pill-wait">Conectando...</span>
+  <div class="logo-nav"><div class="logo-renta">RENTA</div><div class="logo-maq">MAQ</div></div>
+  <span id="cloud-status" class="pill pill-wait">Conectando...</span>
 </h1>
 <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
 <button onclick="show('grid')" id="n-grid">Grilla</button>
 <button onclick="show('new')" id="n-new">Nuevo Report</button>
-<button onclick="show('cons')" id="n-cons">Consolidados</button>
-<button onclick="show('lotes')" id="n-lotes">Lotes Firma</button>
-<button onclick="show('equipos')" id="n-equipos">Equipos</button>
-<button onclick="show('err')" id="n-err">Diagnóstico</button>
+<button onclick="show('cons')" id="n-cons" class="hidden">Consolidados</button>
+<button onclick="show('lotes')" id="n-lotes" class="hidden">Lotes Firma</button>
+<button onclick="show('equipos')" id="n-equipos" class="hidden">Equipos</button>
+<button onclick="show('err')" id="n-err" class="hidden">Diagnóstico</button>
 <div class="spacer"></div>
-<span id="user-label" class="small" style="color:#fff;margin-right:10px"></span>
+<span id="user-label" class="small" style="color:#fff;margin-right:10px;font-weight:bold"></span>
 <button onclick="doLogout()" class="btn-sec" style="color:#333">Salir</button>
 </div>
 
@@ -252,20 +257,43 @@ const auth = firebase.auth();
 const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
 let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
-let fotoData=null, currentUser=null;
+let fotoData=null, currentUser=null, userRole='operador'; // Por defecto todos son operadores
 let unsubs=[];
 
-// ============ AUTH ============
-auth.onAuthStateChanged(u=>{
+// ============ AUTH CON ROLES ============
+auth.onAuthStateChanged(async u=>{
   if(u){
     currentUser=u;
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    document.getElementById('user-label').textContent=u.email;
+    setStatus('wait','Verificando perfil...');
+    
+    // Validar Rol del Usuario en Firestore
+    try {
+      const doc = await db.collection('usuarios').doc(u.email.toLowerCase()).get();
+      if (doc.exists && doc.data().rol === 'admin') {
+        userRole = 'admin';
+        document.getElementById('user-label').innerHTML = `⭐ Admin: ${u.email}`;
+        // Mostrar botones administrativos
+        ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+      } else {
+        userRole = 'operador';
+        document.getElementById('user-label').innerHTML = `👤 Operador: ${u.email}`;
+        // Ocultar botones administrativos por seguridad
+        ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      }
+    } catch(e) {
+      console.log("Error de permisos, asumiendo perfil Operador basico.");
+      userRole = 'operador';
+      document.getElementById('user-label').innerHTML = `👤 Operador: ${u.email}`;
+      ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+
     setStatus('ok','Conectado');
     bootstrap();
   } else {
     currentUser=null;
+    userRole='operador';
     unsubs.forEach(f=>f());unsubs=[];
     document.getElementById('app').classList.add('hidden');
     document.getElementById('login-view').classList.remove('hidden');
@@ -277,7 +305,7 @@ function doLogin(e){
   const email=document.getElementById('li-email').value;
   const pass=document.getElementById('li-pass').value;
   auth.signInWithEmailAndPassword(email,pass).catch(err=>{
-    document.getElementById('li-err').innerHTML='<div class="err">'+err.message+'</div>';
+    document.getElementById('li-err').innerHTML='<div class="err">Error de acceso. Verifique sus datos.</div>';
   });
 }
 function doLogout(){auth.signOut()}
@@ -303,18 +331,26 @@ function bootstrap(){
     },err=>{toast('Error cargando '+col+': '+err.message,'err');setStatus('err','Error')});
     unsubs.push(u);
   };
-  handle('equipos',equipos,()=>{renderDash();llenarSelects();renderEquiposTab()});
-  handle('reportes',reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(!isHidden('cons'))renderCons();if(!isHidden('err'))renderErr()});
+  handle('equipos',equipos,()=>{renderDash();llenarSelects();if(userRole==='admin')renderEquiposTab()});
+  handle('reportes',reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(userRole==='admin'&&!isHidden('err'))renderErr()});
   handle('ausencias',ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
-  handle('proveedores',provs,()=>{renderDash();renderEquiposTab()});
-  handle('lotes',lotes,()=>{if(!isHidden('lotes'))renderLotes()});
-  initGrid();initCons();
+  handle('proveedores',provs,()=>{renderDash();if(userRole==='admin')renderEquiposTab()});
+  handle('lotes',lotes,()=>{if(userRole==='admin'&&!isHidden('lotes'))renderLotes()});
+  initGrid();
+  if(userRole==='admin')initCons();
   document.getElementById('f-fecha').value=todayS();
 }
 
 function isHidden(v){return document.getElementById('view-'+v).classList.contains('hidden')}
 
 function show(v){
+  // Validar seguridad de navegación
+  const restricted = ['cons', 'lotes', 'equipos', 'err'];
+  if (restricted.includes(v) && userRole !== 'admin') {
+    toast('Acceso denegado', 'err');
+    return;
+  }
+
   ['dash','grid','new','cons','lotes','equipos','err'].forEach(x=>{
     document.getElementById('view-'+x).classList.add('hidden');
     document.getElementById('n-'+x)?.classList.remove('active');
@@ -337,14 +373,9 @@ function defaultPeriod() {
   const d = new Date();
   let mesIni = d.getMonth();
   let añoIni = d.getFullYear();
-  
-  if (d.getDate() <= 20) {
-    mesIni = mesIni - 1; 
-  }
-  
+  if (d.getDate() <= 20) mesIni = mesIni - 1; 
   const fIni = new Date(añoIni, mesIni, 21);
   const fFin = new Date(añoIni, mesIni + 1, 20);
-  
   const pad = (n) => n < 10 ? '0'+n : n;
   return {
     ini: `${fIni.getFullYear()}-${pad(fIni.getMonth()+1)}-21`,
@@ -369,7 +400,6 @@ function renderDash(){
   const ausP=ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin);
   
   let lista=equipos.filter(e=>(!fProv||e.proveedor===fProv)&&(!fTipo||e.tipo===fTipo)&&(!f||e.patente.toLowerCase().includes(f)));
-  
   const repsPorEq={};repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
   
   let totHrs=0,totRep=0,firm=0,hoyN=0;
@@ -387,7 +417,6 @@ function renderDash(){
   }).join('');
   
   document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Horas</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
-  
   document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
   document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
   document.getElementById('s-eq').textContent=lista.length;
@@ -491,69 +520,28 @@ function openAusForm(pat,fecha,turno,aid){
 
 async function saveAus(pat,fecha,turno,id){
   try{
-    const data={equipo:pat,fecha,turno,
-      motivo:document.getElementById('a-motivo').value,
-      descripcion:document.getElementById('a-desc').value,
-      descuento:document.getElementById('a-desc2').value,
-      validado:document.getElementById('a-val').value,
-      ts:new Date().toISOString(),usuario:currentUser.email};
-    if(id){await db.collection('ausencias').doc(id).update(data)}
-    else{await db.collection('ausencias').add(data)}
+    const data={equipo:pat,fecha,turno,motivo:document.getElementById('a-motivo').value,descripcion:document.getElementById('a-desc').value,descuento:document.getElementById('a-desc2').value,validado:document.getElementById('a-val').value,ts:new Date().toISOString(),usuario:currentUser.email};
+    if(id){await db.collection('ausencias').doc(id).update(data)}else{await db.collection('ausencias').add(data)}
     closeModal();toast('Ausencia guardada','ok');
   }catch(e){toast('Error: '+e.message,'err')}
 }
-
 function editAus(id){const a=ausencias.find(x=>x._id===id);if(a)openAusForm(a.equipo,a.fecha,a.turno,id)}
 async function delAus(id){if(confirm('¿Eliminar ausencia?')){await db.collection('ausencias').doc(id).delete();closeModal();toast('Eliminada','ok')}}
-
-function irReportar(pat,fecha,turno){
-  closeModal();
-  clearForm();
-  show('new');
-  setTimeout(()=>{
-    document.getElementById('f-eq').value=pat;
-    document.getElementById('f-fecha').value=fecha;
-    document.getElementById('f-turno').value=turno;
-    onEqChange();
-  }, 100);
-}
+function irReportar(pat,fecha,turno){closeModal();clearForm();show('new');setTimeout(()=>{document.getElementById('f-eq').value=pat;document.getElementById('f-fecha').value=fecha;document.getElementById('f-turno').value=turno;onEqChange();}, 100);}
 
 // ============ NEW REPORT ============
-function initNewForm(){
-  llenarSelects();
-  if(!document.getElementById('f-id').value){
-    document.getElementById('f-fecha').value=todayS();
-    document.getElementById('new-title').textContent='Ingresar nuevo report';
-  }
-}
-
+function initNewForm(){llenarSelects();if(!document.getElementById('f-id').value){document.getElementById('f-fecha').value=todayS();document.getElementById('new-title').textContent='Ingresar nuevo report';}}
 function editReport(id){
   const r=reports.find(x=>x._id===id);if(!r)return;
   show('new');
   setTimeout(()=>{
-    document.getElementById('new-title').textContent='Editar report';
-    document.getElementById('f-id').value=r._id;
-    document.getElementById('f-fecha').value=r.fecha;
-    document.getElementById('f-turno').value=r.turno;
-    document.getElementById('f-folio').value=r.folio||'';
-    document.getElementById('f-eq').value=r.equipo;
-    document.getElementById('f-op').value=r.operador||'';
-    document.getElementById('f-hi').value=r.hi;
-    document.getElementById('f-hf').value=r.hf;
-    document.getElementById('f-hef').value=r.hef||'';
-    document.getElementById('f-obs').value=r.obs||'';
-    document.getElementById('f-estado').value=r.estado||'Borrador';
-    calcDif();
+    document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;document.getElementById('f-hef').value=r.hef||'';document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
     if(r.foto)document.getElementById('f-foto-prev').innerHTML=`<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button></div>`;
     const f=document.getElementById('form-new');
-    if(!document.getElementById('btn-del-rep')){
-      const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);
-      f.querySelector('div[style*="flex-end"]').prepend(b);
-    }
+    if(!document.getElementById('btn-del-rep')){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b);}
     validate();
   },100);
 }
-
 async function delReport(id){
   if(!confirm('¿Eliminar este report?'))return;
   try{
@@ -563,47 +551,21 @@ async function delReport(id){
     clearForm();show('grid');toast('Report eliminado','ok');
   }catch(e){toast('Error: '+e.message,'err')}
 }
-
-function quitFoto(){
-  document.getElementById('f-foto-prev').innerHTML='';
-  document.getElementById('f-foto').value='';
-  fotoData={remove:true};
-}
-
+function quitFoto(){document.getElementById('f-foto-prev').innerHTML='';document.getElementById('f-foto').value='';fotoData={remove:true};}
 function compFoto(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      const c=document.createElement('canvas');
-      const maxW=1400;const sc=Math.min(1,maxW/img.width);
-      c.width=img.width*sc;c.height=img.height*sc;
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      c.toBlob(blob=>{
-        fotoData={blob,preview:c.toDataURL('image/jpeg',0.75)};
-        const kb=Math.round(blob.size/1024);
-        document.getElementById('f-foto-prev').innerHTML=`<img src="${fotoData.preview}" class="foto-full"><div class="small">Comprimido: ${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar</button>`;
-      },'image/jpeg',0.75);
-    };
-    img.src=ev.target.result;
-  };
-  r.readAsDataURL(f);
+      const c=document.createElement('canvas');const maxW=1400;const sc=Math.min(1,maxW/img.width);
+      c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      c.toBlob(blob=>{fotoData={blob,preview:c.toDataURL('image/jpeg',0.75)};const kb=Math.round(blob.size/1024);document.getElementById('f-foto-prev').innerHTML=`<img src="${fotoData.preview}" class="foto-full"><div class="small">Comprimido: ${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar</button>`;},'image/jpeg',0.75);
+    };img.src=ev.target.result;
+  };r.readAsDataURL(f);
 }
-
-function onEqChange(){
-  const p=document.getElementById('f-eq').value;
-  const e=eqByPat(p);
-  if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';
-  calcDif();
-}
-
-function calcDif(){
-  const hi=parseFloat(document.getElementById('f-hi').value)||0;
-  const hf=parseFloat(document.getElementById('f-hf').value)||0;
-  document.getElementById('f-dif').value=(hf-hi).toFixed(1);
-  validate();
-}
+function onEqChange(){const p=document.getElementById('f-eq').value;const e=eqByPat(p);if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';calcDif();}
+function calcDif(){const hi=parseFloat(document.getElementById('f-hi').value)||0;const hf=parseFloat(document.getElementById('f-hf').value)||0;document.getElementById('f-dif').value=(hf-hi).toFixed(1);validate();}
 
 function validate(){
   const msgs=[];
@@ -625,13 +587,24 @@ function validate(){
   if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
   if(estado==='Firmado'&&!fotoData?.blob&&!reports.find(r=>r._id===id)?.foto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere foto adjunta'});
   
-  // Auditoría Cronológica Estricta
+  // Auditoría Cronológica Estricta (Incluye turnos del mismo día)
   if (eq && fecha && hi && hf) {
-    const repsEq = reports.filter(r => r.equipo === eq && r._id !== id);
-    const pasado = repsEq.find(r => r.fecha < fecha && parseFloat(r.hf) > hi);
-    if (pasado) msgs.push({t:'err', m:`⊘ Choque: El ${fmtD(pasado.fecha)} terminó con ${pasado.hf}h. No puedes partir con ${hi}h.`});
-    const futuro = repsEq.find(r => r.fecha > fecha && parseFloat(r.hi) < hf);
-    if (futuro) msgs.push({t:'err', m:`⊘ Choque: El ${fmtD(futuro.fecha)} partió con ${futuro.hi}h. No puedes terminar con ${hf}h.`});
+    const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
+    const rEq = reports.filter(r => r.equipo === eq && r._id !== id);
+
+    const pasados = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder);
+    if (pasados.length > 0) {
+      pasados.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
+      const ant = pasados[0];
+      if (parseFloat(ant.hf) > hi) msgs.push({t:'err', m:`⊘ Choque: Turno anterior (${fmtD(ant.fecha)} ${ant.turno}) terminó en ${ant.hf}.`});
+    }
+
+    const futuros = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) > currentOrder);
+    if (futuros.length > 0) {
+      futuros.sort((a,b) => (a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
+      const sig = futuros[0];
+      if (parseFloat(sig.hi) < hf) msgs.push({t:'err', m:`⊘ Choque: Turno siguiente (${fmtD(sig.fecha)} ${sig.turno}) parte en ${sig.hi}.`});
+    }
   }
   
   if(hi&&eq&&!id){
@@ -687,7 +660,6 @@ async function saveReport(e){
     if(id){await db.collection('reportes').doc(id).update(data)}
     else{await db.collection('reportes').add(data)}
     
-    // Recalcular horo del equipo: el máximo hf de todos sus reports
     const allR=[...reports.filter(r=>r.equipo===pat&&r._id!==id),{hf,fecha:data.fecha,turno:data.turno}];
     const maxHf=allR.reduce((m,r)=>Math.max(m,Number(r.hf||0)),0);
     await db.collection('equipos').doc(pat).update({horo:maxHf});
@@ -914,7 +886,14 @@ function renderErr(){
   const folios={},dups=[],saltos=[];
   reports.forEach(r=>{if(r.folio){const k=r.equipo+'|'+r.folio;if(folios[k])dups.push({eq:r.equipo,folio:r.folio});folios[k]=true}});
   const porEq={};reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
-  Object.keys(porEq).forEach(eq=>{const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));for(let i=1;i<rs.length;i++){const gap=rs[i].hi-rs[i-1].hf;if(Math.abs(gap)>2)saltos.push({eq,fecha:rs[i].fecha,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})}});
+  Object.keys(porEq).forEach(eq=>{
+    const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
+    for(let i=1;i<rs.length;i++){
+      const gap=rs[i].hi-rs[i-1].hf;
+      // Auditoría sin tolerancia (0.1)
+      if(Math.abs(gap)>0.1)saltos.push({eq,fecha:rs[i].fecha,turno:rs[i].turno,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})
+    }
+  });
   const sinF=reports.filter(r=>!r.folio).length;
   const sinFoto=reports.filter(r=>!r.foto&&r.estado==='Firmado').length;
   
@@ -924,8 +903,8 @@ function renderErr(){
   <div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
   <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
   </div>
-  <h3 style="margin-top:14px">Saltos de horómetro</h3>
-  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha</th><th>Anterior</th><th>Actual</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha}</td><td>${s.prev}</td><td>${s.curr}</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}
+  <h3 style="margin-top:14px">Saltos de horómetro (Control Estricto)</h3>
+  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}
   <h3 style="margin-top:14px">Folios duplicados</h3>
   ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
 }
