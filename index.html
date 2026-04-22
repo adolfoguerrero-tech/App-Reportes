@@ -137,8 +137,8 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="view-dash">
 <h2>Panel de control</h2>
 <div class="stats">
-<div class="stat"><div class="lbl">Horas período</div><div class="val" id="s-hrs">—</div><div class="sub" id="s-hrs-sub"></div></div>
-<div class="stat"><div class="lbl">Equipos</div><div class="val" id="s-eq">—</div><div class="sub" id="s-eq-sub"></div></div>
+<div class="stat"><div class="lbl">Horas Máquina (Horo)</div><div class="val" id="s-hrs">—</div><div class="sub" id="s-hrs-sub"></div></div>
+<div class="stat"><div class="lbl">Horas Efectivas (Cobro)</div><div class="val" id="s-hef" style="color:#BA7517">—</div><div class="sub">Validadas Mandante</div></div>
 <div class="stat"><div class="lbl">Reports</div><div class="val" id="s-rep">—</div><div class="sub" id="s-rep-sub"></div></div>
 <div class="stat"><div class="lbl">Con foto firmada</div><div class="val" id="s-firm" style="color:#198754">—</div><div class="sub" id="s-firm-sub"></div></div>
 <div class="stat"><div class="lbl">Ausencias</div><div class="val" id="s-aus" style="color:#378ADD">—</div></div>
@@ -184,19 +184,22 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div class="grid3">
 <div><label>Horóm. inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
 <div><label>Horóm. final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
-<div><label>Diferencia</label><input id="f-dif" disabled style="background:#f5f5f5"></div>
+<div><label>Diferencia Horo.</label><input id="f-dif" disabled style="background:#f5f5f5;font-weight:bold"></div>
 </div>
-<label>Horas efectivas (opcional)</label><input type="number" step="0.1" id="f-hef">
+<label style="color:#BA7517;font-weight:bold">Horas Efectivas a Cobrar (Validadas Teck)</label>
+<input type="number" step="0.1" id="f-hef" required style="border-color:#BA7517">
+<p class="small" style="margin-bottom:8px">Se autocompleta con la diferencia. Modifica este valor solo si hubo descuentos de horas.</p>
+
 <label>Foto del report firmado (opcional)</label>
 <input type="file" id="f-foto" accept="image/*" onchange="compFoto(event)">
 <div id="f-foto-prev"></div>
 <label>Estado</label>
 <select id="f-estado"><option value="Borrador">Borrador (sin firmar)</option><option value="En firma Teck">En firma Teck</option><option value="Firmado">Firmado + foto</option></select>
-<label>Observaciones</label><textarea id="f-obs" rows="2"></textarea>
+<label>Observaciones (Obligatorio si hay descuento)</label><textarea id="f-obs" rows="2"></textarea>
 <div id="f-msgs" style="margin-top:10px"></div>
 <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
 <button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
-<button type="submit" class="btn" id="btn-save">Guardar</button>
+<button type="submit" class="btn" id="btn-save">Guardar Reporte</button>
 </div>
 </form>
 </div>
@@ -209,7 +212,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <label style="margin:0">Período:</label>
 <input type="date" id="c-ini" onchange="renderCons()">
 <input type="date" id="c-fin" onchange="renderCons()">
-<button class="btn" onclick="exportExcel()">Excel completo</button>
+<button class="btn" onclick="exportExcel()">Excel por Equipo (EDP)</button>
 <button class="btn btn-sec" onclick="exportFotosZip()">Descargar fotos ZIP</button>
 </div>
 <div id="cons-body"></div>
@@ -243,8 +246,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 
 <div id="view-err" class="hidden">
 <div class="card">
-<h2>Diagnóstico Operacional</h2>
-<p class="small" style="margin-bottom:10px">Análisis automático sobre los reports ingresados para control de calidad.</p>
+<h2>Diagnóstico Operacional Estricto</h2>
 <div id="err-body"></div>
 </div>
 </div>
@@ -417,22 +419,26 @@ function renderDash(){
   let lista=equipos.filter(e=>(!fProv||e.proveedor===fProv)&&(!fTipo||e.tipo===fTipo)&&(!f||e.patente.toLowerCase().includes(f)));
   const repsPorEq={};repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
   
-  let totHrs=0,totRep=0,firm=0,hoyN=0;
+  // CAMBIO: Incorporamos Hrs Efectivas al Dash
+  let totHrs=0, totHef=0, totRep=0, firm=0, hoyN=0;
   const hoy=todayS();
   
   const rows=lista.map(e=>{
     const rs=repsPorEq[e.patente]||[];
     const hrs=rs.reduce((a,b)=>a+Number(b.dif||(b.hf-b.hi)||0),0);
-    totHrs+=hrs;totRep+=rs.length;
+    const hef=rs.reduce((a,b)=>a+Number(b.hef!==undefined?b.hef:b.dif||0),0);
+    totHrs+=hrs; totHef+=hef; totRep+=rs.length;
     firm+=rs.filter(r=>r.estado==='Firmado').length;
     const tHoy=rs.some(r=>r.fecha===hoy);
     if(tHoy)hoyN++;
     const st=rs.length===0?'<span class="badge b-warn">Sin reports</span>':(tHoy?'<span class="badge b-ok">Al día</span>':'<span class="badge b-info">Con historial</span>');
-    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${st}</td></tr>`;
+    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${hef.toFixed(1)}</td><td>${st}</td></tr>`;
   }).join('');
   
-  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Horas</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
+  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
+  
   document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
+  document.getElementById('s-hef').textContent=totHef.toFixed(0); // Métrica de Cobro
   document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
   document.getElementById('s-eq').textContent=lista.length;
   document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
@@ -471,7 +477,9 @@ function renderGrid(){
   const reps=reports.filter(r=>r.equipo===pat&&r.fecha>=ini&&r.fecha<=fin);
   const aus=ausencias.filter(a=>a.equipo===pat&&a.fecha>=ini&&a.fecha<=fin);
   const hoy=todayS();
-  let totHrs=0,reptN=0,ausN=0,missN=0,firmN=0;
+  
+  // CAMBIO: Incorporamos Hrs Efectivas a la Grilla
+  let totHrs=0, totHef=0, reptN=0, ausN=0, missN=0, firmN=0;
   
   let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
   html+=`<table><thead><tr><th style="width:110px">Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
@@ -482,13 +490,15 @@ function renderGrid(){
       const r=reps.find(x=>x.fecha===fs&&x.turno===t);
       const a=aus.find(x=>x.fecha===fs&&x.turno===t);
       if(r){
-        const dif=r.dif||(r.hf-r.hi);
-        totHrs+=Number(dif||0);reptN++;
+        const dif=Number(r.dif||(r.hf-r.hi));
+        const hef=Number(r.hef!==undefined?r.hef:dif);
+        totHrs+=dif; totHef+=hef; reptN++;
         if(r.estado==='Firmado')firmN++;
         const cls=r.estado==='Firmado'?'cell-signed':(r.estado==='Borrador'?'cell-draft':'cell-ok');
         const foto=r.foto?'<span class="pill-foto">✓ foto</span>':'<span class="pill-nofoto">sin foto</span>';
         const est=r.estado?`<span class="tab-estado" style="background:#eee">${r.estado}</span>`:'';
-        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · ${Number(dif).toFixed(1)}h ${foto}<small>${r.operador||''} · ${r.hi}→${r.hf} ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
+        // Mostramos las Hrs Efectivas grandes y las Hrs Horo pequeñas
+        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · Ef: ${hef.toFixed(1)}h ${foto}<small>Horo: ${r.hi}→${r.hf} (${dif.toFixed(1)}h) ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
       }
       if(a){ausN++;return `<td><div class="cell-just" onclick="editAus('${a._id}')"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
       if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
@@ -502,9 +512,9 @@ function renderGrid(){
   const cab=`<div class="stats" style="grid-template-columns:repeat(5,1fr)">
   <div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div>
   <div class="stat"><div class="lbl">Firmados</div><div class="val" style="color:#198754">${firmN}</div></div>
-  <div class="stat"><div class="lbl">Justificados</div><div class="val" style="color:#378ADD">${ausN}</div></div>
+  <div class="stat"><div class="lbl">Hrs Horo</div><div class="val">${totHrs.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Hrs Efectivas</div><div class="val" style="color:#BA7517">${totHef.toFixed(1)}</div></div>
   <div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:#E24B4A">${missN}</div></div>
-  <div class="stat"><div class="lbl">Horas</div><div class="val">${totHrs.toFixed(1)}</div></div>
   </div>`;
   document.getElementById('grid-body').innerHTML=cab+html;
 }
@@ -556,7 +566,12 @@ function editReport(id){
   const r=reports.find(x=>x._id===id);if(!r)return;
   show('new');
   setTimeout(()=>{
-    document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;document.getElementById('f-hef').value=r.hef||'';document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
+    document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;
+    
+    // CARGAR HORAS EFECTIVAS AL EDITAR
+    document.getElementById('f-hef').value=(r.hef!==undefined)?r.hef:r.dif;
+    
+    document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
     if(r.foto)document.getElementById('f-foto-prev').innerHTML=`<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button></div>`;
     const f=document.getElementById('form-new');
     if(!document.getElementById('btn-del-rep') && userRole==='admin'){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b);}
@@ -586,7 +601,24 @@ function compFoto(e){
   };r.readAsDataURL(f);
 }
 function onEqChange(){const p=document.getElementById('f-eq').value;const e=eqByPat(p);if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';calcDif();}
-function calcDif(){const hi=parseFloat(document.getElementById('f-hi').value)||0;const hf=parseFloat(document.getElementById('f-hf').value)||0;document.getElementById('f-dif').value=(hf-hi).toFixed(1);validate();}
+
+// CAMBIO CRÍTICO: LOGICA DE AUTOCOMPLETADO DE HORAS EFECTIVAS
+function calcDif(){
+  const hi=parseFloat(document.getElementById('f-hi').value)||0;
+  const hf=parseFloat(document.getElementById('f-hf').value)||0;
+  const dif=(hf-hi).toFixed(1);
+  document.getElementById('f-dif').value=dif;
+  
+  const isNew = !document.getElementById('f-id').value;
+  const hefInput = document.getElementById('f-hef');
+  
+  // Si es un reporte nuevo y el usuario aún no escribe horas manuales, o si el sistema lo rellenó la última vez
+  if(isNew && (!hefInput.value || hefInput.dataset.auto === 'true')) {
+     hefInput.value = dif;
+     hefInput.dataset.auto = 'true';
+  }
+  validate();
+}
 
 function validate(){
   const msgs=[];
@@ -599,11 +631,17 @@ function validate(){
   const turno=document.getElementById('f-turno').value;
   const folio=document.getElementById('f-folio').value;
   const estado=document.getElementById('f-estado').value;
+  const obs=document.getElementById('f-obs').value;
   const hoy=todayS();
+  const dif = hf - hi;
   
   if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
   if(hi&&hf&&hf<hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
-  if(hef&&hi&&hf&&hef>(hf-hi))msgs.push({t:'err',m:'⊘ Horas efectivas superan la diferencia del horómetro'});
+  
+  // VALIDACIÓN DE HORAS EFECTIVAS
+  if(hef&&hi&&hf&&hef>dif)msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
+  if(hef&&hi&&hf&&hef<dif&&!obs.trim())msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Debes escribir una Observación obligatoria.'});
+
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
   if(estado==='Firmado'&&!fotoData?.blob&&!reports.find(r=>r._id===id)?.foto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere foto adjunta'});
@@ -695,9 +733,11 @@ function clearForm(){
   document.getElementById('f-msgs').innerHTML='';
   document.getElementById('f-foto-prev').innerHTML='';
   fotoData=null;
+  // Limpiamos el dataset del auto-completado
+  document.getElementById('f-hef').dataset.auto='';
   const b=document.getElementById('btn-del-rep');if(b)b.remove();
   document.getElementById('btn-save').disabled=false;
-  document.getElementById('btn-save').textContent='Guardar';
+  document.getElementById('btn-save').textContent='Guardar Reporte';
   initNewForm();
 }
 
@@ -711,37 +751,39 @@ function renderCons(){
   const aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
   
   const porProv={};
-  equipos.forEach(e=>{const p=e.proveedor||'Sin proveedor';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0,firmados:0};porProv[p].equipos++});
+  equipos.forEach(e=>{const p=e.proveedor||'Sin proveedor';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,efectivas:0};porProv[p].equipos++});
   reps.forEach(r=>{
     const e=eqByPat(r.equipo);const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';
-    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,conFoto:0,firmados:0};
-    porProv[p].reports++;porProv[p].horas+=Number(r.dif||(r.hf-r.hi)||0);
-    if(r.foto)porProv[p].conFoto++;
-    if(r.estado==='Firmado')porProv[p].firmados++;
+    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,efectivas:0};
+    porProv[p].reports++;porProv[p].horas+=Number(r.dif||0);
+    porProv[p].efectivas+=Number(r.hef!==undefined?r.hef:r.dif||0);
   });
   
   const porEq={};
-  equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,conFoto:0,firmados:0,aus:0}});
-  reps.forEach(r=>{if(porEq[r.equipo]){porEq[r.equipo].reports++;porEq[r.equipo].horas+=Number(r.dif||(r.hf-r.hi)||0);if(r.foto)porEq[r.equipo].conFoto++;if(r.estado==='Firmado')porEq[r.equipo].firmados++}});
+  equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,efectivas:0,aus:0}});
+  reps.forEach(r=>{if(porEq[r.equipo]){
+    porEq[r.equipo].reports++;
+    porEq[r.equipo].horas+=Number(r.dif||0);
+    porEq[r.equipo].efectivas+=Number(r.hef!==undefined?r.hef:r.dif||0);
+  }});
   aus.forEach(a=>{if(porEq[a.equipo])porEq[a.equipo].aus++});
   
-  let totH=0,totR=0,totF=0,totFirm=0;
-  Object.values(porProv).forEach(p=>{totH+=p.horas;totR+=p.reports;totF+=p.conFoto;totFirm+=p.firmados});
+  let totH=0,totHef=0,totR=0;
+  Object.values(porProv).forEach(p=>{totH+=p.horas;totHef+=p.efectivas;totR+=p.reports});
   
-  let html=`<div class="stats" style="grid-template-columns:repeat(5,1fr)">
-  <div class="stat"><div class="lbl">Total horas</div><div class="val">${totH.toFixed(1)}</div></div>
+  let html=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Total Hrs Horo</div><div class="val">${totH.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Total Hrs Efectivas</div><div class="val" style="color:#BA7517">${totHef.toFixed(1)}</div></div>
   <div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div>
-  <div class="stat"><div class="lbl">Firmados</div><div class="val" style="color:#198754">${totFirm}</div><div class="sub">${totR?Math.round(totFirm*100/totR):0}%</div></div>
-  <div class="stat"><div class="lbl">Con foto</div><div class="val">${totF}</div></div>
   <div class="stat"><div class="lbl">Ausencias</div><div class="val" style="color:#378ADD">${aus.length}</div></div>
   </div>`;
   
-  html+='<h3>Consolidado por proveedor</h3><div class="table-responsive"><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Con foto</th></tr></thead><tbody>';
-  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td>${d.firmados}</td><td>${d.conFoto}/${d.reports}</td></tr>`});
+  html+='<h3>Consolidado por proveedor</h3><div class="table-responsive"><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efectivas</th></tr></thead><tbody>';
+  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td style="color:#BA7517;font-weight:bold">${d.efectivas.toFixed(1)}</td></tr>`});
   html+='</tbody></table></div>';
   
-  html+='<h3 style="margin-top:16px">Detalle por equipo</h3><div class="table-responsive"><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Ausencias</th></tr></thead><tbody>';
-  Object.values(porEq).filter(x=>x.reports>0||x.aus>0).sort((a,b)=>b.horas-a.horas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo||'—'}</td><td>${x.eq.proveedor||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td>${x.firmados}</td><td>${x.aus}</td></tr>`});
+  html+='<h3 style="margin-top:16px">Detalle por equipo</h3><div class="table-responsive"><table><thead><tr><th>Patente</th><th>Tipo</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efectivas</th><th>Ausencias</th></tr></thead><tbody>';
+  Object.values(porEq).filter(x=>x.reports>0||x.aus>0).sort((a,b)=>b.efectivas-a.efectivas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td style="color:#BA7517;font-weight:bold">${x.efectivas.toFixed(1)}</td><td>${x.aus}</td></tr>`});
   html+='</tbody></table></div>';
   
   document.getElementById('cons-body').innerHTML=html;
@@ -754,78 +796,69 @@ function exportExcel(){
   toast('Generando Excel por equipos...', 'wait');
   const wb = XLSX.utils.book_new();
   
-  // 1. Calcular todos los días del período (para dejar los vacíos en blanco como en tu formato)
   const d1 = new Date(ini + 'T00:00'), d2 = new Date(fin + 'T00:00');
   const dias = [];
   for(let d = new Date(d1); d <= d2; d.setDate(d.getDate() + 1)) {
     dias.push(new Date(d).toISOString().slice(0,10));
   }
 
-  // 2. Formatear el mes para el título (ej: "MARZO/ABRIL")
   const meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
   const m1 = meses[d1.getMonth()], m2 = meses[d2.getMonth()];
   const tituloMeses = (m1 === m2) ? m1 : `${m1}/${m2}`;
 
-  // 3. Crear una Pestaña por cada Equipo
   equipos.forEach(eq => {
     const rEq = reports.filter(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
     const aEq = ausencias.filter(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
     
-    const aoa = []; // Array of Arrays (para dibujar la hoja celda por celda)
+    const aoa = []; 
     
-    // Fila 1: Títulos Superiores (dejando espacios para combinar celdas)
     const tituloEquipo = `${eq.patente} ${eq.tipo ? '- ' + eq.tipo : ''}`;
     aoa.push(["", tituloEquipo, "", "Horómetros", "", "Horas", tituloMeses]);
     
-    // Fila 2: Sub-Títulos de columnas
-    aoa.push(["Fecha", "Report", "Operador", "Inicial", "Final", "Dif.", "OBSERVACION"]);
+    // CAMBIO AL EXCEL: Agregamos la columna Dif. Horo y Hrs. Efectivas
+    aoa.push(["Fecha", "Report", "Operador", "Inicial", "Final", "Dif. Horo", "Hrs. Efect.", "OBSERVACION"]);
 
-    // Filas 3 en adelante: Rellenar con los días (2 filas por día para Día/Noche)
     dias.forEach(fs => {
-      const fechaLatina = fs.split('-').reverse().join('-'); // Convertir YYYY-MM-DD a DD-MM-YYYY
+      const fechaLatina = fs.split('-').reverse().join('-'); 
       
       ['Día', 'Noche'].forEach(t => {
         const r = rEq.find(x => x.fecha === fs && x.turno === t);
         const a = aEq.find(x => x.fecha === fs && x.turno === t);
 
         if (r) {
-          // Si hay reporte, vaciamos los datos (los números como Float para que Excel pueda sumarlos)
-          aoa.push([fechaLatina, r.folio || 'S/F', r.operador || '', parseFloat(r.hi), parseFloat(r.hf), parseFloat(r.dif), r.obs || '']);
+          const dif = parseFloat(r.dif||(r.hf-r.hi));
+          const hef = parseFloat(r.hef!==undefined?r.hef:dif);
+          aoa.push([fechaLatina, r.folio || 'S/F', r.operador || '', parseFloat(r.hi), parseFloat(r.hf), dif, hef, r.obs || '']);
         } else if (a) {
-          // Si hay ausencia, lo marcamos en la observación
-          aoa.push([fechaLatina, 'AUSENCIA', '', '', '', '', `${a.motivo} ${a.descripcion ? '- '+a.descripcion : ''}`]);
+          aoa.push([fechaLatina, 'AUSENCIA', '', '', '', '', '', `${a.motivo} ${a.descripcion ? '- '+a.descripcion : ''}`]);
         } else {
-          // Si no hay nada, fila en blanco con la fecha
-          aoa.push([fechaLatina, '', '', '', '', '', '']);
+          aoa.push([fechaLatina, '', '', '', '', '', '', '']);
         }
       });
     });
 
-    // 4. Construir la hoja y aplicarle el diseño
     const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-    // Combinar Celdas (Merges) para que quede igual a tu foto
     ws['!merges'] = [
-      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }, // Combinar B1:C1 (Título del Equipo)
-      { s: { r: 0, c: 3 }, e: { r: 0, c: 4 } }  // Combinar D1:E1 (Título de Horómetros)
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }, // Título del Equipo
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 4 } }, // Título de Horómetros
+      { s: { r: 0, c: 5 }, e: { r: 0, c: 6 } }  // Título de Horas
     ];
 
-    // Ajustar el ancho de las columnas para que se vea ordenado
     ws['!cols'] = [
-      { wch: 12 }, // A: Fecha
+      { wch: 11 }, // A: Fecha
       { wch: 10 }, // B: Report
-      { wch: 22 }, // C: Operador
-      { wch: 10 }, // D: Inicial
-      { wch: 10 }, // E: Final
-      { wch: 8 },  // F: Dif
-      { wch: 45 }  // G: Observacion
+      { wch: 20 }, // C: Operador
+      { wch: 9 },  // D: Inicial
+      { wch: 9 },  // E: Final
+      { wch: 9 },  // F: Dif Horo
+      { wch: 9 },  // G: Hrs Efect
+      { wch: 40 }  // H: Observacion
     ];
 
-    // Añadir la hoja al libro (Nombrada con la Patente)
     XLSX.utils.book_append_sheet(wb, ws, eq.patente.slice(0, 31));
   });
 
-  // 5. Descargar el archivo
   XLSX.writeFile(wb, `EDP_Rentamaq_${ini}_al_${fin}.xlsx`);
   toast('Excel generado con éxito', 'ok');
 }
