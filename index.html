@@ -34,7 +34,9 @@ h3{font-size:13px;margin-bottom:8px;color:#444;font-weight:500}
 .stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
 .stat .val{font-size:22px;font-weight:500;color:#1F4E78;margin-top:3px}
 .stat .sub{font-size:10px;color:#aaa;margin-top:2px;font-weight:bold}
-table{width:100%;border-collapse:collapse;font-size:12px}
+/* CLASE PARA TABLAS DESLIZABLES EN CELULAR */
+.table-responsive{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
 th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
 td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top}
 .clickable:hover{background:#fafbfc;cursor:pointer}
@@ -78,6 +80,22 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .pill-foto{background:#D4EDDA;color:#155724;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
 .pill-nofoto{background:#FFF3CD;color:#856404;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
 .tab-estado{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;text-transform:uppercase}
+
+/* REGLAS MOBILE (Para apilar contenido en celulares) */
+@media (max-width: 768px) {
+  .nav { padding: 10px; justify-content: center; }
+  .nav h1 { width: 100%; justify-content: center; margin-bottom: 10px; margin-right: 0; }
+  .nav button { flex: 1 1 30%; text-align: center; padding: 10px 4px; font-size: 11px; margin-bottom: 6px; }
+  .spacer { display: none; }
+  #user-label { width: 100%; text-align: center; margin: 5px 0 10px 0; }
+  .grid3 { grid-template-columns: 1fr; gap: 0; }
+  .row-flex { flex-direction: column; align-items: stretch; }
+  .row-flex > div, .row-flex select, .row-flex input, .row-flex button { width: 100% !important; margin-bottom: 8px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .card { padding: 12px; }
+  .container { padding: 10px; }
+  .btn { padding: 12px; font-size: 14px; } /* Botones más grandes para el dedo */
+}
 </style></head>
 <body>
 
@@ -134,7 +152,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="renderDash()">
 </div>
 </div>
-<div id="dash-table"><div class="loader">Cargando...</div></div>
+<div id="dash-table" class="table-responsive"><div class="loader">Cargando...</div></div>
 </div>
 </div>
 
@@ -146,7 +164,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <input type="date" id="per-ini" onchange="renderGrid()" style="max-width:150px">
 <input type="date" id="per-fin" onchange="renderGrid()" style="max-width:150px">
 </div>
-<div id="grid-body"></div>
+<div id="grid-body" class="table-responsive"></div>
 </div>
 </div>
 
@@ -203,7 +221,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <h2 style="margin:0">Lotes enviados a firma Teck</h2>
 <button class="btn" onclick="nuevoLote()">+ Nuevo lote</button>
 </div>
-<div id="lotes-body"></div>
+<div id="lotes-body" class="table-responsive"></div>
 </div>
 </div>
 
@@ -216,7 +234,9 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <button class="btn" onclick="nuevoEquipo()">+ Nuevo Equipo</button>
 </div>
 </div>
+<div class="table-responsive">
 <table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horóm. actual</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="t-eq"></tbody></table>
+</div>
 </div>
 </div>
 
@@ -715,13 +735,13 @@ function renderCons(){
   <div class="stat"><div class="lbl">Ausencias</div><div class="val" style="color:#378ADD">${aus.length}</div></div>
   </div>`;
   
-  html+='<h3>Consolidado por proveedor</h3><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Con foto</th></tr></thead><tbody>';
+  html+='<h3>Consolidado por proveedor</h3><div class="table-responsive"><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Con foto</th></tr></thead><tbody>';
   Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td>${d.firmados}</td><td>${d.conFoto}/${d.reports}</td></tr>`});
-  html+='</tbody></table>';
+  html+='</tbody></table></div>';
   
-  html+='<h3 style="margin-top:16px">Detalle por equipo</h3><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Ausencias</th></tr></thead><tbody>';
+  html+='<h3 style="margin-top:16px">Detalle por equipo</h3><div class="table-responsive"><table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Reports</th><th>Horas</th><th>Firmados</th><th>Ausencias</th></tr></thead><tbody>';
   Object.values(porEq).filter(x=>x.reports>0||x.aus>0).sort((a,b)=>b.horas-a.horas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo||'—'}</td><td>${x.eq.proveedor||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td>${x.firmados}</td><td>${x.aus}</td></tr>`});
-  html+='</tbody></table>';
+  html+='</tbody></table></div>';
   
   document.getElementById('cons-body').innerHTML=html;
 }
@@ -825,12 +845,12 @@ async function exportFotosZip(){
 
 // ============ LOTES ============
 function renderLotes(){
-  let html='<table><thead><tr><th>#</th><th>Fecha despacho</th><th>Entregado a</th><th>Reports</th><th>Devueltos</th><th>Estado</th><th></th></tr></thead><tbody>';
+  let html='<div class="table-responsive"><table><thead><tr><th>#</th><th>Fecha despacho</th><th>Entregado a</th><th>Reports</th><th>Devueltos</th><th>Estado</th><th></th></tr></thead><tbody>';
   html+=lotes.sort((a,b)=>b.fecha_despacho?.localeCompare(a.fecha_despacho||'')||0).map(l=>{
     const cnt=reports.filter(r=>r.id_lote===l._id).length;
     return `<tr><td><b>${l.numero||'—'}</b></td><td>${l.fecha_despacho||''}</td><td>${l.entregado_a||''}</td><td>${cnt}</td><td>${l.devueltos||0}</td><td><span class="badge b-${l.estado==='Cerrado'?'ok':(l.estado==='En firma'?'warn':'info')}">${l.estado||'—'}</span></td><td><button class="btn btn-sm btn-sec" onclick="editLote('${l._id}')">Editar</button></td></tr>`;
   }).join('');
-  html+='</tbody></table>';
+  html+='</tbody></table></div>';
   if(!lotes.length)html='<div class="empty">Sin lotes registrados</div>';
   document.getElementById('lotes-body').innerHTML=html;
 }
@@ -965,7 +985,7 @@ function renderErr(){
   <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
   </div>
   <h3 style="margin-top:14px">Saltos de horómetro (Control Estricto)</h3>
-  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table>'}
+  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}
   <h3 style="margin-top:14px">Folios duplicados</h3>
   ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
 }
