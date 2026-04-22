@@ -400,18 +400,13 @@ function defaultPeriod() {
   };
 }
 function eqByPat(p){return equipos.find(e=>e.patente===p)}
-
 // ============ DASHBOARD ============
 function renderDash(){
   if(!currentUser)return;
-  const fp=document.getElementById('fltr-prov');
-  if(fp){const cur=fp.value;fp.innerHTML='<option value="">Todos proveedores</option>'+provs.map(p=>`<option ${p.nombre===cur?'selected':''}>${p.nombre}</option>`).join('')}
-  const ft=document.getElementById('fltr-tipo');
-  if(ft){const cur=ft.value;const tipos=[...new Set(equipos.map(e=>e.tipo))].sort();ft.innerHTML='<option value="">Todos tipos</option>'+tipos.map(t=>`<option ${t===cur?'selected':''}>${t}</option>`).join('')}
+  const fp=document.getElementById('fltr-prov'); if(fp){const cur=fp.value;fp.innerHTML='<option value="">Todos proveedores</option>'+provs.map(p=>`<option ${p.nombre===cur?'selected':''}>${p.nombre}</option>`).join('')}
+  const ft=document.getElementById('fltr-tipo'); if(ft){const cur=ft.value;const tipos=[...new Set(equipos.map(e=>e.tipo))].sort();ft.innerHTML='<option value="">Todos tipos</option>'+tipos.map(t=>`<option ${t===cur?'selected':''}>${t}</option>`).join('')}
   
-  const f=(document.getElementById('fltr')?.value||'').toLowerCase();
-  const fProv=document.getElementById('fltr-prov')?.value||'';
-  const fTipo=document.getElementById('fltr-tipo')?.value||'';
+  const f=(document.getElementById('fltr')?.value||'').toLowerCase(), fProv=document.getElementById('fltr-prov')?.value||'', fTipo=document.getElementById('fltr-tipo')?.value||'';
   const per=defaultPeriod();
   const repsP=reports.filter(r=>r.fecha>=per.ini&&r.fecha<=per.fin);
   const ausP=ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin);
@@ -419,7 +414,6 @@ function renderDash(){
   let lista=equipos.filter(e=>(!fProv||e.proveedor===fProv)&&(!fTipo||e.tipo===fTipo)&&(!f||e.patente.toLowerCase().includes(f)));
   const repsPorEq={};repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
   
-  // CAMBIO: Incorporamos Hrs Efectivas al Dash
   let totHrs=0, totHef=0, totRep=0, firm=0, hoyN=0;
   const hoy=todayS();
   
@@ -437,14 +431,17 @@ function renderDash(){
   
   document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
   
-  document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
-  document.getElementById('s-hef').textContent=totHef.toFixed(0); // Métrica de Cobro
-  document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
-  document.getElementById('s-rep').textContent=totRep;
-  document.getElementById('s-firm').textContent=firm;
-  document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
-  document.getElementById('s-aus').textContent=ausP.length;
-  document.getElementById('s-miss').textContent='—';
+  // ACTUALIZACIÓN DE TARJETAS BLINDADA CON "IF"
+  if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
+  if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
+  if(document.getElementById('s-hrs-sub')) document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
+  if(document.getElementById('s-eq')) document.getElementById('s-eq').textContent=lista.length;
+  if(document.getElementById('s-eq-sub')) document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
+  if(document.getElementById('s-rep')) document.getElementById('s-rep').textContent=totRep;
+  if(document.getElementById('s-firm')) document.getElementById('s-firm').textContent=firm;
+  if(document.getElementById('s-firm-sub')) document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
+  if(document.getElementById('s-aus')) document.getElementById('s-aus').textContent=ausP.length;
+  if(document.getElementById('s-miss')) document.getElementById('s-miss').textContent='—';
 }
 
 function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
