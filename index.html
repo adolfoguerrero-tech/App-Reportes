@@ -440,8 +440,6 @@ function renderDash(){
   document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
   document.getElementById('s-hef').textContent=totHef.toFixed(0); // Métrica de Cobro
   document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
-  document.getElementById('s-eq').textContent=lista.length;
-  document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
   document.getElementById('s-rep').textContent=totRep;
   document.getElementById('s-firm').textContent=firm;
   document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
