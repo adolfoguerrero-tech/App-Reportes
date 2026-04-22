@@ -727,24 +727,86 @@ function renderCons(){
 }
 
 function exportExcel(){
-  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
-  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
-  const wb=XLSX.utils.book_new();
-  const filas=reps.map(r=>{const e=eqByPat(r.equipo);return{Fecha:r.fecha,Turno:r.turno,Equipo:r.equipo,Tipo:e?.tipo||'',Proveedor:e?.proveedor||'',Folio:r.folio||'',Operador:r.operador||'',HoromInicial:r.hi,HoromFinal:r.hf,Diferencia:Number(r.dif||(r.hf-r.hi)).toFixed(1),HorasEfectivas:r.hef||'',Estado:r.estado||'',Observaciones:r.obs||'',TieneFoto:r.foto?'Sí':'No',URLFoto:r.foto||''}});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),'Reports');
+  const ini=document.getElementById('c-ini').value, fin=document.getElementById('c-fin').value;
+  if(!ini || !fin) return toast('Seleccione un período primero', 'warn');
   
-  const provsSet=[...new Set(equipos.map(e=>e.proveedor||'Sin proveedor'))];
-  provsSet.forEach(p=>{const fp=filas.filter(f=>f.Proveedor===p);if(fp.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp),('Prov_'+p).slice(0,31))});
+  toast('Generando Excel por equipos...', 'wait');
+  const wb = XLSX.utils.book_new();
   
-  const res={};
-  filas.forEach(f=>{res[f.Proveedor]=res[f.Proveedor]||{Proveedor:f.Proveedor,Reports:0,Horas:0,Firmados:0};res[f.Proveedor].Reports++;res[f.Proveedor].Horas+=Number(f.Diferencia);if(f.Estado==='Firmado')res[f.Proveedor].Firmados++});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(res)),'Resumen_Proveedor');
-  
-  const au=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
-  if(au.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(au),'Ausencias');
-  
-  XLSX.writeFile(wb,`Consolidado_${ini}_a_${fin}.xlsx`);
-  toast('Excel generado','ok');
+  // 1. Calcular todos los días del período (para dejar los vacíos en blanco como en tu formato)
+  const d1 = new Date(ini + 'T00:00'), d2 = new Date(fin + 'T00:00');
+  const dias = [];
+  for(let d = new Date(d1); d <= d2; d.setDate(d.getDate() + 1)) {
+    dias.push(new Date(d).toISOString().slice(0,10));
+  }
+
+  // 2. Formatear el mes para el título (ej: "MARZO/ABRIL")
+  const meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  const m1 = meses[d1.getMonth()], m2 = meses[d2.getMonth()];
+  const tituloMeses = (m1 === m2) ? m1 : `${m1}/${m2}`;
+
+  // 3. Crear una Pestaña por cada Equipo
+  equipos.forEach(eq => {
+    const rEq = reports.filter(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
+    const aEq = ausencias.filter(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
+    
+    const aoa = []; // Array of Arrays (para dibujar la hoja celda por celda)
+    
+    // Fila 1: Títulos Superiores (dejando espacios para combinar celdas)
+    const tituloEquipo = `${eq.patente} ${eq.tipo ? '- ' + eq.tipo : ''}`;
+    aoa.push(["", tituloEquipo, "", "Horómetros", "", "Horas", tituloMeses]);
+    
+    // Fila 2: Sub-Títulos de columnas
+    aoa.push(["Fecha", "Report", "Operador", "Inicial", "Final", "Dif.", "OBSERVACION"]);
+
+    // Filas 3 en adelante: Rellenar con los días (2 filas por día para Día/Noche)
+    dias.forEach(fs => {
+      const fechaLatina = fs.split('-').reverse().join('-'); // Convertir YYYY-MM-DD a DD-MM-YYYY
+      
+      ['Día', 'Noche'].forEach(t => {
+        const r = rEq.find(x => x.fecha === fs && x.turno === t);
+        const a = aEq.find(x => x.fecha === fs && x.turno === t);
+
+        if (r) {
+          // Si hay reporte, vaciamos los datos (los números como Float para que Excel pueda sumarlos)
+          aoa.push([fechaLatina, r.folio || 'S/F', r.operador || '', parseFloat(r.hi), parseFloat(r.hf), parseFloat(r.dif), r.obs || '']);
+        } else if (a) {
+          // Si hay ausencia, lo marcamos en la observación
+          aoa.push([fechaLatina, 'AUSENCIA', '', '', '', '', `${a.motivo} ${a.descripcion ? '- '+a.descripcion : ''}`]);
+        } else {
+          // Si no hay nada, fila en blanco con la fecha
+          aoa.push([fechaLatina, '', '', '', '', '', '']);
+        }
+      });
+    });
+
+    // 4. Construir la hoja y aplicarle el diseño
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    // Combinar Celdas (Merges) para que quede igual a tu foto
+    ws['!merges'] = [
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }, // Combinar B1:C1 (Título del Equipo)
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 4 } }  // Combinar D1:E1 (Título de Horómetros)
+    ];
+
+    // Ajustar el ancho de las columnas para que se vea ordenado
+    ws['!cols'] = [
+      { wch: 12 }, // A: Fecha
+      { wch: 10 }, // B: Report
+      { wch: 22 }, // C: Operador
+      { wch: 10 }, // D: Inicial
+      { wch: 10 }, // E: Final
+      { wch: 8 },  // F: Dif
+      { wch: 45 }  // G: Observacion
+    ];
+
+    // Añadir la hoja al libro (Nombrada con la Patente)
+    XLSX.utils.book_append_sheet(wb, ws, eq.patente.slice(0, 31));
+  });
+
+  // 5. Descargar el archivo
+  XLSX.writeFile(wb, `EDP_Rentamaq_${ini}_al_${fin}.xlsx`);
+  toast('Excel generado con éxito', 'ok');
 }
 
 async function exportFotosZip(){
