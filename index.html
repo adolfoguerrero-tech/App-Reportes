@@ -14,7 +14,6 @@
 body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
 .nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .nav h1{font-size:15px;margin-right:12px;font-weight:500;display:flex;align-items:center}
-/* Estilos para el logo oficial como imagen */
 .logo-nav{height:22px;width:auto;margin-right:10px;object-fit:contain}
 .logo-login{display:block;max-width:260px;width:100%;height:auto;margin:0 auto 20px auto}
 .nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all 0.2s}
@@ -35,7 +34,6 @@ h3{font-size:13px;margin-bottom:8px;color:#444;font-weight:500}
 .stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
 .stat .val{font-size:22px;font-weight:500;color:#1F4E78;margin-top:3px}
 .stat .sub{font-size:10px;color:#aaa;margin-top:2px;font-weight:bold}
-/* CLASE PARA TABLAS DESLIZABLES EN CELULAR */
 .table-responsive{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px}
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
 th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
@@ -55,6 +53,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .btn-dang{background:#c33;color:#fff;border:none}
 .btn-sm{padding:4px 9px;font-size:11px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .err{background:#F8D7DA;color:#721C24;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
 .warn{background:#FFF3CD;color:#856404;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
 .ok{background:#D4EDDA;color:#155724;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
@@ -82,20 +81,19 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .pill-nofoto{background:#FFF3CD;color:#856404;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
 .tab-estado{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;text-transform:uppercase}
 
-/* REGLAS MOBILE (Para apilar contenido en celulares) */
 @media (max-width: 768px) {
   .nav { padding: 10px; justify-content: center; }
   .nav h1 { width: 100%; justify-content: center; margin-bottom: 10px; margin-right: 0; }
   .nav button { flex: 1 1 30%; text-align: center; padding: 10px 4px; font-size: 11px; margin-bottom: 6px; }
   .spacer { display: none; }
   #user-label { width: 100%; text-align: center; margin: 5px 0 10px 0; }
-  .grid3 { grid-template-columns: 1fr; gap: 0; }
+  .grid3, .grid2 { grid-template-columns: 1fr; gap: 0; }
   .row-flex { flex-direction: column; align-items: stretch; }
   .row-flex > div, .row-flex select, .row-flex input, .row-flex button { width: 100% !important; margin-bottom: 8px; }
   .stats { grid-template-columns: 1fr 1fr; }
   .card { padding: 12px; }
   .container { padding: 10px; }
-  .btn { padding: 12px; font-size: 14px; } /* Botones más grandes para el dedo */
+  .btn { padding: 12px; font-size: 14px; } 
 }
 </style></head>
 <body>
@@ -138,11 +136,9 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <h2>Panel de control</h2>
 <div class="stats">
 <div class="stat"><div class="lbl">Horas Máquina (Horo)</div><div class="val" id="s-hrs">—</div><div class="sub" id="s-hrs-sub"></div></div>
-<div class="stat"><div class="lbl">Horas Efectivas </div><div class="val" id="s-hef" style="color:#BA7517">—</div><div class="sub">Validadas Mandante</div></div>
-<div class="stat"><div class="lbl">Reports</div><div class="val" id="s-rep">—</div><div class="sub" id="s-rep-sub"></div></div>
-<div class="stat"><div class="lbl">Con foto firmada</div><div class="val" id="s-firm" style="color:#198754">—</div><div class="sub" id="s-firm-sub"></div></div>
-<div class="stat"><div class="lbl">Ausencias</div><div class="val" id="s-aus" style="color:#378ADD">—</div></div>
-<div class="stat"><div class="lbl">Sin registrar</div><div class="val" id="s-miss" style="color:#E24B4A">—</div></div>
+<div class="stat"><div class="lbl">Horas Efectivas</div><div class="val" id="s-hef" style="color:#BA7517">—</div><div class="sub">Validadas Mandante</div></div>
+<div class="stat"><div class="lbl">Reports Registrados</div><div class="val" id="s-rep">—</div><div class="sub" id="s-rep-sub"></div></div>
+<div class="stat"><div class="lbl">Con Foto Firmada</div><div class="val" id="s-firm" style="color:#198754">—</div><div class="sub" id="s-firm-sub"></div></div>
 </div>
 <div class="card">
 <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
@@ -177,29 +173,40 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div class="grid3">
 <div><label>Fecha</label><input type="date" id="f-fecha" required></div>
 <div><label>Turno</label><select id="f-turno" required><option value="">—</option><option>Día</option><option>Noche</option></select></div>
-<div><label>Folio papel</label><input id="f-folio" placeholder="Ej: 34477"></div>
+<div><label>Folio(s) papel</label><input id="f-folio" placeholder="Ej: 34477 / 34478"></div>
 </div>
 <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
-<label>Operador</label><input id="f-op" required>
+<label>Operador(es)</label><input id="f-op" placeholder="Si hay 2, sepáralos con slash. Ej: Juan / Pedro" required>
 <div class="grid3">
 <div><label>Horóm. inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
 <div><label>Horóm. final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
 <div><label>Diferencia Horo.</label><input id="f-dif" disabled style="background:#f5f5f5;font-weight:bold"></div>
 </div>
+
 <label style="color:#BA7517;font-weight:bold">Horas Efectivas (Validadas Teck)</label>
 <input type="number" step="0.1" id="f-hef" required style="border-color:#BA7517">
 <p class="small" style="margin-bottom:8px">Se autocompleta con la diferencia. Modifica este valor solo si hubo descuentos de horas.</p>
 
-<label>Foto del report firmado (opcional)</label>
-<input type="file" id="f-foto" accept="image/*" onchange="compFoto(event)">
-<div id="f-foto-prev"></div>
+<div class="grid2" style="background:#f9fafb; padding:10px; border-radius:5px; border:1px solid #eee; margin-top:10px;">
+  <div>
+    <label style="margin-top:0">Foto Reporte 1 (Opcional)</label>
+    <input type="file" id="f-foto1" accept="image/*" onchange="compFoto(event, 1)">
+    <div id="f-foto-prev1"></div>
+  </div>
+  <div>
+    <label style="margin-top:0">Foto Reporte 2 (Opcional - Cambio de Operador)</label>
+    <input type="file" id="f-foto2" accept="image/*" onchange="compFoto(event, 2)">
+    <div id="f-foto-prev2"></div>
+  </div>
+</div>
+
 <label>Estado</label>
 <select id="f-estado"><option value="Borrador">Borrador (sin firmar)</option><option value="En firma Teck">En firma Teck</option><option value="Firmado">Firmado + foto</option></select>
 <label>Observaciones (Obligatorio si hay descuento)</label><textarea id="f-obs" rows="2"></textarea>
 <div id="f-msgs" style="margin-top:10px"></div>
 <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
 <button type="button" class="btn btn-sec" onclick="clearForm()">Limpiar</button>
-<button type="submit" class="btn" id="btn-save">Guardar Reporte</button>
+<button type="submit" class="btn" id="btn-save">Guardar</button>
 </div>
 </form>
 </div>
@@ -277,7 +284,7 @@ const auth = firebase.auth();
 const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
 let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
-let fotoData=null, currentUser=null, userRole='operador'; 
+let fotoData1=null, fotoData2=null, currentUser=null, userRole='operador'; 
 let unsubs=[];
 
 // ============ AUTH CON ROLES ============
@@ -288,7 +295,6 @@ auth.onAuthStateChanged(async u=>{
     document.getElementById('app').classList.remove('hidden');
     setStatus('wait','Verificando perfil...');
     
-    // Validar Rol del Usuario en Firestore
     try {
       const doc = await db.collection('usuarios').doc(u.email.toLowerCase()).get();
       if (doc.exists && doc.data().rol === 'admin') {
@@ -301,7 +307,6 @@ auth.onAuthStateChanged(async u=>{
         ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
       }
     } catch(e) {
-      console.log("Error de permisos, asumiendo perfil Operador basico.");
       userRole = 'operador';
       document.getElementById('user-label').innerHTML = `👤 Operador: ${u.email}`;
       ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -349,7 +354,7 @@ function bootstrap(){
     },err=>{toast('Error cargando '+col+': '+err.message,'err');setStatus('err','Error')});
     unsubs.push(u);
   };
-  handle('equipos',equipos,()=>{renderDash();llenarSelects();if(userRole==='admin')renderEquiposTab()});
+  handle('equipos',equipos,()=>{renderDash();llenarSelects();if(!isHidden('grid'))renderGrid();if(userRole==='admin')renderEquiposTab()});
   handle('reportes',reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(userRole==='admin'&&!isHidden('err'))renderErr()});
   handle('ausencias',ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
   handle('proveedores',provs,()=>{renderDash();if(userRole==='admin')renderEquiposTab()});
@@ -400,13 +405,18 @@ function defaultPeriod() {
   };
 }
 function eqByPat(p){return equipos.find(e=>e.patente===p)}
+
 // ============ DASHBOARD ============
 function renderDash(){
   if(!currentUser)return;
-  const fp=document.getElementById('fltr-prov'); if(fp){const cur=fp.value;fp.innerHTML='<option value="">Todos proveedores</option>'+provs.map(p=>`<option ${p.nombre===cur?'selected':''}>${p.nombre}</option>`).join('')}
-  const ft=document.getElementById('fltr-tipo'); if(ft){const cur=ft.value;const tipos=[...new Set(equipos.map(e=>e.tipo))].sort();ft.innerHTML='<option value="">Todos tipos</option>'+tipos.map(t=>`<option ${t===cur?'selected':''}>${t}</option>`).join('')}
+  const fp=document.getElementById('fltr-prov');
+  if(fp){const cur=fp.value;fp.innerHTML='<option value="">Todos proveedores</option>'+provs.map(p=>`<option ${p.nombre===cur?'selected':''}>${p.nombre}</option>`).join('')}
+  const ft=document.getElementById('fltr-tipo');
+  if(ft){const cur=ft.value;const tipos=[...new Set(equipos.map(e=>e.tipo))].sort();ft.innerHTML='<option value="">Todos tipos</option>'+tipos.map(t=>`<option ${t===cur?'selected':''}>${t}</option>`).join('')}
   
-  const f=(document.getElementById('fltr')?.value||'').toLowerCase(), fProv=document.getElementById('fltr-prov')?.value||'', fTipo=document.getElementById('fltr-tipo')?.value||'';
+  const f=(document.getElementById('fltr')?.value||'').toLowerCase();
+  const fProv=document.getElementById('fltr-prov')?.value||'';
+  const fTipo=document.getElementById('fltr-tipo')?.value||'';
   const per=defaultPeriod();
   const repsP=reports.filter(r=>r.fecha>=per.ini&&r.fecha<=per.fin);
   const ausP=ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin);
@@ -431,7 +441,6 @@ function renderDash(){
   
   document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
   
-  // ACTUALIZACIÓN DE TARJETAS BLINDADA CON "IF"
   if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
   if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
   if(document.getElementById('s-hrs-sub')) document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
@@ -457,8 +466,10 @@ function initGrid(){
 
 function llenarSelects(){
   const opts='<option value="">— Seleccionar —</option>'+equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
-  const fe=document.getElementById('f-eq');if(fe)fe.innerHTML=opts;
-  const se=document.getElementById('sel-eq');if(se&&!se.options.length)se.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
+  const fe=document.getElementById('f-eq');
+  if(fe){ const v = fe.value; fe.innerHTML=opts; if(v) fe.value = v; }
+  const se=document.getElementById('sel-eq');
+  if(se){ const v = se.value; se.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join(''); if(v) se.value = v; }
 }
 
 function renderGrid(){
@@ -473,7 +484,6 @@ function renderGrid(){
   const aus=ausencias.filter(a=>a.equipo===pat&&a.fecha>=ini&&a.fecha<=fin);
   const hoy=todayS();
   
-  // CAMBIO: Incorporamos Hrs Efectivas a la Grilla
   let totHrs=0, totHef=0, reptN=0, ausN=0, missN=0, firmN=0;
   
   let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
@@ -489,11 +499,14 @@ function renderGrid(){
         const hef=Number(r.hef!==undefined?r.hef:dif);
         totHrs+=dif; totHef+=hef; reptN++;
         if(r.estado==='Firmado')firmN++;
+        
+        let fCount = 0; if(r.foto) fCount++; if(r.foto2) fCount++;
+        const fotoPill = fCount > 0 ? `<span class="pill-foto">✓ ${fCount} foto${fCount>1?'s':''}</span>` : '<span class="pill-nofoto">sin foto</span>';
+        
         const cls=r.estado==='Firmado'?'cell-signed':(r.estado==='Borrador'?'cell-draft':'cell-ok');
-        const foto=r.foto?'<span class="pill-foto">✓ foto</span>':'<span class="pill-nofoto">sin foto</span>';
         const est=r.estado?`<span class="tab-estado" style="background:#eee">${r.estado}</span>`:'';
-        // Mostramos las Hrs Efectivas grandes y las Hrs Horo pequeñas
-        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · Ef: ${hef.toFixed(1)}h ${foto}<small>Horo: ${r.hi}→${r.hf} (${dif.toFixed(1)}h) ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
+        
+        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · Ef: ${hef.toFixed(1)}h ${fotoPill}<small>Horo: ${r.hi}→${r.hf} (${dif.toFixed(1)}h) ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
       }
       if(a){ausN++;return `<td><div class="cell-just" onclick="editAus('${a._id}')"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
       if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
@@ -563,27 +576,40 @@ function editReport(id){
   setTimeout(()=>{
     document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;
     
-    // CARGAR HORAS EFECTIVAS AL EDITAR
     document.getElementById('f-hef').value=(r.hef!==undefined)?r.hef:r.dif;
-    
     document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
-    if(r.foto)document.getElementById('f-foto-prev').innerHTML=`<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar foto</button></div>`;
+    
+    // CARGAR AMBAS FOTOS SI EXISTEN
+    document.getElementById('f-foto-prev1').innerHTML = r.foto ? `<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(1)">Quitar foto</button></div>` : '';
+    document.getElementById('f-foto-prev2').innerHTML = r.foto2 ? `<img src="${r.foto2}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(2)">Quitar foto</button></div>` : '';
+    
     const f=document.getElementById('form-new');
     if(!document.getElementById('btn-del-rep') && userRole==='admin'){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b);}
     validate();
   },100);
 }
+
 async function delReport(id){
   if(!confirm('¿Eliminar este report?'))return;
   try{
     const r=reports.find(x=>x._id===id);
     if(r&&r.foto){try{await storage.refFromURL(r.foto).delete()}catch(e){}}
+    if(r&&r.foto2){try{await storage.refFromURL(r.foto2).delete()}catch(e){}}
     await db.collection('reportes').doc(id).delete();
     clearForm();show('grid');toast('Report eliminado','ok');
   }catch(e){toast('Error: '+e.message,'err')}
 }
-function quitFoto(){document.getElementById('f-foto-prev').innerHTML='';document.getElementById('f-foto').value='';fotoData={remove:true};}
-function compFoto(e){
+
+// QUITAR FOTO 1 o 2
+function quitFoto(num){
+  document.getElementById('f-foto-prev'+num).innerHTML='';
+  document.getElementById('f-foto'+num).value='';
+  if(num===1) fotoData1={remove:true}; else fotoData2={remove:true};
+  validate();
+}
+
+// COMPRIMIR FOTO 1 o 2
+function compFoto(e, num){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=ev=>{
@@ -591,13 +617,19 @@ function compFoto(e){
     img.onload=()=>{
       const c=document.createElement('canvas');const maxW=1400;const sc=Math.min(1,maxW/img.width);
       c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      c.toBlob(blob=>{fotoData={blob,preview:c.toDataURL('image/jpeg',0.75)};const kb=Math.round(blob.size/1024);document.getElementById('f-foto-prev').innerHTML=`<img src="${fotoData.preview}" class="foto-full"><div class="small">Comprimido: ${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto()">Quitar</button>`;},'image/jpeg',0.75);
+      c.toBlob(blob=>{
+        const fd={blob,preview:c.toDataURL('image/jpeg',0.75)};
+        const kb=Math.round(blob.size/1024);
+        if(num===1) fotoData1=fd; else fotoData2=fd;
+        document.getElementById('f-foto-prev'+num).innerHTML=`<img src="${fd.preview}" class="foto-full"><div class="small">Comprimido: ${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(${num})">Quitar</button>`;
+        validate();
+      },'image/jpeg',0.75);
     };img.src=ev.target.result;
   };r.readAsDataURL(f);
 }
+
 function onEqChange(){const p=document.getElementById('f-eq').value;const e=eqByPat(p);if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';calcDif();}
 
-// CAMBIO CRÍTICO: LOGICA DE AUTOCOMPLETADO DE HORAS EFECTIVAS
 function calcDif(){
   const hi=parseFloat(document.getElementById('f-hi').value)||0;
   const hf=parseFloat(document.getElementById('f-hf').value)||0;
@@ -607,7 +639,6 @@ function calcDif(){
   const isNew = !document.getElementById('f-id').value;
   const hefInput = document.getElementById('f-hef');
   
-  // Si es un reporte nuevo y el usuario aún no escribe horas manuales, o si el sistema lo rellenó la última vez
   if(isNew && (!hefInput.value || hefInput.dataset.auto === 'true')) {
      hefInput.value = dif;
      hefInput.dataset.auto = 'true';
@@ -633,15 +664,15 @@ function validate(){
   if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
   if(hi&&hf&&hf<hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
   
-  // VALIDACIÓN DE HORAS EFECTIVAS
   if(hef&&hi&&hf&&hef>dif)msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
   if(hef&&hi&&hf&&hef<dif&&!obs.trim())msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Debes escribir una Observación obligatoria.'});
 
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
-  if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
-  if(estado==='Firmado'&&!fotoData?.blob&&!reports.find(r=>r._id===id)?.foto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere foto adjunta'});
   
-  // Auditoría Cronológica Estricta (Incluye turnos del mismo día)
+  // VALIDAMOS QUE AL MENOS HAYA UNA FOTO SI ESTÁ FIRMADO
+  const hasPhoto = fotoData1?.blob || fotoData2?.blob || reports.find(r=>r._id===id)?.foto || reports.find(r=>r._id===id)?.foto2;
+  if(estado==='Firmado'&&!hasPhoto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto adjunta'});
+  
   if (eq && fecha && hi && hf) {
     const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
     const rEq = reports.filter(r => r.equipo === eq && r._id !== id);
@@ -649,7 +680,7 @@ function validate(){
     const pasados = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder);
     if (pasados.length > 0) {
       pasados.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
-      const ant = pasados[0];
+      const ant = pasados[pasados.length-1];
       if (parseFloat(ant.hf) > hi) msgs.push({t:'err', m:`⊘ Choque: Turno anterior (${fmtD(ant.fecha)} ${ant.turno}) terminó en ${ant.hf}.`});
     }
 
@@ -687,13 +718,23 @@ async function saveReport(e){
     const hi=parseFloat(document.getElementById('f-hi').value);
     const hf=parseFloat(document.getElementById('f-hf').value);
     
-    let fotoUrl=id?(reports.find(r=>r._id===id)?.foto||''):'';
-    if(fotoData?.remove)fotoUrl='';
-    if(fotoData?.blob){
-      const docId=id||db.collection('reportes').doc().id;
-      const ref=storage.ref(`fotos/${pat}/${docId}.jpg`);
-      await ref.put(fotoData.blob);
-      fotoUrl=await ref.getDownloadURL();
+    let fotoUrl1=id?(reports.find(r=>r._id===id)?.foto||''):'';
+    let fotoUrl2=id?(reports.find(r=>r._id===id)?.foto2||''):'';
+    
+    if(fotoData1?.remove)fotoUrl1='';
+    if(fotoData2?.remove)fotoUrl2='';
+    
+    const docId=id||db.collection('reportes').doc().id;
+    
+    if(fotoData1?.blob){
+      const ref=storage.ref(`fotos/${pat}/${docId}_1.jpg`);
+      await ref.put(fotoData1.blob);
+      fotoUrl1=await ref.getDownloadURL();
+    }
+    if(fotoData2?.blob){
+      const ref=storage.ref(`fotos/${pat}/${docId}_2.jpg`);
+      await ref.put(fotoData2.blob);
+      fotoUrl2=await ref.getDownloadURL();
     }
     
     const data={
@@ -705,7 +746,8 @@ async function saveReport(e){
       hi,hf,dif:hf-hi,
       hef:parseFloat(document.getElementById('f-hef').value)||0,
       obs:document.getElementById('f-obs').value,
-      foto:fotoUrl,
+      foto:fotoUrl1,
+      foto2:fotoUrl2, // GUARDAMOS LA SEGUNDA FOTO
       estado:document.getElementById('f-estado').value,
       usuario:currentUser.email,
       ts:new Date().toISOString()
@@ -726,13 +768,13 @@ function clearForm(){
   document.getElementById('form-new').reset();
   document.getElementById('f-id').value='';
   document.getElementById('f-msgs').innerHTML='';
-  document.getElementById('f-foto-prev').innerHTML='';
-  fotoData=null;
-  // Limpiamos el dataset del auto-completado
+  document.getElementById('f-foto-prev1').innerHTML='';
+  document.getElementById('f-foto-prev2').innerHTML='';
+  fotoData1=null; fotoData2=null;
   document.getElementById('f-hef').dataset.auto='';
   const b=document.getElementById('btn-del-rep');if(b)b.remove();
   document.getElementById('btn-save').disabled=false;
-  document.getElementById('btn-save').textContent='Guardar Reporte';
+  document.getElementById('btn-save').textContent='Guardar';
   initNewForm();
 }
 
@@ -810,7 +852,6 @@ function exportExcel(){
     const tituloEquipo = `${eq.patente} ${eq.tipo ? '- ' + eq.tipo : ''}`;
     aoa.push(["", tituloEquipo, "", "Horómetros", "", "Horas", tituloMeses]);
     
-    // CAMBIO AL EXCEL: Agregamos la columna Dif. Horo y Hrs. Efectivas
     aoa.push(["Fecha", "Report", "Operador", "Inicial", "Final", "Dif. Horo", "Hrs. Efect.", "OBSERVACION"]);
 
     dias.forEach(fs => {
@@ -835,20 +876,13 @@ function exportExcel(){
     const ws = XLSX.utils.aoa_to_sheet(aoa);
 
     ws['!merges'] = [
-      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }, // Título del Equipo
-      { s: { r: 0, c: 3 }, e: { r: 0, c: 4 } }, // Título de Horómetros
-      { s: { r: 0, c: 5 }, e: { r: 0, c: 6 } }  // Título de Horas
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }, 
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 4 } }, 
+      { s: { r: 0, c: 5 }, e: { r: 0, c: 6 } }  
     ];
 
     ws['!cols'] = [
-      { wch: 11 }, // A: Fecha
-      { wch: 10 }, // B: Report
-      { wch: 20 }, // C: Operador
-      { wch: 9 },  // D: Inicial
-      { wch: 9 },  // E: Final
-      { wch: 9 },  // F: Dif Horo
-      { wch: 9 },  // G: Hrs Efect
-      { wch: 40 }  // H: Observacion
+      { wch: 11 }, { wch: 10 }, { wch: 20 }, { wch: 9 }, { wch: 9 }, { wch: 9 }, { wch: 9 }, { wch: 40 }
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, eq.patente.slice(0, 31));
@@ -858,14 +892,16 @@ function exportExcel(){
   toast('Excel generado con éxito', 'ok');
 }
 
+// DESCARGA LAS DOS FOTOS EN EL ZIP
 async function exportFotosZip(){
   const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
-  const filt=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin&&r.foto);
+  const filt=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin&&(r.foto||r.foto2));
   if(!filt.length)return toast('Sin fotos en el período','err');
   toast('Generando ZIP... puede tardar');
   const zip=new JSZip();
   for(const r of filt){
-    try{const res=await fetch(r.foto);const blob=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_${r.folio||'SF'}.jpg`,blob)}catch(e){console.warn(e)}
+    if(r.foto){ try{const res=await fetch(r.foto);const blob=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_1.jpg`,blob)}catch(e){} }
+    if(r.foto2){ try{const res=await fetch(r.foto2);const blob=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_2.jpg`,blob)}catch(e){} }
   }
   const c=await zip.generateAsync({type:'blob'});
   const a=document.createElement('a');a.href=URL.createObjectURL(c);a.download=`Fotos_${ini}_${fin}.zip`;a.click();
@@ -1005,7 +1041,7 @@ function renderErr(){
     }
   });
   const sinF=reports.filter(r=>!r.folio).length;
-  const sinFoto=reports.filter(r=>!r.foto&&r.estado==='Firmado').length;
+  const sinFoto=reports.filter(r=>!r.foto&&!r.foto2&&r.estado==='Firmado').length;
   
   document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
   <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
