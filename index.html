@@ -189,7 +189,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 
 <div class="grid2" style="background:#f9fafb; padding:10px; border-radius:5px; border:1px solid #eee; margin-top:10px;">
   <div>
-    <label style="margin-top:0">Foto Reporte </label>
+    <label style="margin-top:0">Foto Reporte 1</label>
     <input type="file" id="f-foto1" accept="image/*" onchange="compFoto(event, 1)">
     <div id="f-foto-prev1"></div>
   </div>
@@ -582,7 +582,6 @@ function editReport(id){
     document.getElementById('f-hef').value=(r.hef!==undefined)?r.hef:r.dif;
     document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
     
-    // CARGAR AMBAS FOTOS SI EXISTEN
     document.getElementById('f-foto-prev1').innerHTML = r.foto ? `<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(1)">Quitar foto</button></div>` : '';
     document.getElementById('f-foto-prev2').innerHTML = r.foto2 ? `<img src="${r.foto2}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(2)">Quitar foto</button></div>` : '';
     
@@ -660,29 +659,32 @@ function validate(){
   const turno=document.getElementById('f-turno').value;
   const folio=document.getElementById('f-folio').value;
   const estado=document.getElementById('f-estado').value;
-  const obs=document.getElementById('f-obs').value;
+  
+  // OBTENEMOS LA OBSERVACIÓN Y NOS ASEGURAMOS DE QUE SEA UN TEXTO
+  const obs = (document.getElementById('f-obs').value || '').trim();
+  
   const hoy=todayS();
   const dif = hf - hi;
   
   if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
   if(!isNaN(hi) && !isNaN(hf) && hf < hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
   
-  // --- NUEVO BLOQUE BLINDADO PARA HORAS EFECTIVAS ---
+  // BLOQUE BLINDADO DE HORAS EFECTIVAS
   if(!isNaN(hi) && !isNaN(hf) && !isNaN(hef)) {
-    const difRedondeada = Math.round(dif * 10) / 10;
-    const hefRedondeada = Math.round(hef * 10) / 10;
-
-    if(hefRedondeada > difRedondeada) {
+    const difRed = Math.round(dif * 10) / 10;
+    const hefRed = Math.round(hef * 10) / 10;
+    if(hefRed > difRed) {
       msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
-    } else if(hefRedondeada < difRedondeada && !obs.trim()) {
-      msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Escribe una Observación obligatoria.'});
+    } else if(hefRed < difRed && obs === '') {
+      // AQUÍ ESTÁ LA MAGIA: Si está vacía, manda el error sin importar qué navegador uses.
+      msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Escribe una Observación obligatoria indicando el motivo.'});
     }
   }
-  // --------------------------------------------------
 
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   
-  const hasPhoto = fotoData1?.blob || fotoData2?.blob || reports.find(r=>r._id===id)?.foto || reports.find(r=>r._id===id)?.foto2;
+  // VALIDAMOS QUE AL MENOS HAYA UNA FOTO SI ESTÁ FIRMADO
+  const hasPhoto = fotoData1?.blob || fotoData2?.blob || (id && reports.find(r=>r._id===id)?.foto) || (id && reports.find(r=>r._id===id)?.foto2);
   if(estado==='Firmado'&&!hasPhoto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto adjunta'});
   
   if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
@@ -703,8 +705,8 @@ function validate(){
       if (parseFloat(sig.hi) < hf) msgs.push({t:'err', m:`⊘ Choque: Turno siguiente (${fmtD(sig.fecha)} ${sig.turno}) parte en ${sig.hi}.`});
     }
   }
-
-  // VALIDACIÓN DE HORÓMETRO INICIAL VS BASE DE DATOS
+  
+  // VALIDACIÓN INICIAL VS BASE DE DATOS
   if(!isNaN(hi) && eq && !id){
     const e=eqByPat(eq);
     if(e && e.horo){
@@ -728,6 +730,9 @@ function validate(){
   document.getElementById('btn-save').disabled=hasErr;
   return !hasErr;
 }
+
+document.addEventListener('input',e=>{if(e.target.closest('#form-new'))validate()});
+document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate()});
 
 async function saveReport(e){
   e.preventDefault();
