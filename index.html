@@ -665,18 +665,27 @@ function validate(){
   const dif = hf - hi;
   
   if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
-  if(hi&&hf&&hf<hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
+  if(!isNaN(hi) && !isNaN(hf) && hf < hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
   
-  if(hef&&hi&&hf&&hef>dif)msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
-  if(hef&&hi&&hf&&hef<dif&&!obs.trim())msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Debes escribir una Observación obligatoria.'});
+  // --- NUEVO BLOQUE BLINDADO PARA HORAS EFECTIVAS ---
+  if(!isNaN(hi) && !isNaN(hf) && !isNaN(hef)) {
+    const difRedondeada = Math.round(dif * 10) / 10;
+    const hefRedondeada = Math.round(hef * 10) / 10;
+
+    if(hefRedondeada > difRedondeada) {
+      msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
+    } else if(hefRedondeada < difRedondeada && !obs.trim()) {
+      msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Escribe una Observación obligatoria.'});
+    }
+  }
+  // --------------------------------------------------
 
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   
-  // VALIDAMOS QUE AL MENOS HAYA UNA FOTO SI ESTÁ FIRMADO
   const hasPhoto = fotoData1?.blob || fotoData2?.blob || reports.find(r=>r._id===id)?.foto || reports.find(r=>r._id===id)?.foto2;
   if(estado==='Firmado'&&!hasPhoto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto adjunta'});
   
-  if (eq && fecha && hi && hf) {
+  if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
     const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
     const rEq = reports.filter(r => r.equipo === eq && r._id !== id);
 
@@ -696,8 +705,8 @@ function validate(){
   }
 
   // VALIDACIÓN DE HORÓMETRO INICIAL VS BASE DE DATOS
-  if(hi && eq && !id){
-    const e = eqByPat(eq);
+  if(!isNaN(hi) && eq && !id){
+    const e=eqByPat(eq);
     if(e && e.horo){
       if(hi < e.horo) {
         msgs.push({t:'err',m:`⊘ Horóm. inicial (${hi}) es MENOR al último registrado (${e.horo})`});
@@ -708,7 +717,7 @@ function validate(){
   }
 
   // RANGO TÍPICO 0-11 HORAS
-  if(hi && hf){
+  if(!isNaN(hi) && !isNaN(hf)){
     if(dif > 11) msgs.push({t:'warn',m:`⚠ Diferencia de ${dif.toFixed(1)}h supera el turno típico de 11h`});
   }
 
