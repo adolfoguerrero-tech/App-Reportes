@@ -694,7 +694,7 @@ function validate(){
     const pasados = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder);
     if (pasados.length > 0) {
       pasados.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
-      const ant = pasados[pasados.length-1];
+      const ant = pasados[0];
       if (parseFloat(ant.hf) > hi) msgs.push({t:'err', m:`⊘ Choque: Turno anterior (${fmtD(ant.fecha)} ${ant.turno}) terminó en ${ant.hf}.`});
     }
 
