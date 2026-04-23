@@ -691,10 +691,13 @@ function validate(){
       if (parseFloat(sig.hi) < hf) msgs.push({t:'err', m:`⊘ Choque: Turno siguiente (${fmtD(sig.fecha)} ${sig.turno}) parte en ${sig.hi}.`});
     }
   }
-  
   if(hi&&eq&&!id){
     const e=eqByPat(eq);
-    if(e&&e.horo&&Math.abs(hi-e.horo)>2)msgs.push({t:'warn',m:`⚠ Horóm. inicial (${hi}) difiere del último conocido (${e.horo})`});
+    if(e&&e.horo){
+      if(hi < e.horo) msgs.push({t:'err',m:`⚠ Horóm. inicial (${hi}) es MENOR al último registrado (${e.horo})`});
+      else if(hi - e.horo > e.horo) msgs.push({t:'warn',m:`⚠ Salto de hora respecto al último registro (${e.horo})`});
+    }
+  }
   }
   if(hi&&hf){const d=hf-hi;if(d>0&&(d<2||d>14))msgs.push({t:'warn',m:`⚠ Diferencia ${d.toFixed(1)}h fuera del rango típico 2-14h`})}
   if(!folio)msgs.push({t:'warn',m:'⚠ Report sin folio'});
