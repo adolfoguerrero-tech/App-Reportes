@@ -576,6 +576,7 @@ function irReportar(pat,fecha,turno){closeModal();clearForm();show('new');setTim
 function initNewForm(){llenarSelects();if(!document.getElementById('f-id').value){document.getElementById('f-fecha').value=todayS();document.getElementById('new-title').textContent='Ingresar nuevo report';}}
 function editReport(id){
   const r=reports.find(x=>x._id===id);if(!r)return;
+   fotoData1=null; fotoData2=null;
   show('new');
   setTimeout(()=>{
     document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;
