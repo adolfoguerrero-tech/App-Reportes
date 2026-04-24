@@ -171,8 +171,9 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <form id="form-new" onsubmit="saveReport(event)">
 <input type="hidden" id="f-id">
 <div class="grid3">
-<div><label>Fecha</label><input type="date" id="f-fecha" required></div>
-<div><label>Turno</label><select id="f-turno" required><option value="">—</option><option>Día</option><option>Noche</option></select></div>
+<!-- CAMBIO 1: onchange en fecha y turno para recalcular horómetro sugerido -->
+<div><label>Fecha</label><input type="date" id="f-fecha" required onchange="onEqChange()"></div>
+<div><label>Turno</label><select id="f-turno" required onchange="onEqChange()"><option value="">—</option><option>Día</option><option>Noche</option></select></div>
 <div><label>Folio(s) papel</label><input id="f-folio" placeholder="Ej: 34477 / 34478"></div>
 </div>
 <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
@@ -602,7 +603,6 @@ async function delReport(id){
   }catch(e){toast('Error: '+e.message,'err')}
 }
 
-// QUITAR FOTO 1 o 2
 function quitFoto(num){
   document.getElementById('f-foto-prev'+num).innerHTML='';
   document.getElementById('f-foto'+num).value='';
@@ -610,7 +610,6 @@ function quitFoto(num){
   validate();
 }
 
-// COMPRIMIR FOTO 1 o 2
 function compFoto(e, num){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -630,7 +629,33 @@ function compFoto(e, num){
   };r.readAsDataURL(f);
 }
 
-function onEqChange(){const p=document.getElementById('f-eq').value;const e=eqByPat(p);if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';calcDif();}
+// ============ CAMBIO 2: onEqChange INTELIGENTE ============
+// Ahora busca el turno cronológicamente anterior para sugerir horómetro,
+// NO el máximo global. Así los reports atrasados reciben el valor correcto.
+function onEqChange(){
+  const p = document.getElementById('f-eq').value;
+  const e = eqByPat(p);
+  if(!e || document.getElementById('f-id').value) { calcDif(); return; }
+  
+  const fecha = document.getElementById('f-fecha').value;
+  const turno = document.getElementById('f-turno').value;
+  
+  if(fecha && turno && p) {
+    const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
+    const anteriores = reports
+      .filter(r => r.equipo === p && (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder)
+      .sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
+    
+    if(anteriores.length > 0) {
+      document.getElementById('f-hi').value = anteriores[0].hf;
+    } else {
+      document.getElementById('f-hi').value = e.horo || '';
+    }
+  } else {
+    document.getElementById('f-hi').value = e.horo || '';
+  }
+  calcDif();
+}
 
 function calcDif(){
   const hi=parseFloat(document.getElementById('f-hi').value)||0;
@@ -659,10 +684,7 @@ function validate(){
   const turno=document.getElementById('f-turno').value;
   const folio=document.getElementById('f-folio').value;
   const estado=document.getElementById('f-estado').value;
-  
-  // OBTENEMOS LA OBSERVACIÓN Y NOS ASEGURAMOS DE QUE SEA UN TEXTO
   const obs = (document.getElementById('f-obs').value || '').trim();
-  
   const hoy=todayS();
   const dif = hf - hi;
   
@@ -676,17 +698,20 @@ function validate(){
     if(hefRed > difRed) {
       msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
     } else if(hefRed < difRed && obs === '') {
-      // AQUÍ ESTÁ LA MAGIA: Si está vacía, manda el error sin importar qué navegador uses.
       msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Escribe una Observación obligatoria indicando el motivo.'});
     }
   }
 
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   
+  // CAMBIO 4: FOLIO DUPLICADO REPUESTO
+  if(folio && eq && reports.some(r=>r.folio===folio && r.equipo===eq && r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
+  
   // VALIDAMOS QUE AL MENOS HAYA UNA FOTO SI ESTÁ FIRMADO
   const hasPhoto = fotoData1?.blob || fotoData2?.blob || (id && reports.find(r=>r._id===id)?.foto) || (id && reports.find(r=>r._id===id)?.foto2);
   if(estado==='Firmado'&&!hasPhoto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto adjunta'});
   
+  // VALIDACIÓN CRONOLÓGICA (pasados y futuros) — cubre reports atrasados correctamente
   if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
     const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
     const rEq = reports.filter(r => r.equipo === eq && r._id !== id);
@@ -706,19 +731,11 @@ function validate(){
     }
   }
   
-  // VALIDACIÓN INICIAL VS BASE DE DATOS
-  if(!isNaN(hi) && eq && !id){
-    const e=eqByPat(eq);
-    if(e && e.horo){
-      if(hi < e.horo) {
-        msgs.push({t:'err',m:`⊘ Horóm. inicial (${hi}) es MENOR al último registrado (${e.horo})`});
-      } else if(hi > e.horo) {
-        msgs.push({t:'warn',m:`⚠ Salto de horómetro respecto al último registro (${e.horo})`});
-      }
-    }
-  }
+  // CAMBIO 3: ELIMINADO el bloque "VALIDACIÓN INICIAL VS BASE DE DATOS" que comparaba
+  // contra e.horo (máximo global). La validación cronológica de arriba ya cubre todo
+  // correctamente, incluyendo reports atrasados.
 
-  // RANGO TÍPICO 0-11 HORAS
+  // RANGO TÍPICO 0-11 HORAS (advertencia, no bloquea)
   if(!isNaN(hi) && !isNaN(hf)){
     if(dif > 11) msgs.push({t:'warn',m:`⚠ Diferencia de ${dif.toFixed(1)}h supera el turno típico de 11h`});
   }
@@ -773,7 +790,7 @@ async function saveReport(e){
       hef:parseFloat(document.getElementById('f-hef').value)||0,
       obs:document.getElementById('f-obs').value,
       foto:fotoUrl1,
-      foto2:fotoUrl2, // GUARDAMOS LA SEGUNDA FOTO
+      foto2:fotoUrl2,
       estado:document.getElementById('f-estado').value,
       usuario:currentUser.email,
       ts:new Date().toISOString()
@@ -918,7 +935,6 @@ function exportExcel(){
   toast('Excel generado con éxito', 'ok');
 }
 
-// DESCARGA LAS DOS FOTOS EN EL ZIP
 async function exportFotosZip(){
   const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
   const filt=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin&&(r.foto||r.foto2));
