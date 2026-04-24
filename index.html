@@ -596,13 +596,21 @@ async function delReport(id){
   if(!confirm('¿Eliminar este report?'))return;
   try{
     const r=reports.find(x=>x._id===id);
+    const pat = r?.equipo;
     if(r&&r.foto){try{await storage.refFromURL(r.foto).delete()}catch(e){}}
     if(r&&r.foto2){try{await storage.refFromURL(r.foto2).delete()}catch(e){}}
     await db.collection('reportes').doc(id).delete();
+    
+    // Recalcular horómetro del equipo sin el report borrado
+    if(pat){
+      const restantes = reports.filter(x => x.equipo === pat && x._id !== id);
+      const maxHf = restantes.reduce((m, x) => Math.max(m, Number(x.hf || 0)), 0);
+      await db.collection('equipos').doc(pat).update({horo: maxHf});
+    }
+    
     clearForm();show('grid');toast('Report eliminado','ok');
   }catch(e){toast('Error: '+e.message,'err')}
 }
-
 function quitFoto(num){
   document.getElementById('f-foto-prev'+num).innerHTML='';
   document.getElementById('f-foto'+num).value='';
