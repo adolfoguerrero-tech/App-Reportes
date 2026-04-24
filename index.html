@@ -666,10 +666,10 @@ function onEqChange(){
 }
 
 function calcDif(){
-  const hi=parseFloat(document.getElementById('f-hi').value)||0;
-  const hf=parseFloat(document.getElementById('f-hf').value)||0;
-  const dif=(hf-hi).toFixed(1);
-  document.getElementById('f-dif').value=dif;
+  const hi=parseFloat(document.getElementById('f-hi').value);
+  const hf=parseFloat(document.getElementById('f-hf').value);
+  const dif = (!isNaN(hi) && !isNaN(hf)) ? (hf-hi).toFixed(1) : '';
+  document.getElementById('f-dif').value = dif;
   
   const isNew = !document.getElementById('f-id').value;
   const hefInput = document.getElementById('f-hef');
@@ -894,7 +894,11 @@ function exportExcel(){
   const m1 = meses[d1.getMonth()], m2 = meses[d2.getMonth()];
   const tituloMeses = (m1 === m2) ? m1 : `${m1}/${m2}`;
 
-  equipos.forEach(eq => {
+  equipos.filter(eq => {
+  const tieneR = reports.some(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
+  const tieneA = ausencias.some(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
+  return tieneR || tieneA;
+}).forEach(eq => {
     const rEq = reports.filter(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
     const aEq = ausencias.filter(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
     
