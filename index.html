@@ -16,16 +16,30 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px; transition: background-color 0.3s, color 0.3s;}
 
-/* ====== NUEVO: CSS PANTALLA DE CARGA SEGURO ====== */
+/* ====== MODO OSCURO SEGURO ====== */
+body.dark-theme { background-color: #121212; color: #e0e0e0; }
+body.dark-theme .card, body.dark-theme .stat, body.dark-theme .modal-box, body.dark-theme .login-box { background-color: #1e1e1e; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+body.dark-theme input, body.dark-theme select, body.dark-theme textarea { background-color: #2c2c2c; color: #fff; border-color: #444; }
+body.dark-theme th { background-color: #2c2c2c; color: #aaa; border-bottom-color: #444; }
+body.dark-theme td { border-bottom-color: #2a2a2a; }
+body.dark-theme h2, body.dark-theme h3 { color: #66b2ff; }
+body.dark-theme label, body.dark-theme .small { color: #999; }
+body.dark-theme .cell-fut { background-color: #252525; color: #555; }
+body.dark-theme .btn-sec { background-color: #333; color: #ddd; border-color: #555; }
+body.dark-theme .btn-sec:hover { background-color: #444; }
+body.dark-theme .empty { color: #666; }
+/* ================================ */
+
+/* ====== PANTALLA DE CARGA ====== */
 .splash {position:fixed;inset:0;background:#1F4E78;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;}
 .splash.hide {opacity:0;pointer-events:none;}
 .splash img {width:200px;margin-bottom:20px; object-fit:contain;}
 .splash-bar {width:200px;height:4px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden;}
 .splash-bar div {width:0%;height:100%;background:#fff;border-radius:4px;transition:width 0.3s;}
 .splash p {color:rgba(255,255,255,0.8);font-size:12px;margin-top:12px;}
-/* ================================================= */
+/* ================================ */
 
 .nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .nav h1{font-size:15px;margin-right:12px;font-weight:500;display:flex;align-items:center}
@@ -40,6 +54,10 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5
 .pill-ok{background:#22c55e;color:#fff}
 .pill-off{background:#ef4444;color:#fff}
 .pill-wait{background:#eab308;color:#fff}
+
+.dark-toggle {background:transparent !important; border:none !important; font-size:16px !important; padding:4px 8px !important; cursor:pointer; color:white; opacity:0.8;}
+.dark-toggle:hover {opacity:1;}
+
 .container{padding:16px;max-width:1500px;margin:0 auto}
 .card{background:#fff;border-radius:8px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 h2{font-size:16px;margin-bottom:10px;color:#1F4E78;font-weight:500}
@@ -54,6 +72,8 @@ table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
 th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
 td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top}
 .clickable:hover{background:#fafbfc;cursor:pointer}
+body.dark-theme .clickable:hover {background:#252525;cursor:pointer;}
+
 .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
 .b-ok{background:#D4EDDA;color:#155724}.b-warn{background:#FFF3CD;color:#856404}
 .b-alert{background:#FAEEDA;color:#633806}.b-crit{background:#F8D7DA;color:#721C24}
@@ -72,13 +92,16 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 .err{background:#F8D7DA;color:#721C24;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
 .warn{background:#FFF3CD;color:#856404;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
 .ok{background:#D4EDDA;color:#155724;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
-.cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:7px;cursor:pointer;border-radius:3px}
-.cell-signed{background:#D4EDDA;border-left:3px solid #198754;padding:7px;cursor:pointer;border-radius:3px}
-.cell-draft{background:#FFF3CD;border-left:3px solid #BA7517;padding:7px;cursor:pointer;border-radius:3px}
-.cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:7px;cursor:pointer;border-radius:3px}
-.cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:7px;cursor:pointer;border-radius:3px}
+
+/* COLORES ESTRICTOS DE GRILLA (INCLUSO EN DARK MODE) */
+.cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:7px;cursor:pointer;border-radius:3px;color:#1a1a1a;}
+.cell-signed{background:#D4EDDA;border-left:3px solid #198754;padding:7px;cursor:pointer;border-radius:3px;color:#1a1a1a;}
+.cell-draft{background:#FFF3CD;border-left:3px solid #BA7517;padding:7px;cursor:pointer;border-radius:3px;color:#1a1a1a;}
+.cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:7px;cursor:pointer;border-radius:3px;color:#1a1a1a;}
+.cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:7px;cursor:pointer;border-radius:3px;color:#1a1a1a;}
 .cell-fut{background:#f8f8f8;color:#aaa;padding:7px;text-align:center;border-radius:3px}
-.cell-ok small,.cell-signed small,.cell-draft small,.cell-just small,.cell-miss small{font-size:10px;display:block;color:#555;margin-top:2px}
+.cell-ok small,.cell-signed small,.cell-draft small,.cell-just small,.cell-miss small{font-size:10px;display:block;color:#444;margin-top:2px}
+
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
 .modal.show{display:flex}
 .modal-box{background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow-y:auto}
@@ -94,7 +117,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
 .pill-foto{background:#D4EDDA;color:#155724;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
 .pill-nofoto{background:#FFF3CD;color:#856404;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
-.tab-estado{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;text-transform:uppercase}
+.tab-estado{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;text-transform:uppercase;color:#1a1a1a;}
 
 @media (max-width: 768px) {
   .nav { padding: 10px; justify-content: center; }
@@ -118,6 +141,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
   <div class="splash-bar"><div id="splash-progress"></div></div>
   <p id="splash-msg">Iniciando sistema...</p>
 </div>
+
 <div id="login-view" class="hidden">
 <div class="login-box">
 <img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Rentamaq Logo" class="logo-login">
@@ -146,6 +170,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <button onclick="show('equipos')" id="n-equipos" class="hidden">Equipos</button>
 <button onclick="show('err')" id="n-err" class="hidden">Diagnóstico</button>
 <div class="spacer"></div>
+<button class="dark-toggle" onclick="toggleDark()" id="btn-dark" title="Modo Oscuro">🌙</button>
 <span id="user-label" class="small" style="color:#fff;margin-right:10px;font-weight:bold"></span>
 <button onclick="doLogout()" class="btn-sec" style="color:#333">Salir</button>
 </div>
@@ -200,14 +225,14 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div class="grid3">
 <div><label>Horóm. inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
 <div><label>Horóm. final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
-<div><label>Diferencia Horo.</label><input id="f-dif" disabled style="background:#f5f5f5;font-weight:bold"></div>
+<div><label>Diferencia Horo.</label><input id="f-dif" disabled style="background:rgba(0,0,0,0.05);font-weight:bold"></div>
 </div>
 
 <label style="color:#BA7517;font-weight:bold">Horas Efectivas (Validadas Teck)</label>
 <input type="number" step="0.1" id="f-hef" required style="border-color:#BA7517">
 <p class="small" style="margin-bottom:8px">Se autocompleta con la diferencia. Modifica este valor solo si hubo descuentos de horas.</p>
 
-<div class="grid2" style="background:#f9fafb; padding:10px; border-radius:5px; border:1px solid #eee; margin-top:10px;">
+<div class="grid2" style="background:rgba(0,0,0,0.02); padding:10px; border-radius:5px; border:1px solid rgba(0,0,0,0.1); margin-top:10px;">
   <div>
     <label style="margin-top:0">Foto Reporte 1</label>
     <input type="file" id="f-foto1" accept="image/*" onchange="compFoto(event, 1)">
@@ -290,7 +315,24 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="toast-container"></div>
 
 <script>
-// ============ PWA (MANTIENE LA CAPACIDAD DE INSTALARSE) ============
+// ============ SCRIPT MODO OSCURO ============
+function toggleDark(){
+  document.body.classList.toggle('dark-theme');
+  const isDark = document.body.classList.contains('dark-theme');
+  document.getElementById('btn-dark').textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+if(localStorage.getItem('theme') === 'dark') {
+  document.body.classList.add('dark-theme');
+}
+window.addEventListener('DOMContentLoaded', () => {
+  if(localStorage.getItem('theme') === 'dark' && document.getElementById('btn-dark')) {
+    document.getElementById('btn-dark').textContent = '☀️';
+  }
+});
+// ============================================
+
+// ============ PWA INSTALLATION ============
 if('serviceWorker' in navigator){
   const swCode='self.addEventListener("fetch",e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));';
   const swBlob=new Blob([swCode],{type:'application/javascript'});
@@ -299,7 +341,7 @@ if('serviceWorker' in navigator){
 const manifest={name:"Rentamaq Reportabilidad",short_name:"Rentamaq",start_url:location.href,display:"standalone",background_color:"#1F4E78",theme_color:"#1F4E78",icons:[{src:"https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8",sizes:"192x192",type:"image/png"}]};
 const mLink=document.createElement('link');mLink.rel='manifest';mLink.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(manifest));document.head.appendChild(mLink);
 
-// ====== NUEVAS FUNCIONES PANTALLA DE CARGA ======
+// ====== FUNCIONES PANTALLA DE CARGA ======
 let loadedCollections = 0;
 function splashProgress(pct, msg) {
   const bar = document.getElementById('splash-progress');
@@ -311,7 +353,6 @@ function hideSplash() {
   const s = document.getElementById('splash');
   if(s) { s.classList.add('hide'); setTimeout(() => s.remove(), 600); }
 }
-// =================================================
 
 // ============ CONFIG ============
 const firebaseConfig = {
@@ -368,7 +409,7 @@ auth.onAuthStateChanged(async u=>{
     unsubs.forEach(f=>f());unsubs=[];
     document.getElementById('app').classList.add('hidden');
     document.getElementById('login-view').classList.remove('hidden');
-    hideSplash(); // Oculta si hay que iniciar sesión
+    hideSplash();
   }
 });
 
@@ -394,14 +435,14 @@ function toast(msg,kind){
   setTimeout(()=>t.remove(),3500);
 }
 
-// ============ BOOTSTRAP (CON BARRA DE CARGA) ============
+// ============ BOOTSTRAP ============
 function bootstrap(){
   const totalCols = 5;
   const handle=(col,tgt,cb)=>{
     const u=db.collection(col).onSnapshot(s=>{
       tgt.length=0;s.docs.forEach(d=>tgt.push({...d.data(),_id:d.id}));
       
-      // Control de la barra de carga
+      // Barra de carga
       loadedCollections++;
       splashProgress(40 + Math.round((loadedCollections/totalCols)*60), 'Cargando ' + col + '...');
       if(loadedCollections >= totalCols) setTimeout(hideSplash, 400);
@@ -573,7 +614,7 @@ function renderGrid(){
   
   let totHrs=0, totHef=0, reptN=0, ausN=0, missN=0, firmN=0;
   
-  let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
+  let html=`<div style="padding:10px;background:rgba(0,0,0,0.03);border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
   html+=`<table><thead><tr><th style="width:110px">Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
   
   dias.forEach(d=>{
@@ -591,7 +632,7 @@ function renderGrid(){
         const fotoPill = fCount > 0 ? `<span class="pill-foto">✓ ${fCount} foto${fCount>1?'s':''}</span>` : '<span class="pill-nofoto">sin foto</span>';
         
         const cls=r.estado==='Firmado'?'cell-signed':(r.estado==='Borrador'?'cell-draft':'cell-ok');
-        const est=r.estado?`<span class="tab-estado" style="background:#eee">${r.estado}</span>`:'';
+        const est=r.estado?`<span class="tab-estado" style="background:rgba(0,0,0,0.05)">${r.estado}</span>`:'';
         
         return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · Ef: ${hef.toFixed(1)}h ${fotoPill}<small>Horo: ${r.hi}→${r.hf} (${dif.toFixed(1)}h) ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
       }
