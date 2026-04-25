@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1F4E78">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Rentamaq">
-<link rel="apple-touch-icon" href="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8">
 <title>Rentamaq Reportabilidad</title>
 <link rel="icon" type="image/png" href="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -15,181 +10,93 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <style>
-:root{
-  --bg:#f5f6f8;--bg2:#fff;--bg3:#f0f2f5;--bg4:#f9fafb;
-  --tx:#1a1a1a;--tx2:#555;--tx3:#888;--tx4:#aaa;
-  --brd:#eee;--brd2:#ddd;--brd3:#e0e0e0;
-  --nav:#1F4E78;--nav2:#163A5C;--accent:#BA7517;
-  --ok:#198754;--ok-bg:#D4EDDA;--ok-tx:#155724;
-  --warn-bg:#FFF3CD;--warn-tx:#856404;
-  --err-bg:#F8D7DA;--err-tx:#721C24;
-  --info-bg:#D1ECF1;--info-tx:#0C5460;
-  --miss-bg:#FCEBEB;--miss-tx:#E24B4A;
-  --card-shadow:0 1px 3px rgba(0,0,0,.06);
-  --transition:0.25s ease;
-}
-[data-theme="dark"]{
-  --bg:#111827;--bg2:#1f2937;--bg3:#374151;--bg4:#2d3748;
-  --tx:#e5e7eb;--tx2:#d1d5db;--tx3:#9ca3af;--tx4:#6b7280;
-  --brd:#374151;--brd2:#4b5563;--brd3:#4b5563;
-  --card-shadow:0 1px 3px rgba(0,0,0,.3);
-}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:13px;transition:background var(--transition),color var(--transition)}
-
-/* SPLASH */
-.splash{position:fixed;inset:0;background:var(--nav);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease}
-.splash.hide{opacity:0;pointer-events:none}
-.splash img{width:200px;margin-bottom:20px;filter:brightness(10)}
-.splash-bar{width:200px;height:3px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden}
-.splash-bar div{width:0%;height:100%;background:#fff;border-radius:3px;transition:width .3s}
-.splash p{color:rgba(255,255,255,.7);font-size:12px;margin-top:12px}
-
-/* NAV */
-.nav{background:var(--nav);color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+.nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .nav h1{font-size:15px;margin-right:12px;font-weight:500;display:flex;align-items:center}
 .logo-nav{height:22px;width:auto;margin-right:10px;object-fit:contain}
 .logo-login{display:block;max-width:260px;width:100%;height:auto;margin:0 auto 20px auto}
 .nav button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:5px;cursor:pointer;font-size:12px;transition:all 0.2s}
 .nav button:hover{background:rgba(255,255,255,.2)}
-.nav button.active{background:#fff;color:var(--nav);font-weight:500}
+.nav button.active{background:#fff;color:#1F4E78;font-weight:500}
 .nav button.hidden{display:none !important}
 .nav .spacer{flex:1}
-.dark-toggle{background:none !important;border:none !important;font-size:16px !important;padding:6px !important;cursor:pointer;opacity:.8}
-.dark-toggle:hover{opacity:1}
-
-/* BREADCRUMB */
-.breadcrumb{background:var(--bg2);border-bottom:1px solid var(--brd);padding:8px 16px;font-size:11px;color:var(--tx3);transition:background var(--transition)}
-.breadcrumb span{color:var(--tx2);font-weight:500}
-.breadcrumb a{color:var(--nav);text-decoration:none;cursor:pointer}
-.breadcrumb a:hover{text-decoration:underline}
-
-/* PILLS */
 .pill{padding:3px 8px;border-radius:10px;font-size:10px;margin-left:6px}
 .pill-ok{background:#22c55e;color:#fff}
 .pill-off{background:#ef4444;color:#fff}
 .pill-wait{background:#eab308;color:#fff}
-
-/* LAYOUT */
 .container{padding:16px;max-width:1500px;margin:0 auto}
-.card{background:var(--bg2);border-radius:8px;padding:16px;margin-bottom:12px;box-shadow:var(--card-shadow);transition:background var(--transition)}
-h2{font-size:16px;margin-bottom:10px;color:var(--nav);font-weight:500}
-[data-theme="dark"] h2{color:#60a5fa}
-h3{font-size:13px;margin-bottom:8px;color:var(--tx2);font-weight:500}
-
-/* STATS */
+.card{background:#fff;border-radius:8px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+h2{font-size:16px;margin-bottom:10px;color:#1F4E78;font-weight:500}
+h3{font-size:13px;margin-bottom:8px;color:#444;font-weight:500}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
-.stat{background:var(--bg2);padding:12px;border-radius:8px;box-shadow:var(--card-shadow);border-left:3px solid var(--nav);transition:background var(--transition)}
-[data-theme="dark"] .stat{border-left-color:#60a5fa}
-.stat .lbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px}
-.stat .val{font-size:22px;font-weight:500;color:var(--nav);margin-top:3px}
-[data-theme="dark"] .stat .val{color:#60a5fa}
-.stat .sub{font-size:10px;color:var(--tx4);margin-top:2px;font-weight:bold}
-
-/* TABLE */
+.stat{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:3px solid #1F4E78}
+.stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.stat .val{font-size:22px;font-weight:500;color:#1F4E78;margin-top:3px}
+.stat .sub{font-size:10px;color:#aaa;margin-top:2px;font-weight:bold}
 .table-responsive{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px}
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
-th{background:var(--bg3);padding:9px;text-align:left;font-weight:500;color:var(--tx2);font-size:11px;border-bottom:1px solid var(--brd3);transition:background var(--transition)}
-td{padding:8px 9px;border-bottom:1px solid var(--brd);vertical-align:top;transition:border-color var(--transition)}
-.clickable:hover{background:var(--bg4);cursor:pointer}
-
-/* BADGES */
+th{background:#f0f2f5;padding:9px;text-align:left;font-weight:500;color:#555;font-size:11px;border-bottom:1px solid #e0e0e0}
+td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top}
+.clickable:hover{background:#fafbfc;cursor:pointer}
 .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
-.b-ok{background:var(--ok-bg);color:var(--ok-tx)}.b-warn{background:var(--warn-bg);color:var(--warn-tx)}
-.b-crit{background:var(--err-bg);color:var(--err-tx)}
-.b-info{background:var(--info-bg);color:var(--info-tx)}.b-draft{background:#E2E3E5;color:#383D41}
-.b-late{background:#FFE0CC;color:#8B4513}
-
-/* FORMS */
-input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--brd2);border-radius:5px;font-size:13px;font-family:inherit;background:var(--bg2);color:var(--tx);transition:background var(--transition),border-color var(--transition)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--nav)}
-label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-bottom:3px;margin-top:9px}
-
-/* BUTTONS */
-.btn{background:var(--nav);color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500;transition:background .2s}
-.btn:hover{background:var(--nav2)}.btn:disabled{background:#ccc;cursor:not-allowed}
-.btn-sec{background:var(--bg2);color:var(--tx2);border:1px solid var(--brd2)}
-.btn-sec:hover{background:var(--bg3)}
+.b-ok{background:#D4EDDA;color:#155724}.b-warn{background:#FFF3CD;color:#856404}
+.b-alert{background:#FAEEDA;color:#633806}.b-crit{background:#F8D7DA;color:#721C24}
+.b-info{background:#D1ECF1;color:#0C5460}.b-draft{background:#E2E3E5;color:#383D41}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1F4E78}
+label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;margin-top:9px}
+.btn{background:#1F4E78;color:#fff;border:none;padding:8px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:500}
+.btn:hover{background:#163A5C}.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-sec{background:#fff;color:#555;border:1px solid #ddd}
+.btn-sec:hover{background:#f5f5f5}
 .btn-dang{background:#c33;color:#fff;border:none}
 .btn-sm{padding:4px 9px;font-size:11px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* MESSAGES */
-.err{background:var(--err-bg);color:var(--err-tx);padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
-.warn{background:var(--warn-bg);color:var(--warn-tx);padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
-.ok{background:var(--ok-bg);color:var(--ok-tx);padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
-
-/* GRID CELLS */
+.err{background:#F8D7DA;color:#721C24;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.warn{background:#FFF3CD;color:#856404;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
+.ok{background:#D4EDDA;color:#155724;padding:7px 9px;border-radius:5px;font-size:11px;margin-top:4px}
 .cell-ok{background:#EAF3DE;border-left:3px solid #639922;padding:7px;cursor:pointer;border-radius:3px}
 .cell-signed{background:#D4EDDA;border-left:3px solid #198754;padding:7px;cursor:pointer;border-radius:3px}
 .cell-draft{background:#FFF3CD;border-left:3px solid #BA7517;padding:7px;cursor:pointer;border-radius:3px}
 .cell-just{background:#E6F1FB;border-left:3px solid #378ADD;padding:7px;cursor:pointer;border-radius:3px}
 .cell-miss{background:#FCEBEB;border-left:3px solid #E24B4A;padding:7px;cursor:pointer;border-radius:3px}
-.cell-fut{background:var(--bg4);color:var(--tx4);padding:7px;text-align:center;border-radius:3px}
+.cell-fut{background:#f8f8f8;color:#aaa;padding:7px;text-align:center;border-radius:3px}
 .cell-ok small,.cell-signed small,.cell-draft small,.cell-just small,.cell-miss small{font-size:10px;display:block;color:#555;margin-top:2px}
-
-/* MODAL */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
 .modal.show{display:flex}
-.modal-box{background:var(--bg2);border-radius:8px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow-y:auto;animation:modalIn .2s ease}
-@keyframes modalIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-/* TRANSITIONS */
-.view-panel{opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .2s ease;display:none}
-.view-panel.active{opacity:1;transform:translateY(0);display:block}
-
-/* PAGINATION */
-.pag{display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:12px;color:var(--tx3)}
-.pag button{background:var(--bg3);border:1px solid var(--brd2);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;color:var(--tx2);transition:background .2s}
-.pag button:hover{background:var(--brd2)}
-.pag button:disabled{opacity:.4;cursor:not-allowed}
-.pag select{width:auto;padding:4px 8px;font-size:11px}
-
-/* UTILITY */
-.hidden{display:none !important}
-.small{font-size:11px;color:var(--tx3)}
-.foto-full{max-width:100%;max-height:300px;border-radius:5px;margin-top:8px;border:1px solid var(--brd2)}
+.modal-box{background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow-y:auto}
+.hidden{display:none}
+.small{font-size:11px;color:#888}
+.foto-full{max-width:100%;max-height:300px;border-radius:5px;margin-top:8px;border:1px solid #ddd}
 .row-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.empty{text-align:center;padding:40px;color:var(--tx4)}
-.loader{text-align:center;padding:40px;color:var(--tx3)}
-.login-box{max-width:380px;margin:80px auto;padding:30px;background:var(--bg2);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.empty{text-align:center;padding:40px;color:#aaa}
+.loader{text-align:center;padding:40px;color:#888}
+.login-box{max-width:380px;margin:80px auto;padding:30px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.toast{position:fixed;bottom:20px;right:20px;background:#1F4E78;color:#fff;padding:12px 18px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:200;animation:slideIn .3s ease}
+.toast.err{background:#c33}.toast.ok{background:#22c55e}
+@keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
 .pill-foto{background:#D4EDDA;color:#155724;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
 .pill-nofoto{background:#FFF3CD;color:#856404;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px}
 .tab-estado{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;text-transform:uppercase}
 
-/* TOAST */
-.toast{position:fixed;right:20px;background:var(--nav);color:#fff;padding:12px 18px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:200;animation:slideIn .3s ease}
-.toast.err{background:#c33}.toast.ok{background:#22c55e}
-@keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* ÚLTIMO REGISTRO */
-.ultimo{font-size:10px;color:var(--tx3);display:block;margin-top:2px}
-.ultimo b{font-weight:600}
-
 @media (max-width: 768px) {
-  .nav{padding:10px;justify-content:center}
-  .nav h1{width:100%;justify-content:center;margin-bottom:10px;margin-right:0}
-  .nav button{flex:1 1 30%;text-align:center;padding:10px 4px;font-size:11px;margin-bottom:6px}
-  .spacer{display:none}
-  #user-label{width:100%;text-align:center;margin:5px 0 10px 0}
-  .grid3,.grid2{grid-template-columns:1fr;gap:0}
-  .row-flex{flex-direction:column;align-items:stretch}
-  .row-flex>div,.row-flex select,.row-flex input,.row-flex button{width:100%!important;margin-bottom:8px}
-  .stats{grid-template-columns:1fr 1fr}
-  .card{padding:12px}
-  .container{padding:10px}
-  .btn{padding:12px;font-size:14px}
-  .breadcrumb{padding:6px 10px}
+  .nav { padding: 10px; justify-content: center; }
+  .nav h1 { width: 100%; justify-content: center; margin-bottom: 10px; margin-right: 0; }
+  .nav button { flex: 1 1 30%; text-align: center; padding: 10px 4px; font-size: 11px; margin-bottom: 6px; }
+  .spacer { display: none; }
+  #user-label { width: 100%; text-align: center; margin: 5px 0 10px 0; }
+  .grid3, .grid2 { grid-template-columns: 1fr; gap: 0; }
+  .row-flex { flex-direction: column; align-items: stretch; }
+  .row-flex > div, .row-flex select, .row-flex input, .row-flex button { width: 100% !important; margin-bottom: 8px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .card { padding: 12px; }
+  .container { padding: 10px; }
+  .btn { padding: 12px; font-size: 14px; } 
 }
 </style></head>
 <body>
-
-<div class="splash" id="splash">
-<img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Rentamaq">
-<div class="splash-bar"><div id="splash-progress"></div></div>
-<p id="splash-msg">Iniciando sistema...</p>
-</div>
 
 <div id="login-view" class="hidden">
 <div class="login-box">
@@ -213,44 +120,40 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 </h1>
 <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
 <button onclick="show('grid')" id="n-grid">Grilla</button>
-<button onclick="show('new')" id="n-new" class="hidden">Nuevo Report</button>
+<button onclick="show('new')" id="n-new">Nuevo Report</button>
 <button onclick="show('cons')" id="n-cons" class="hidden">Consolidados</button>
 <button onclick="show('lotes')" id="n-lotes" class="hidden">Lotes Firma</button>
 <button onclick="show('equipos')" id="n-equipos" class="hidden">Equipos</button>
 <button onclick="show('err')" id="n-err" class="hidden">Diagnóstico</button>
 <div class="spacer"></div>
-<button class="dark-toggle" onclick="toggleDark()" title="Modo oscuro">🌙</button>
 <span id="user-label" class="small" style="color:#fff;margin-right:10px;font-weight:bold"></span>
 <button onclick="doLogout()" class="btn-sec" style="color:#333">Salir</button>
 </div>
 
-<div class="breadcrumb" id="breadcrumb"><a onclick="show('dash')">Inicio</a></div>
-
 <div class="container">
 
-<div id="view-dash" class="view-panel active">
+<div id="view-dash">
 <h2>Panel de control</h2>
 <div class="stats">
 <div class="stat"><div class="lbl">Horas Máquina (Horo)</div><div class="val" id="s-hrs">—</div><div class="sub" id="s-hrs-sub"></div></div>
-<div class="stat"><div class="lbl">Horas Efectivas</div><div class="val" id="s-hef" style="color:var(--accent)">—</div><div class="sub">Validadas Mandante</div></div>
+<div class="stat"><div class="lbl">Horas Efectivas</div><div class="val" id="s-hef" style="color:#BA7517">—</div><div class="sub">Validadas Mandante</div></div>
 <div class="stat"><div class="lbl">Reports Registrados</div><div class="val" id="s-rep">—</div><div class="sub" id="s-rep-sub"></div></div>
-<div class="stat"><div class="lbl">Con Foto Firmada</div><div class="val" id="s-firm" style="color:var(--ok)">—</div><div class="sub" id="s-firm-sub"></div></div>
+<div class="stat"><div class="lbl">Con Foto Firmada</div><div class="val" id="s-firm" style="color:#198754">—</div><div class="sub" id="s-firm-sub"></div></div>
 </div>
 <div class="card">
 <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
 <h3>Equipos de la flota</h3>
 <div class="row-flex">
-<select id="fltr-prov" onchange="dashPage=1;renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
-<select id="fltr-tipo" onchange="dashPage=1;renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
-<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="dashPage=1;renderDash()">
+<select id="fltr-prov" onchange="renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
+<select id="fltr-tipo" onchange="renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
+<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="renderDash()">
 </div>
 </div>
 <div id="dash-table" class="table-responsive"><div class="loader">Cargando...</div></div>
-<div id="dash-pag" class="pag hidden"></div>
 </div>
 </div>
 
-<div id="view-grid" class="view-panel">
+<div id="view-grid" class="hidden">
 <div class="card">
 <div class="row-flex" style="margin-bottom:12px">
 <h2 style="margin:0">Grilla por equipo</h2>
@@ -262,14 +165,14 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 </div>
 </div>
 
-<div id="view-new" class="view-panel">
+<div id="view-new" class="hidden">
 <div class="card" style="max-width:720px;margin:0 auto">
 <h2 id="new-title">Ingresar nuevo report</h2>
 <form id="form-new" onsubmit="saveReport(event)">
 <input type="hidden" id="f-id">
 <div class="grid3">
-<div><label>Fecha</label><input type="date" id="f-fecha" required onchange="onEqChange()"></div>
-<div><label>Turno</label><select id="f-turno" required onchange="onEqChange()"><option value="">—</option><option>Día</option><option>Noche</option></select></div>
+<div><label>Fecha</label><input type="date" id="f-fecha" required></div>
+<div><label>Turno</label><select id="f-turno" required><option value="">—</option><option>Día</option><option>Noche</option></select></div>
 <div><label>Folio(s) papel</label><input id="f-folio" placeholder="Ej: 34477 / 34478"></div>
 </div>
 <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
@@ -277,15 +180,26 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 <div class="grid3">
 <div><label>Horóm. inicial</label><input type="number" step="0.1" id="f-hi" required oninput="calcDif()"></div>
 <div><label>Horóm. final</label><input type="number" step="0.1" id="f-hf" required oninput="calcDif()"></div>
-<div><label>Diferencia Horo.</label><input id="f-dif" disabled style="background:var(--bg3);font-weight:bold"></div>
+<div><label>Diferencia Horo.</label><input id="f-dif" disabled style="background:#f5f5f5;font-weight:bold"></div>
 </div>
-<label style="color:var(--accent);font-weight:bold">Horas Efectivas (Validadas Teck)</label>
-<input type="number" step="0.1" id="f-hef" required style="border-color:var(--accent)">
+
+<label style="color:#BA7517;font-weight:bold">Horas Efectivas (Validadas Teck)</label>
+<input type="number" step="0.1" id="f-hef" required style="border-color:#BA7517">
 <p class="small" style="margin-bottom:8px">Se autocompleta con la diferencia. Modifica este valor solo si hubo descuentos de horas.</p>
-<div class="grid2" style="background:var(--bg4);padding:10px;border-radius:5px;border:1px solid var(--brd);margin-top:10px">
-  <div><label style="margin-top:0">Foto Reporte 1</label><input type="file" id="f-foto1" accept="image/*" onchange="compFoto(event,1)"><div id="f-foto-prev1"></div></div>
-  <div><label style="margin-top:0">Foto Reporte 2 (Opcional - Cambio de Operador)</label><input type="file" id="f-foto2" accept="image/*" onchange="compFoto(event,2)"><div id="f-foto-prev2"></div></div>
+
+<div class="grid2" style="background:#f9fafb; padding:10px; border-radius:5px; border:1px solid #eee; margin-top:10px;">
+  <div>
+    <label style="margin-top:0">Foto Reporte 1</label>
+    <input type="file" id="f-foto1" accept="image/*" onchange="compFoto(event, 1)">
+    <div id="f-foto-prev1"></div>
+  </div>
+  <div>
+    <label style="margin-top:0">Foto Reporte 2 (Opcional - Cambio de Operador)</label>
+    <input type="file" id="f-foto2" accept="image/*" onchange="compFoto(event, 2)">
+    <div id="f-foto-prev2"></div>
+  </div>
 </div>
+
 <label>Estado</label>
 <select id="f-estado">
   <option value="Borrador">Borrador (sin firmar)</option>
@@ -301,7 +215,7 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 </div>
 </div>
 
-<div id="view-cons" class="view-panel">
+<div id="view-cons" class="hidden">
 <h2>Consolidados del período</h2>
 <div class="card">
 <div class="row-flex" style="margin-bottom:12px">
@@ -315,7 +229,7 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 </div>
 </div>
 
-<div id="view-lotes" class="view-panel">
+<div id="view-lotes" class="hidden">
 <div class="card">
 <div class="row-flex" style="justify-content:space-between;margin-bottom:12px">
 <h2 style="margin:0">Lotes enviados a firma Teck</h2>
@@ -325,7 +239,7 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 </div>
 </div>
 
-<div id="view-equipos" class="view-panel">
+<div id="view-equipos" class="hidden">
 <div class="card">
 <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
 <h2 style="margin:0">Gestión de Flota</h2>
@@ -340,7 +254,7 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 </div>
 </div>
 
-<div id="view-err" class="view-panel">
+<div id="view-err" class="hidden">
 <div class="card">
 <h2>Diagnóstico Operacional Estricto</h2>
 <div id="err-body"></div>
@@ -357,148 +271,143 @@ label{display:block;font-size:11px;font-weight:500;color:var(--tx2);margin-botto
 
 <script>
 // ============ CONFIG ============
-const firebaseConfig={apiKey:"AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",authDomain:"app-reportabilidad.firebaseapp.com",projectId:"app-reportabilidad",storageBucket:"app-reportabilidad.firebasestorage.app",messagingSenderId:"423911487944",appId:"1:423911487944:web:abbf3c7464bb335bfc28fd"};
+const firebaseConfig = {
+  apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
+  authDomain: "app-reportabilidad.firebaseapp.com",
+  projectId: "app-reportabilidad",
+  storageBucket: "app-reportabilidad.firebasestorage.app", 
+  messagingSenderId: "423911487944",
+  appId: "1:423911487944:web:abbf3c7464bb335bfc28fd"
+};
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore(),storage=firebase.storage(),auth=firebase.auth();
-const MOTIVOS=['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
-let reports=[],equipos=[],ausencias=[],provs=[],lotes=[];
-let fotoData1=null,fotoData2=null,currentUser=null,userRole='operador';
-let unsubs=[],dashPage=1,dashPageSize=20;
-let currentView='dash',currentEqPat='';
+const db = firebase.firestore();
+const storage = firebase.storage();
+const auth = firebase.auth();
 
-// ============ PWA ============
-if('serviceWorker' in navigator){
-  const swCode='self.addEventListener("fetch",e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));';
-  const swBlob=new Blob([swCode],{type:'application/javascript'});
-  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
-}
-const manifest={name:"Rentamaq Reportabilidad",short_name:"Rentamaq",start_url:location.href,display:"standalone",background_color:"#1F4E78",theme_color:"#1F4E78",icons:[{src:"https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8",sizes:"192x192",type:"image/png"}]};
-const mLink=document.createElement('link');mLink.rel='manifest';mLink.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(manifest));document.head.appendChild(mLink);
+const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
-// ============ DARK MODE ============
-function toggleDark(){
-  const d=document.documentElement;
-  const isDark=d.getAttribute('data-theme')==='dark';
-  d.setAttribute('data-theme',isDark?'':'dark');
-  document.querySelector('.dark-toggle').textContent=isDark?'🌙':'☀️';
-  localStorage.setItem('theme',isDark?'':'dark');
-}
-(function(){const t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');setTimeout(()=>{const b=document.querySelector('.dark-toggle');if(b)b.textContent='☀️'},100)}})();
+let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
+let fotoData1=null, fotoData2=null, currentUser=null, userRole='operador'; 
+let unsubs=[];
 
-// ============ SPLASH ============
-let splashStep=0;
-function splashProgress(pct,msg){
-  const bar=document.getElementById('splash-progress');
-  const txt=document.getElementById('splash-msg');
-  if(bar)bar.style.width=pct+'%';
-  if(txt)txt.textContent=msg;
-}
-function hideSplash(){
-  const s=document.getElementById('splash');
-  if(s){s.classList.add('hide');setTimeout(()=>s.remove(),600)}
-}
-
-// ============ TOAST ============
-function toast(msg,kind){
-  const c=document.getElementById('toast-container');
-  const n=c.children.length;
-  const t=document.createElement('div');t.className='toast '+(kind||'');t.textContent=msg;
-  t.style.bottom=(20+n*55)+'px';c.appendChild(t);
-  setTimeout(()=>t.remove(),3500);
-}
-
-// ============ UTILS ============
-function todayS(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function fmtD(d){return new Date(d+'T12:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
-function defaultPeriod(){const d=new Date();let m=d.getMonth();if(d.getDate()<=20)m--;const f=new Date(d.getFullYear(),m,21),g=new Date(d.getFullYear(),m+1,20),p=n=>n<10?'0'+n:n;return{ini:`${f.getFullYear()}-${p(f.getMonth()+1)}-21`,fin:`${g.getFullYear()}-${p(g.getMonth()+1)}-20`}}
-function eqByPat(p){return equipos.find(e=>e.patente===p)}
-function localDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function setStatus(k,t){const e=document.getElementById('cloud-status');e.className='pill pill-'+(k==='ok'?'ok':k==='err'?'off':'wait');e.textContent=t}
-
-// ============ BREADCRUMB ============
-function setBread(...parts){
-  const bc=document.getElementById('breadcrumb');
-  let html='<a onclick="show(\'dash\')">Inicio</a>';
-  parts.forEach((p,i)=>{html+=' › ';if(i<parts.length-1&&p.click)html+=`<a onclick="${p.click}">${p.text}</a>`;else html+=`<span>${p.text||p}</span>`});
-  bc.innerHTML=html;
-}
-
-// ============ VIEW TRANSITIONS ============
-function show(v){
-  const restricted=['cons','lotes','equipos','err'];
-  if(restricted.includes(v)&&userRole!=='admin'){toast('Acceso denegado','err');return}
-  currentView=v;
-  document.querySelectorAll('.view-panel').forEach(el=>{el.classList.remove('active')});
-  document.querySelectorAll('.nav button[id^="n-"]').forEach(b=>b.classList.remove('active'));
-  const panel=document.getElementById('view-'+v);
-  if(panel){panel.style.display='block';requestAnimationFrame(()=>requestAnimationFrame(()=>panel.classList.add('active')))}
-  const btn=document.getElementById('n-'+v);if(btn)btn.classList.add('active');
-  if(v==='dash'){setBread();renderDash()}
-  if(v==='grid'){renderGrid()}
-  if(v==='new'){initNewForm()}
-  if(v==='cons'){setBread('Consolidados');renderCons()}
-  if(v==='lotes'){setBread('Lotes Firma');renderLotes()}
-  if(v==='equipos'){setBread('Gestión de Flota');renderEquiposTab()}
-  if(v==='err'){setBread('Diagnóstico');renderErr()}
-}
-
-// ============ AUTH ============
+// ============ AUTH CON ROLES ============
 auth.onAuthStateChanged(async u=>{
-  splashProgress(30,'Verificando acceso...');
   if(u){
     currentUser=u;
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    try{
-      const doc=await db.collection('usuarios').doc(u.email.toLowerCase()).get();
-      if(doc.exists&&doc.data().rol==='admin'){
-        userRole='admin';
-        document.getElementById('user-label').innerHTML=`⭐ Admin: ${u.email}`;
-        ['n-cons','n-lotes','n-equipos','n-err'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
-      }else{
-        userRole='operador';
-        document.getElementById('user-label').innerHTML=`👤 ${u.email}`;
-        ['n-cons','n-lotes','n-equipos','n-err'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    setStatus('wait','Verificando perfil...');
+    
+    try {
+      const doc = await db.collection('usuarios').doc(u.email.toLowerCase()).get();
+      if (doc.exists && doc.data().rol === 'admin') {
+        userRole = 'admin';
+        document.getElementById('user-label').innerHTML = `⭐ Admin: ${u.email}`;
+        ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+      } else {
+        userRole = 'operador';
+        document.getElementById('user-label').innerHTML = `👤 Operador: ${u.email}`;
+        ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
       }
-    }catch(e){
-      userRole='operador';
-      document.getElementById('user-label').innerHTML=`👤 ${u.email}`;
-      ['n-cons','n-lotes','n-equipos','n-err'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    } catch(e) {
+      userRole = 'operador';
+      document.getElementById('user-label').innerHTML = `👤 Operador: ${u.email}`;
+      ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => document.getElementById(id).classList.add('hidden'));
     }
-    splashProgress(50,'Cargando datos...');
-    setStatus('ok','Conectado');bootstrap();
-  }else{
-    currentUser=null;userRole='operador';unsubs.forEach(f=>f());unsubs=[];
+
+    setStatus('ok','Conectado');
+    bootstrap();
+  } else {
+    currentUser=null;
+    userRole='operador';
+    unsubs.forEach(f=>f());unsubs=[];
     document.getElementById('app').classList.add('hidden');
     document.getElementById('login-view').classList.remove('hidden');
-    hideSplash();
   }
 });
-function doLogin(e){e.preventDefault();auth.signInWithEmailAndPassword(document.getElementById('li-email').value,document.getElementById('li-pass').value).catch(()=>{document.getElementById('li-err').innerHTML='<div class="err">Error de acceso. Verifique sus datos.</div>'})}
+
+function doLogin(e){
+  e.preventDefault();
+  const email=document.getElementById('li-email').value;
+  const pass=document.getElementById('li-pass').value;
+  auth.signInWithEmailAndPassword(email,pass).catch(err=>{
+    document.getElementById('li-err').innerHTML='<div class="err">Error de acceso. Verifique sus datos.</div>';
+  });
+}
 function doLogout(){auth.signOut()}
 
+function setStatus(kind,txt){
+  const el=document.getElementById('cloud-status');
+  el.className='pill pill-'+(kind==='ok'?'ok':kind==='err'?'off':'wait');
+  el.textContent=txt;
+}
+
+function toast(msg,kind){
+  const t=document.createElement('div');t.className='toast '+(kind||'');t.textContent=msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
 // ============ BOOTSTRAP ============
-let loadedCollections=0;
 function bootstrap(){
-  const total=5;
   const handle=(col,tgt,cb)=>{
     const u=db.collection(col).onSnapshot(s=>{
       tgt.length=0;s.docs.forEach(d=>tgt.push({...d.data(),_id:d.id}));
-      loadedCollections++;
-      splashProgress(50+Math.round(loadedCollections/total*45),'Cargando '+col+'...');
-      if(loadedCollections>=total){splashProgress(100,'Listo');setTimeout(hideSplash,400)}
       if(cb)cb();
-    },err=>{toast('Error: '+col,'err');setStatus('err','Error')});
+    },err=>{toast('Error cargando '+col+': '+err.message,'err');setStatus('err','Error')});
     unsubs.push(u);
   };
-  handle('equipos',equipos,()=>{renderDash();llenarSelects();if(currentView==='grid')renderGrid();if(userRole==='admin')renderEquiposTab()});
-  handle('reportes',reports,()=>{renderDash();if(currentView==='grid')renderGrid();if(userRole==='admin'&&currentView==='cons')renderCons();if(userRole==='admin'&&currentView==='err')renderErr()});
-  handle('ausencias',ausencias,()=>{renderDash();if(currentView==='grid')renderGrid()});
+  handle('equipos',equipos,()=>{renderDash();llenarSelects();if(!isHidden('grid'))renderGrid();if(userRole==='admin')renderEquiposTab()});
+  handle('reportes',reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(userRole==='admin'&&!isHidden('err'))renderErr()});
+  handle('ausencias',ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
   handle('proveedores',provs,()=>{renderDash();if(userRole==='admin')renderEquiposTab()});
-  handle('lotes',lotes,()=>{if(userRole==='admin'&&currentView==='lotes')renderLotes()});
-  initGrid();if(userRole==='admin')initCons();
+  handle('lotes',lotes,()=>{if(userRole==='admin'&&!isHidden('lotes'))renderLotes()});
+  initGrid();
+  if(userRole==='admin')initCons();
   document.getElementById('f-fecha').value=todayS();
 }
+
+function isHidden(v){return document.getElementById('view-'+v).classList.contains('hidden')}
+
+function show(v){
+  const restricted = ['cons', 'lotes', 'equipos', 'err'];
+  if (restricted.includes(v) && userRole !== 'admin') {
+    toast('Acceso denegado', 'err');
+    return;
+  }
+
+  ['dash','grid','new','cons','lotes','equipos','err'].forEach(x=>{
+    document.getElementById('view-'+x).classList.add('hidden');
+    document.getElementById('n-'+x)?.classList.remove('active');
+  });
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.getElementById('n-'+v)?.classList.add('active');
+  if(v==='dash')renderDash();
+  if(v==='grid')renderGrid();
+  if(v==='new')initNewForm();
+  if(v==='cons')renderCons();
+  if(v==='lotes')renderLotes();
+  if(v==='equipos')renderEquiposTab();
+  if(v==='err')renderErr();
+}
+
+function todayS(){return new Date().toISOString().slice(0,10)}
+function fmtD(d){return new Date(d+'T00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}
+
+function defaultPeriod() {
+  const d = new Date();
+  let mesIni = d.getMonth();
+  let añoIni = d.getFullYear();
+  if (d.getDate() <= 20) mesIni = mesIni - 1; 
+  const fIni = new Date(añoIni, mesIni, 21);
+  const fFin = new Date(añoIni, mesIni + 1, 20);
+  const pad = (n) => n < 10 ? '0'+n : n;
+  return {
+    ini: `${fIni.getFullYear()}-${pad(fIni.getMonth()+1)}-21`,
+    fin: `${fFin.getFullYear()}-${pad(fFin.getMonth()+1)}-20`
+  };
+}
+function eqByPat(p){return equipos.find(e=>e.patente===p)}
 
 // ============ DASHBOARD ============
 function renderDash(){
@@ -507,75 +416,44 @@ function renderDash(){
   if(fp){const cur=fp.value;fp.innerHTML='<option value="">Todos proveedores</option>'+provs.map(p=>`<option ${p.nombre===cur?'selected':''}>${p.nombre}</option>`).join('')}
   const ft=document.getElementById('fltr-tipo');
   if(ft){const cur=ft.value;const tipos=[...new Set(equipos.map(e=>e.tipo))].sort();ft.innerHTML='<option value="">Todos tipos</option>'+tipos.map(t=>`<option ${t===cur?'selected':''}>${t}</option>`).join('')}
+  
   const f=(document.getElementById('fltr')?.value||'').toLowerCase();
   const fProv=document.getElementById('fltr-prov')?.value||'';
   const fTipo=document.getElementById('fltr-tipo')?.value||'';
   const per=defaultPeriod();
   const repsP=reports.filter(r=>r.fecha>=per.ini&&r.fecha<=per.fin);
   const ausP=ausencias.filter(a=>a.fecha>=per.ini&&a.fecha<=per.fin);
+  
   let lista=equipos.filter(e=>(!fProv||e.proveedor===fProv)&&(!fTipo||e.tipo===fTipo)&&(!f||e.patente.toLowerCase().includes(f)));
   const repsPorEq={};repsP.forEach(r=>{repsPorEq[r.equipo]=repsPorEq[r.equipo]||[];repsPorEq[r.equipo].push(r)});
-  let totHrs=0,totHef=0,totRep=0,firm=0;
+  
+  let totHrs=0, totHef=0, totRep=0, firm=0, hoyN=0;
   const hoy=todayS();
-
-  // Calcular datos por equipo incluyendo último registro
-  const eqData=lista.map(e=>{
+  
+  const rows=lista.map(e=>{
     const rs=repsPorEq[e.patente]||[];
     const hrs=rs.reduce((a,b)=>a+Number(b.dif||(b.hf-b.hi)||0),0);
     const hef=rs.reduce((a,b)=>a+Number(b.hef!==undefined?b.hef:b.dif||0),0);
-    totHrs+=hrs;totHef+=hef;totRep+=rs.length;
+    totHrs+=hrs; totHef+=hef; totRep+=rs.length;
     firm+=rs.filter(r=>r.estado==='Firmado').length;
-    // Último registro de TODOS los reports (no solo del período)
-    const allReps=reports.filter(r=>r.equipo===e.patente);
-    allReps.sort((a,b)=>(b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
-    const ult=allReps[0];
-    let stHtml='',ultHtml='';
-    if(rs.length===0){
-      stHtml='<span class="badge b-warn">Sin reports</span>';
-    }else{
-      const tHoy=rs.some(r=>r.fecha===hoy);
-      if(tHoy){stHtml='<span class="badge b-ok">Al día</span>'}
-      else{
-        // Calcular días de atraso
-        if(ult){
-          const diffMs=new Date(hoy+'T12:00')-new Date(ult.fecha+'T12:00');
-          const diffDays=Math.floor(diffMs/(1000*60*60*24));
-          if(diffDays<=2)stHtml='<span class="badge b-info">Reciente</span>';
-          else if(diffDays<=5)stHtml='<span class="badge b-late">'+diffDays+' días atrás</span>';
-          else stHtml='<span class="badge b-crit">'+diffDays+' días atrás</span>';
-        }else stHtml='<span class="badge b-warn">Sin reports</span>';
-      }
-    }
-    if(ult)ultHtml=`<span class="ultimo">${fmtD(ult.fecha)} · ${ult.turno}</span>`;
-    else ultHtml='<span class="ultimo">—</span>';
-    return{e,rs,hrs,hef,stHtml,ultHtml};
-  });
-
-  // Paginación
-  const totalItems=eqData.length;
-  const totalPages=Math.max(1,Math.ceil(totalItems/dashPageSize));
-  if(dashPage>totalPages)dashPage=totalPages;
-  const start=(dashPage-1)*dashPageSize;
-  const pageData=eqData.slice(start,start+dashPageSize);
-
-  const rows=pageData.map(d=>{
-    return `<tr class="clickable" onclick="openGridFor('${d.e.patente}')"><td><b>${d.e.patente}</b></td><td>${d.e.tipo||'—'}</td><td>${d.e.proveedor||'—'}</td><td>${d.e.horo||'—'}</td><td>${d.rs.length}</td><td>${d.hrs.toFixed(1)}</td><td>${d.hef.toFixed(1)}</td><td>${d.stHtml}${d.ultHtml}</td></tr>`;
+    const tHoy=rs.some(r=>r.fecha===hoy);
+    if(tHoy)hoyN++;
+    const st=rs.length===0?'<span class="badge b-warn">Sin reports</span>':(tHoy?'<span class="badge b-ok">Al día</span>':'<span class="badge b-info">Con historial</span>');
+    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${hef.toFixed(1)}</td><td>${st}</td></tr>`;
   }).join('');
-
-  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado / Último</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
-
-  // Render paginación
-  const pagEl=document.getElementById('dash-pag');
-  if(totalItems>dashPageSize){
-    pagEl.classList.remove('hidden');
-    pagEl.innerHTML=`<div>${totalItems} equipos · Página ${dashPage} de ${totalPages}</div><div style="display:flex;gap:4px;align-items:center"><button onclick="dashPage=1;renderDash()" ${dashPage===1?'disabled':''}>⟨⟨</button><button onclick="dashPage--;renderDash()" ${dashPage===1?'disabled':''}>⟨</button><select onchange="dashPageSize=+this.value;dashPage=1;renderDash()">${[20,50,100].map(n=>`<option value="${n}" ${dashPageSize===n?'selected':''}>${n} por pág</option>`).join('')}</select><button onclick="dashPage++;renderDash()" ${dashPage>=totalPages?'disabled':''}>⟩</button><button onclick="dashPage=${totalPages};renderDash()" ${dashPage>=totalPages?'disabled':''}>⟩⟩</button></div>`;
-  }else pagEl.classList.add('hidden');
-
-  const el=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
-  el('s-hrs',totHrs.toFixed(0));el('s-hef',totHef.toFixed(0));
-  if(document.getElementById('s-hrs-sub'))document.getElementById('s-hrs-sub').textContent=fmtD(per.ini)+' al '+fmtD(per.fin);
-  el('s-rep',totRep);el('s-firm',firm);
-  if(document.getElementById('s-firm-sub'))document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
+  
+  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
+  
+  if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
+  if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
+  if(document.getElementById('s-hrs-sub')) document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
+  if(document.getElementById('s-eq')) document.getElementById('s-eq').textContent=lista.length;
+  if(document.getElementById('s-eq-sub')) document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
+  if(document.getElementById('s-rep')) document.getElementById('s-rep').textContent=totRep;
+  if(document.getElementById('s-firm')) document.getElementById('s-firm').textContent=firm;
+  if(document.getElementById('s-firm-sub')) document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
+  if(document.getElementById('s-aus')) document.getElementById('s-aus').textContent=ausP.length;
+  if(document.getElementById('s-miss')) document.getElementById('s-miss').textContent='—';
 }
 
 function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
@@ -584,240 +462,595 @@ function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
 function initGrid(){
   const sel=document.getElementById('sel-eq');
   sel.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
-  const p=defaultPeriod();document.getElementById('per-ini').value=p.ini;document.getElementById('per-fin').value=p.fin;
+  const p=defaultPeriod();
+  document.getElementById('per-ini').value=p.ini;
+  document.getElementById('per-fin').value=p.fin;
 }
+
 function llenarSelects(){
   const opts='<option value="">— Seleccionar —</option>'+equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');
-  const fe=document.getElementById('f-eq');if(fe){const v=fe.value;fe.innerHTML=opts;if(v)fe.value=v}
-  const se=document.getElementById('sel-eq');if(se){const v=se.value;se.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join('');if(v)se.value=v}
+  const fe=document.getElementById('f-eq');
+  if(fe){ const v = fe.value; fe.innerHTML=opts; if(v) fe.value = v; }
+  const se=document.getElementById('sel-eq');
+  if(se){ const v = se.value; se.innerHTML=equipos.map(e=>`<option value="${e.patente}">${e.patente} — ${e.tipo||''}</option>`).join(''); if(v) se.value = v; }
 }
+
 function renderGrid(){
   const pat=document.getElementById('sel-eq').value;
-  const ini=document.getElementById('per-ini').value,fin=document.getElementById('per-fin').value;
-  if(!pat||!ini||!fin){document.getElementById('grid-body').innerHTML='<div class="empty">Seleccione equipo y período</div>';setBread();return}
-  const eq=eqByPat(pat);if(!eq)return;
-  currentEqPat=pat;
-  setBread({text:'Grilla',click:"show('grid')"},{text:eq.patente+' — '+(eq.tipo||'')});
-  const d1=new Date(ini+'T12:00'),d2=new Date(fin+'T12:00');
-  const dias=[];for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1)){dias.push(localDateStr(new Date(d)))}
+  const ini=document.getElementById('per-ini').value;
+  const fin=document.getElementById('per-fin').value;
+  if(!pat||!ini||!fin){document.getElementById('grid-body').innerHTML='<div class="empty">Seleccione equipo y período</div>';return}
+  const eq=eqByPat(pat);if(!eq){document.getElementById('grid-body').innerHTML='';return}
+  const d1=new Date(ini+'T00:00'),d2=new Date(fin+'T00:00');
+  const dias=[];for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1))dias.push(new Date(d));
   const reps=reports.filter(r=>r.equipo===pat&&r.fecha>=ini&&r.fecha<=fin);
   const aus=ausencias.filter(a=>a.equipo===pat&&a.fecha>=ini&&a.fecha<=fin);
   const hoy=todayS();
-  let totHrs=0,totHef=0,reptN=0,ausN=0,missN=0,firmN=0;
-  let html=`<div style="padding:10px;background:var(--bg3);border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
+  
+  let totHrs=0, totHef=0, reptN=0, ausN=0, missN=0, firmN=0;
+  
+  let html=`<div style="padding:10px;background:#f5f6f8;border-radius:6px;margin-bottom:10px" class="small"><b>${eq.patente}</b> · ${eq.tipo||'—'} · Proveedor: <b>${eq.proveedor||'—'}</b> · Horóm. actual: <b>${eq.horo||'—'}</b></div>`;
   html+=`<table><thead><tr><th style="width:110px">Fecha</th><th>Turno Día</th><th>Turno Noche</th></tr></thead><tbody>`;
-  dias.forEach(fs=>{
-    const cell=t=>{
+  
+  dias.forEach(d=>{
+    const fs=d.toISOString().slice(0,10);
+    const cell=(t)=>{
       const r=reps.find(x=>x.fecha===fs&&x.turno===t);
       const a=aus.find(x=>x.fecha===fs&&x.turno===t);
       if(r){
-        const dif=Number(r.dif||(r.hf-r.hi));const hef=Number(r.hef!==undefined?r.hef:dif);
-        totHrs+=dif;totHef+=hef;reptN++;if(r.estado==='Firmado')firmN++;
-        let fC=0;if(r.foto)fC++;if(r.foto2)fC++;
-        const fp=fC>0?`<span class="pill-foto">✓ ${fC} foto${fC>1?'s':''}</span>`:'<span class="pill-nofoto">sin foto</span>';
+        const dif=Number(r.dif||(r.hf-r.hi));
+        const hef=Number(r.hef!==undefined?r.hef:dif);
+        totHrs+=dif; totHef+=hef; reptN++;
+        if(r.estado==='Firmado')firmN++;
+        
+        let fCount = 0; if(r.foto) fCount++; if(r.foto2) fCount++;
+        const fotoPill = fCount > 0 ? `<span class="pill-foto">✓ ${fCount} foto${fCount>1?'s':''}</span>` : '<span class="pill-nofoto">sin foto</span>';
+        
         const cls=r.estado==='Firmado'?'cell-signed':(r.estado==='Borrador'?'cell-draft':'cell-ok');
-        const est=r.estado?`<span class="tab-estado" style="background:var(--bg3)">${r.estado}</span>`:'';
-        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · Ef: ${hef.toFixed(1)}h ${fp}<small>Horo: ${r.hi}→${r.hf} (${dif.toFixed(1)}h) ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
+        const est=r.estado?`<span class="tab-estado" style="background:#eee">${r.estado}</span>`:'';
+        
+        return `<td><div class="${cls}" onclick="editReport('${r._id}')"><b>${r.folio||'s/folio'}</b> · Ef: ${hef.toFixed(1)}h ${fotoPill}<small>Horo: ${r.hi}→${r.hf} (${dif.toFixed(1)}h) ${est}</small>${r.obs?'<small style="font-style:italic">'+r.obs+'</small>':''}</div></td>`;
       }
       if(a){ausN++;return `<td><div class="cell-just" onclick="editAus('${a._id}')"><b>Ausencia</b><small>${a.motivo}${a.descuento==='Sí'?' (no factur.)':''}</small></div></td>`}
       if(fs>hoy)return '<td><div class="cell-fut">—</div></td>';
-      missN++;return `<td><div class="cell-miss" onclick="openAusForm('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>click para justificar o reportar</small></div></td>`;
+      missN++;
+      return `<td><div class="cell-miss" onclick="openAusForm('${pat}','${fs}','${t}')"><b>Sin registrar</b><small>click para justificar o reportar</small></div></td>`;
     };
     html+=`<tr><td><b>${fmtD(fs)}</b></td>${cell('Día')}${cell('Noche')}</tr>`;
   });
   html+='</tbody></table>';
-  const cab=`<div class="stats" style="grid-template-columns:repeat(5,1fr)"><div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div><div class="stat"><div class="lbl">Firmados</div><div class="val" style="color:var(--ok)">${firmN}</div></div><div class="stat"><div class="lbl">Hrs Horo</div><div class="val">${totHrs.toFixed(1)}</div></div><div class="stat"><div class="lbl">Hrs Efectivas</div><div class="val" style="color:var(--accent)">${totHef.toFixed(1)}</div></div><div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:var(--miss-tx)">${missN}</div></div></div>`;
+  
+  const cab=`<div class="stats" style="grid-template-columns:repeat(5,1fr)">
+  <div class="stat"><div class="lbl">Reportados</div><div class="val">${reptN}</div><div class="sub">de ${dias.length*2}</div></div>
+  <div class="stat"><div class="lbl">Firmados</div><div class="val" style="color:#198754">${firmN}</div></div>
+  <div class="stat"><div class="lbl">Hrs Horo</div><div class="val">${totHrs.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Hrs Efectivas</div><div class="val" style="color:#BA7517">${totHef.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Sin registrar</div><div class="val" style="color:#E24B4A">${missN}</div></div>
+  </div>`;
   document.getElementById('grid-body').innerHTML=cab+html;
 }
 
 // ============ AUSENCIAS ============
 function openAusForm(pat,fecha,turno,aid){
   const a=aid?ausencias.find(x=>x._id===aid):null;
-  document.getElementById('modal-box').innerHTML=`<h2 style="margin-bottom:10px">${a?'Editar':'Gestionar turno vacío'}</h2><p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>${!a?`<button class="btn" style="width:100%;margin-bottom:8px" onclick="irReportar('${pat}','${fecha}','${turno}')">Ingresar report</button><p class="small" style="text-align:center;margin:10px 0">— o —</p>`:''}<label>Motivo de ausencia</label><select id="a-motivo">${MOTIVOS.map(m=>`<option ${a&&a.motivo===m?'selected':''}>${m}</option>`).join('')}</select><label>Descripción</label><textarea id="a-desc" rows="3">${a?a.descripcion||'':''}</textarea><label>Aplica descuento al cobro</label><select id="a-desc2"><option ${a&&a.descuento==='Sí'?'selected':''}>Sí</option><option ${a&&a.descuento==='No'?'selected':''}>No</option></select><label>Validado por (opcional)</label><input id="a-val" value="${a?a.validado||'':''}" placeholder="Nombre Teck"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">${a?'<button class="btn btn-dang btn-sm" onclick="delAus(\''+a._id+'\')">Eliminar</button>':''}<button class="btn btn-sec" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveAus('${pat}','${fecha}','${turno}','${a?a._id:''}')">Guardar</button></div>`;
+  document.getElementById('modal-box').innerHTML=`
+  <h2 style="margin-bottom:10px">${a?'Editar':'Gestionar turno vacío'}</h2>
+  <p class="small" style="margin-bottom:12px">${pat} · ${fmtD(fecha)} · Turno ${turno}</p>
+  ${!a?`<button class="btn" style="width:100%;margin-bottom:8px" onclick="irReportar('${pat}','${fecha}','${turno}')">Ingresar report</button>
+  <p class="small" style="text-align:center;margin:10px 0">— o —</p>`:''}
+  <label>Motivo de ausencia</label>
+  <select id="a-motivo">${MOTIVOS.map(m=>`<option ${a&&a.motivo===m?'selected':''}>${m}</option>`).join('')}</select>
+  <label>Descripción</label>
+  <textarea id="a-desc" rows="3">${a?a.descripcion||'':''}</textarea>
+  <label>Aplica descuento al cobro</label>
+  <select id="a-desc2"><option ${a&&a.descuento==='Sí'?'selected':''}>Sí</option><option ${a&&a.descuento==='No'?'selected':''}>No</option></select>
+  <label>Validado por (opcional)</label>
+  <input id="a-val" value="${a?a.validado||'':''}" placeholder="Nombre Teck">
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+  ${a?'<button class="btn btn-dang btn-sm" onclick="delAus(\''+a._id+'\')">Eliminar</button>':''}
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveAus('${pat}','${fecha}','${turno}','${a?a._id:''}')">Guardar justificación</button>
+  </div>`;
   document.getElementById('modal').classList.add('show');
 }
-async function saveAus(pat,fecha,turno,id){try{const data={equipo:pat,fecha,turno,motivo:document.getElementById('a-motivo').value,descripcion:document.getElementById('a-desc').value,descuento:document.getElementById('a-desc2').value,validado:document.getElementById('a-val').value,ts:new Date().toISOString(),usuario:currentUser.email};if(id){await db.collection('ausencias').doc(id).update(data)}else{await db.collection('ausencias').add(data)}closeModal();toast('Ausencia guardada','ok')}catch(e){toast('Error: '+e.message,'err')}}
+
+async function saveAus(pat,fecha,turno,id){
+  try{
+    const data={equipo:pat,fecha,turno,
+      motivo:document.getElementById('a-motivo').value,
+      descripcion:document.getElementById('a-desc').value,
+      descuento:document.getElementById('a-desc2').value,
+      validado:document.getElementById('a-val').value,
+      ts:new Date().toISOString(),usuario:currentUser.email};
+    if(id){await db.collection('ausencias').doc(id).update(data)}
+    else{await db.collection('ausencias').add(data)}
+    closeModal();toast('Ausencia guardada','ok');
+  }catch(e){toast('Error: '+e.message,'err')}
+}
 function editAus(id){const a=ausencias.find(x=>x._id===id);if(a)openAusForm(a.equipo,a.fecha,a.turno,id)}
 async function delAus(id){if(confirm('¿Eliminar ausencia?')){await db.collection('ausencias').doc(id).delete();closeModal();toast('Eliminada','ok')}}
-function irReportar(pat,fecha,turno){closeModal();clearForm();show('new');setTimeout(()=>{document.getElementById('f-eq').value=pat;document.getElementById('f-fecha').value=fecha;document.getElementById('f-turno').value=turno;onEqChange()},100)}
+function irReportar(pat,fecha,turno){closeModal();clearForm();show('new');setTimeout(()=>{document.getElementById('f-eq').value=pat;document.getElementById('f-fecha').value=fecha;document.getElementById('f-turno').value=turno;onEqChange();}, 100);}
 
 // ============ NEW REPORT ============
-function initNewForm(){llenarSelects();if(!document.getElementById('f-id').value){document.getElementById('f-fecha').value=todayS();document.getElementById('new-title').textContent='Ingresar nuevo report';setBread({text:'Grilla',click:"show('grid')"},'Nuevo report')}}
+function initNewForm(){llenarSelects();if(!document.getElementById('f-id').value){document.getElementById('f-fecha').value=todayS();document.getElementById('new-title').textContent='Ingresar nuevo report';}}
 function editReport(id){
   const r=reports.find(x=>x._id===id);if(!r)return;
-  fotoData1=null;fotoData2=null;
   show('new');
   setTimeout(()=>{
-    const eq=eqByPat(r.equipo);
-    setBread({text:'Grilla',click:"show('grid')"},{text:r.equipo,click:`openGridFor('${r.equipo}')`},'Editar report');
     document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;
+    
     document.getElementById('f-hef').value=(r.hef!==undefined)?r.hef:r.dif;
     document.getElementById('f-obs').value=r.obs||'';document.getElementById('f-estado').value=r.estado||'Borrador';calcDif();
-    document.getElementById('f-foto-prev1').innerHTML=r.foto?`<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(1)">Quitar</button></div>`:'';
-    document.getElementById('f-foto-prev2').innerHTML=r.foto2?`<img src="${r.foto2}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(2)">Quitar</button></div>`:'';
+    
+    document.getElementById('f-foto-prev1').innerHTML = r.foto ? `<img src="${r.foto}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(1)">Quitar foto</button></div>` : '';
+    document.getElementById('f-foto-prev2').innerHTML = r.foto2 ? `<img src="${r.foto2}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(2)">Quitar foto</button></div>` : '';
+    
     const f=document.getElementById('form-new');
-    if(!document.getElementById('btn-del-rep')&&userRole==='admin'){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b)}
+    if(!document.getElementById('btn-del-rep') && userRole==='admin'){const b=document.createElement('button');b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';b.onclick=()=>delReport(r._id);f.querySelector('div[style*="flex-end"]').prepend(b);}
     validate();
   },100);
 }
+
 async function delReport(id){
   if(!confirm('¿Eliminar este report?'))return;
-  try{const r=reports.find(x=>x._id===id);const pat=r?.equipo;
-  if(r&&r.foto){try{await storage.refFromURL(r.foto).delete()}catch(e){}}
-  if(r&&r.foto2){try{await storage.refFromURL(r.foto2).delete()}catch(e){}}
-  await db.collection('reportes').doc(id).delete();
-  if(pat){const rest=reports.filter(x=>x.equipo===pat&&x._id!==id);const maxHf=rest.reduce((m,x)=>Math.max(m,Number(x.hf||0)),0);await db.collection('equipos').doc(pat).update({horo:maxHf})}
-  clearForm();show('grid');toast('Report eliminado','ok')}catch(e){toast('Error: '+e.message,'err')}
+  try{
+    const r=reports.find(x=>x._id===id);
+    if(r&&r.foto){try{await storage.refFromURL(r.foto).delete()}catch(e){}}
+    if(r&&r.foto2){try{await storage.refFromURL(r.foto2).delete()}catch(e){}}
+    await db.collection('reportes').doc(id).delete();
+    clearForm();show('grid');toast('Report eliminado','ok');
+  }catch(e){toast('Error: '+e.message,'err')}
 }
-function quitFoto(n){document.getElementById('f-foto-prev'+n).innerHTML='';document.getElementById('f-foto'+n).value='';if(n===1)fotoData1={remove:true};else fotoData2={remove:true};validate()}
-function compFoto(e,n){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const sc=Math.min(1,1400/img.width);c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(blob=>{const fd={blob,preview:c.toDataURL('image/jpeg',.75)};const kb=Math.round(blob.size/1024);if(n===1)fotoData1=fd;else fotoData2=fd;document.getElementById('f-foto-prev'+n).innerHTML=`<img src="${fd.preview}" class="foto-full"><div class="small">${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(${n})">Quitar</button>`;validate()},'image/jpeg',.75)};img.src=ev.target.result};r.readAsDataURL(f)}
-function onEqChange(){
-  const p=document.getElementById('f-eq').value,e=eqByPat(p);
-  if(!e||document.getElementById('f-id').value){calcDif();return}
-  const fecha=document.getElementById('f-fecha').value,turno=document.getElementById('f-turno').value;
-  if(fecha&&turno&&p){
-    const co=fecha+(turno==='Día'?'A':'B');
-    const ant=reports.filter(r=>r.equipo===p&&(r.fecha+(r.turno==='Día'?'A':'B'))<co).sort((a,b)=>(b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
-    document.getElementById('f-hi').value=ant.length>0?ant[0].hf:(e.horo||'');
-  }else document.getElementById('f-hi').value=e.horo||'';
-  calcDif();
-}
-function calcDif(){
-  const hi=parseFloat(document.getElementById('f-hi').value),hf=parseFloat(document.getElementById('f-hf').value);
-  const dif=(!isNaN(hi)&&!isNaN(hf))?(hf-hi).toFixed(1):'';
-  document.getElementById('f-dif').value=dif;
-  const isNew=!document.getElementById('f-id').value,hI=document.getElementById('f-hef');
-  if(isNew&&(!hI.value||hI.dataset.auto==='true')){hI.value=dif;hI.dataset.auto='true'}
+
+// QUITAR FOTO 1 o 2
+function quitFoto(num){
+  document.getElementById('f-foto-prev'+num).innerHTML='';
+  document.getElementById('f-foto'+num).value='';
+  if(num===1) fotoData1={remove:true}; else fotoData2={remove:true};
   validate();
 }
+
+// COMPRIMIR FOTO 1 o 2
+function compFoto(e, num){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');const maxW=1400;const sc=Math.min(1,maxW/img.width);
+      c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      c.toBlob(blob=>{
+        const fd={blob,preview:c.toDataURL('image/jpeg',0.75)};
+        const kb=Math.round(blob.size/1024);
+        if(num===1) fotoData1=fd; else fotoData2=fd;
+        document.getElementById('f-foto-prev'+num).innerHTML=`<img src="${fd.preview}" class="foto-full"><div class="small">Comprimido: ${kb} KB</div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(${num})">Quitar</button>`;
+        validate();
+      },'image/jpeg',0.75);
+    };img.src=ev.target.result;
+  };r.readAsDataURL(f);
+}
+
+function onEqChange(){const p=document.getElementById('f-eq').value;const e=eqByPat(p);if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';calcDif();}
+
+function calcDif(){
+  const hi=parseFloat(document.getElementById('f-hi').value)||0;
+  const hf=parseFloat(document.getElementById('f-hf').value)||0;
+  const dif=(hf-hi).toFixed(1);
+  document.getElementById('f-dif').value=dif;
+  
+  const isNew = !document.getElementById('f-id').value;
+  const hefInput = document.getElementById('f-hef');
+  
+  if(isNew && (!hefInput.value || hefInput.dataset.auto === 'true')) {
+     hefInput.value = dif;
+     hefInput.dataset.auto = 'true';
+  }
+  validate();
+}
+
 function validate(){
-  const msgs=[],id=document.getElementById('f-id').value;
-  const hi=parseFloat(document.getElementById('f-hi').value),hf=parseFloat(document.getElementById('f-hf').value),hef=parseFloat(document.getElementById('f-hef').value);
-  const eq=document.getElementById('f-eq').value,fecha=document.getElementById('f-fecha').value,turno=document.getElementById('f-turno').value;
-  const folio=document.getElementById('f-folio').value,estado=document.getElementById('f-estado').value;
-  const obs=(document.getElementById('f-obs').value||'').trim(),hoy=todayS(),dif=hf-hi;
+  const msgs=[];
+  const id=document.getElementById('f-id').value;
+  const hi=parseFloat(document.getElementById('f-hi').value);
+  const hf=parseFloat(document.getElementById('f-hf').value);
+  const hef=parseFloat(document.getElementById('f-hef').value);
+  const eq=document.getElementById('f-eq').value;
+  const fecha=document.getElementById('f-fecha').value;
+  const turno=document.getElementById('f-turno').value;
+  const folio=document.getElementById('f-folio').value;
+  const estado=document.getElementById('f-estado').value;
+  
+  // OBTENEMOS LA OBSERVACIÓN Y NOS ASEGURAMOS DE QUE SEA UN TEXTO
+  const obs = (document.getElementById('f-obs').value || '').trim();
+  
+  const hoy=todayS();
+  const dif = hf - hi;
   
   if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
-  if(!isNaN(hi)&&!isNaN(hf)&&hf<hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
+  if(!isNaN(hi) && !isNaN(hf) && hf < hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
   
-  if(!isNaN(hi)&&!isNaN(hf)&&!isNaN(hef)){
-    const dr=Math.round(dif*10)/10,hr=Math.round(hef*10)/10;
-    if(hr>dr)msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia'});
-    else if(hr<dr&&obs==='')msgs.push({t:'err',m:'⊘ Descuento de horas detectado. Observación obligatoria.'});
+  // BLOQUE BLINDADO DE HORAS EFECTIVAS
+  if(!isNaN(hi) && !isNaN(hf) && !isNaN(hef)) {
+    const difRed = Math.round(dif * 10) / 10;
+    const hefRed = Math.round(hef * 10) / 10;
+    if(hefRed > difRed) {
+      msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
+    } else if(hefRed < difRed && obs === '') {
+      // AQUÍ ESTÁ LA MAGIA: Si está vacía, manda el error sin importar qué navegador uses.
+      msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Escribe una Observación obligatoria indicando el motivo.'});
+    }
   }
-  
+
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
-  if(folio&&eq&&reports.some(r=>r.folio===folio&&r.equipo===eq&&r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
-  const hasP=fotoData1?.blob||fotoData2?.blob||(id&&reports.find(r=>r._id===id)?.foto)||(id&&reports.find(r=>r._id===id)?.foto2);
-  if(estado==='Firmado'&&!hasP)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto'});
   
-  if(eq&&fecha&&!isNaN(hi)&&!isNaN(hf)){
-    const co=fecha+(turno==='Día'?'A':'B'),rEq=reports.filter(r=>r.equipo===eq&&r._id!==id);
-    const pas=rEq.filter(r=>(r.fecha+(r.turno==='Día'?'A':'B'))<co).sort((a,b)=>(b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
-    if(pas.length>0&&parseFloat(pas[0].hf)>hi)msgs.push({t:'err',m:`⊘ Choque: Turno anterior (${fmtD(pas[0].fecha)} ${pas[0].turno}) terminó en ${pas[0].hf}`});
-    const fut=rEq.filter(r=>(r.fecha+(r.turno==='Día'?'A':'B'))>co).sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
-    if(fut.length>0&&parseFloat(fut[0].hi)<hf)msgs.push({t:'err',m:`⊘ Choque: Turno siguiente (${fmtD(fut[0].fecha)} ${fut[0].turno}) parte en ${fut[0].hi}`});
-  }
+  // VALIDAMOS QUE AL MENOS HAYA UNA FOTO SI ESTÁ FIRMADO
+  const hasPhoto = fotoData1?.blob || fotoData2?.blob || (id && reports.find(r=>r._id===id)?.foto) || (id && reports.find(r=>r._id===id)?.foto2);
+  if(estado==='Firmado'&&!hasPhoto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto adjunta'});
   
-  if(!isNaN(hi)&&eq&&!id){
-    const e=eqByPat(eq);
-    if(e&&e.horo){
-      if(hi < e.horo) msgs.push({t:'err',m:`⊘ Horóm. inicial (${hi}) es MENOR al último registrado (${e.horo})`});
-      else if(hi > e.horo) msgs.push({t:'warn',m:`⚠ Salto de horómetro respecto al último registro (${e.horo})`});
+  if (eq && fecha && !isNaN(hi) && !isNaN(hf)) {
+    const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
+    const rEq = reports.filter(r => r.equipo === eq && r._id !== id);
+
+    const pasados = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder);
+    if (pasados.length > 0) {
+      pasados.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
+      const ant = pasados[pasados.length-1];
+      if (parseFloat(ant.hf) > hi) msgs.push({t:'err', m:`⊘ Choque: Turno anterior (${fmtD(ant.fecha)} ${ant.turno}) terminó en ${ant.hf}.`});
+    }
+
+    const futuros = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) > currentOrder);
+    if (futuros.length > 0) {
+      futuros.sort((a,b) => (a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
+      const sig = futuros[0];
+      if (parseFloat(sig.hi) < hf) msgs.push({t:'err', m:`⊘ Choque: Turno siguiente (${fmtD(sig.fecha)} ${sig.turno}) parte en ${sig.hi}.`});
     }
   }
   
-  if(!isNaN(hi)&&!isNaN(hf)){if(dif>11)msgs.push({t:'warn',m:`⚠ Diferencia de ${dif.toFixed(1)}h supera turno típico de 11h`});}
+  // VALIDACIÓN INICIAL VS BASE DE DATOS
+  if(!isNaN(hi) && eq && !id){
+    const e=eqByPat(eq);
+    if(e && e.horo){
+      if(hi < e.horo) {
+        msgs.push({t:'err',m:`⊘ Horóm. inicial (${hi}) es MENOR al último registrado (${e.horo})`});
+      } else if(hi > e.horo) {
+        msgs.push({t:'warn',m:`⚠ Salto de horómetro respecto al último registro (${e.horo})`});
+      }
+    }
+  }
+
+  // RANGO TÍPICO 0-11 HORAS
+  if(!isNaN(hi) && !isNaN(hf)){
+    if(dif > 11) msgs.push({t:'warn',m:`⚠ Diferencia de ${dif.toFixed(1)}h supera el turno típico de 11h`});
+  }
+
   if(!folio)msgs.push({t:'warn',m:'⚠ Report sin folio'});
   
   document.getElementById('f-msgs').innerHTML=msgs.map(x=>`<div class="${x.t}">${x.m}</div>`).join('');
-  const hasErr=msgs.some(m=>m.t==='err');document.getElementById('btn-save').disabled=hasErr;return!hasErr;
+  const hasErr=msgs.some(m=>m.t==='err');
+  document.getElementById('btn-save').disabled=hasErr;
+  return !hasErr;
 }
+
 document.addEventListener('input',e=>{if(e.target.closest('#form-new'))validate()});
 document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate()});
+
 async function saveReport(e){
-  e.preventDefault();if(!validate())return;
+  e.preventDefault();
+  if(!validate())return;
   const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='Guardando...';
-  try{const id=document.getElementById('f-id').value,pat=document.getElementById('f-eq').value;
-  const hi=parseFloat(document.getElementById('f-hi').value),hf=parseFloat(document.getElementById('f-hf').value);
-  let f1=id?(reports.find(r=>r._id===id)?.foto||''):'',f2=id?(reports.find(r=>r._id===id)?.foto2||''):'';
-  if(fotoData1?.remove)f1='';if(fotoData2?.remove)f2='';
-  const docId=id||db.collection('reportes').doc().id;
-  if(fotoData1?.blob){const ref=storage.ref(`fotos/${pat}/${docId}_1.jpg`);await ref.put(fotoData1.blob);f1=await ref.getDownloadURL()}
-  if(fotoData2?.blob){const ref=storage.ref(`fotos/${pat}/${docId}_2.jpg`);await ref.put(fotoData2.blob);f2=await ref.getDownloadURL()}
-  const data={fecha:document.getElementById('f-fecha').value,turno:document.getElementById('f-turno').value,folio:document.getElementById('f-folio').value,equipo:pat,operador:document.getElementById('f-op').value,hi,hf,dif:hf-hi,hef:parseFloat(document.getElementById('f-hef').value)||0,obs:document.getElementById('f-obs').value,foto:f1,foto2:f2,estado:document.getElementById('f-estado').value,usuario:currentUser.email,ts:new Date().toISOString()};
-  if(id){await db.collection('reportes').doc(id).update(data)}else{await db.collection('reportes').add(data)}
-  const allR=[...reports.filter(r=>r.equipo===pat&&r._id!==id),{hf}];const maxHf=allR.reduce((m,r)=>Math.max(m,Number(r.hf||0)),0);
-  await db.collection('equipos').doc(pat).update({horo:maxHf});
-  toast('Report guardado ✓','ok');clearForm();show('grid')}catch(e){toast('Error: '+e.message,'err');btn.disabled=false;btn.textContent='Guardar'}
+  try{
+    const id=document.getElementById('f-id').value;
+    const pat=document.getElementById('f-eq').value;
+    const hi=parseFloat(document.getElementById('f-hi').value);
+    const hf=parseFloat(document.getElementById('f-hf').value);
+    
+    let fotoUrl1=id?(reports.find(r=>r._id===id)?.foto||''):'';
+    let fotoUrl2=id?(reports.find(r=>r._id===id)?.foto2||''):'';
+    
+    if(fotoData1?.remove)fotoUrl1='';
+    if(fotoData2?.remove)fotoUrl2='';
+    
+    const docId=id||db.collection('reportes').doc().id;
+    
+    if(fotoData1?.blob){
+      const ref=storage.ref(`fotos/${pat}/${docId}_1.jpg`);
+      await ref.put(fotoData1.blob);
+      fotoUrl1=await ref.getDownloadURL();
+    }
+    if(fotoData2?.blob){
+      const ref=storage.ref(`fotos/${pat}/${docId}_2.jpg`);
+      await ref.put(fotoData2.blob);
+      fotoUrl2=await ref.getDownloadURL();
+    }
+    
+    const data={
+      fecha:document.getElementById('f-fecha').value,
+      turno:document.getElementById('f-turno').value,
+      folio:document.getElementById('f-folio').value,
+      equipo:pat,
+      operador:document.getElementById('f-op').value,
+      hi,hf,dif:hf-hi,
+      hef:parseFloat(document.getElementById('f-hef').value)||0,
+      obs:document.getElementById('f-obs').value,
+      foto:fotoUrl1,
+      foto2:fotoUrl2, // GUARDAMOS LA SEGUNDA FOTO
+      estado:document.getElementById('f-estado').value,
+      usuario:currentUser.email,
+      ts:new Date().toISOString()
+    };
+    
+    if(id){await db.collection('reportes').doc(id).update(data)}
+    else{await db.collection('reportes').add(data)}
+    
+    const allR=[...reports.filter(r=>r.equipo===pat&&r._id!==id),{hf,fecha:data.fecha,turno:data.turno}];
+    const maxHf=allR.reduce((m,r)=>Math.max(m,Number(r.hf||0)),0);
+    await db.collection('equipos').doc(pat).update({horo:maxHf});
+    
+    toast('Report guardado ✓','ok');clearForm();show('grid');
+  }catch(e){toast('Error: '+e.message,'err');btn.disabled=false;btn.textContent='Guardar'}
 }
-function clearForm(){document.getElementById('form-new').reset();document.getElementById('f-id').value='';document.getElementById('f-msgs').innerHTML='';document.getElementById('f-foto-prev1').innerHTML='';document.getElementById('f-foto-prev2').innerHTML='';fotoData1=null;fotoData2=null;document.getElementById('f-hef').dataset.auto='';const b=document.getElementById('btn-del-rep');if(b)b.remove();document.getElementById('btn-save').disabled=false;document.getElementById('btn-save').textContent='Guardar';initNewForm()}
+
+function clearForm(){
+  document.getElementById('form-new').reset();
+  document.getElementById('f-id').value='';
+  document.getElementById('f-msgs').innerHTML='';
+  document.getElementById('f-foto-prev1').innerHTML='';
+  document.getElementById('f-foto-prev2').innerHTML='';
+  fotoData1=null; fotoData2=null;
+  document.getElementById('f-hef').dataset.auto='';
+  const b=document.getElementById('btn-del-rep');if(b)b.remove();
+  document.getElementById('btn-save').disabled=false;
+  document.getElementById('btn-save').textContent='Guardar';
+  initNewForm();
+}
 
 // ============ CONSOLIDADOS ============
 function initCons(){const p=defaultPeriod();document.getElementById('c-ini').value=p.ini;document.getElementById('c-fin').value=p.fin}
+
 function renderCons(){
-  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;if(!ini||!fin)return;
-  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin),aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
-  const porProv={};equipos.forEach(e=>{const p=e.proveedor||'Sin proveedor';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,efectivas:0};porProv[p].equipos++});
-  reps.forEach(r=>{const e=eqByPat(r.equipo);const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,efectivas:0};porProv[p].reports++;porProv[p].horas+=Number(r.dif||0);porProv[p].efectivas+=Number(r.hef!==undefined?r.hef:r.dif||0)});
-  const porEq={};equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,efectivas:0,aus:0}});
-  reps.forEach(r=>{if(porEq[r.equipo]){porEq[r.equipo].reports++;porEq[r.equipo].horas+=Number(r.dif||0);porEq[r.equipo].efectivas+=Number(r.hef!==undefined?r.hef:r.dif||0)}});
+  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
+  if(!ini||!fin)return;
+  const reps=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin);
+  const aus=ausencias.filter(a=>a.fecha>=ini&&a.fecha<=fin);
+  
+  const porProv={};
+  equipos.forEach(e=>{const p=e.proveedor||'Sin proveedor';porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,efectivas:0};porProv[p].equipos++});
+  reps.forEach(r=>{
+    const e=eqByPat(r.equipo);const p=e?(e.proveedor||'Sin proveedor'):'Desconocido';
+    porProv[p]=porProv[p]||{equipos:0,reports:0,horas:0,efectivas:0};
+    porProv[p].reports++;porProv[p].horas+=Number(r.dif||0);
+    porProv[p].efectivas+=Number(r.hef!==undefined?r.hef:r.dif||0);
+  });
+  
+  const porEq={};
+  equipos.forEach(e=>{porEq[e.patente]={eq:e,reports:0,horas:0,efectivas:0,aus:0}});
+  reps.forEach(r=>{if(porEq[r.equipo]){
+    porEq[r.equipo].reports++;
+    porEq[r.equipo].horas+=Number(r.dif||0);
+    porEq[r.equipo].efectivas+=Number(r.hef!==undefined?r.hef:r.dif||0);
+  }});
   aus.forEach(a=>{if(porEq[a.equipo])porEq[a.equipo].aus++});
-  let totH=0,totHef=0,totR=0;Object.values(porProv).forEach(p=>{totH+=p.horas;totHef+=p.efectivas;totR+=p.reports});
-  let html=`<div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><div class="lbl">Total Hrs Horo</div><div class="val">${totH.toFixed(1)}</div></div><div class="stat"><div class="lbl">Total Hrs Efectivas</div><div class="val" style="color:var(--accent)">${totHef.toFixed(1)}</div></div><div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div><div class="stat"><div class="lbl">Ausencias</div><div class="val" style="color:#378ADD">${aus.length}</div></div></div>`;
-  html+='<h3>Por proveedor</h3><div class="table-responsive"><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efectivas</th></tr></thead><tbody>';
-  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td style="color:var(--accent);font-weight:bold">${d.efectivas.toFixed(1)}</td></tr>`});
-  html+='</tbody></table></div><h3 style="margin-top:16px">Por equipo</h3><div class="table-responsive"><table><thead><tr><th>Patente</th><th>Tipo</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Ausencias</th></tr></thead><tbody>';
-  Object.values(porEq).filter(x=>x.reports>0||x.aus>0).sort((a,b)=>b.efectivas-a.efectivas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td style="color:var(--accent);font-weight:bold">${x.efectivas.toFixed(1)}</td><td>${x.aus}</td></tr>`});
-  html+='</tbody></table></div>';document.getElementById('cons-body').innerHTML=html;
+  
+  let totH=0,totHef=0,totR=0;
+  Object.values(porProv).forEach(p=>{totH+=p.horas;totHef+=p.efectivas;totR+=p.reports});
+  
+  let html=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Total Hrs Horo</div><div class="val">${totH.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Total Hrs Efectivas</div><div class="val" style="color:#BA7517">${totHef.toFixed(1)}</div></div>
+  <div class="stat"><div class="lbl">Reports</div><div class="val">${totR}</div></div>
+  <div class="stat"><div class="lbl">Ausencias</div><div class="val" style="color:#378ADD">${aus.length}</div></div>
+  </div>`;
+  
+  html+='<h3>Consolidado por proveedor</h3><div class="table-responsive"><table><thead><tr><th>Proveedor</th><th>Equipos</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efectivas</th></tr></thead><tbody>';
+  Object.keys(porProv).sort().forEach(p=>{const d=porProv[p];html+=`<tr><td><b>${p}</b></td><td>${d.equipos}</td><td>${d.reports}</td><td>${d.horas.toFixed(1)}</td><td style="color:#BA7517;font-weight:bold">${d.efectivas.toFixed(1)}</td></tr>`});
+  html+='</tbody></table></div>';
+  
+  html+='<h3 style="margin-top:16px">Detalle por equipo</h3><div class="table-responsive"><table><thead><tr><th>Patente</th><th>Tipo</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efectivas</th><th>Ausencias</th></tr></thead><tbody>';
+  Object.values(porEq).filter(x=>x.reports>0||x.aus>0).sort((a,b)=>b.efectivas-a.efectivas).forEach(x=>{html+=`<tr><td><b>${x.eq.patente}</b></td><td>${x.eq.tipo||'—'}</td><td>${x.reports}</td><td>${x.horas.toFixed(1)}</td><td style="color:#BA7517;font-weight:bold">${x.efectivas.toFixed(1)}</td><td>${x.aus}</td></tr>`});
+  html+='</tbody></table></div>';
+  
+  document.getElementById('cons-body').innerHTML=html;
 }
+
 function exportExcel(){
-  const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;if(!ini||!fin)return toast('Seleccione período','warn');
-  toast('Generando Excel...','wait');const wb=XLSX.utils.book_new();
-  const d1=new Date(ini+'T12:00'),d2=new Date(fin+'T12:00'),dias=[];
-  for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1))dias.push(localDateStr(new Date(d)));
-  const meses=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
-  const tM=(meses[d1.getMonth()]===meses[d2.getMonth()])?meses[d1.getMonth()]:`${meses[d1.getMonth()]}/${meses[d2.getMonth()]}`;
-  equipos.filter(eq=>{const t=reports.some(r=>r.equipo===eq.patente&&r.fecha>=ini&&r.fecha<=fin)||ausencias.some(a=>a.equipo===eq.patente&&a.fecha>=ini&&a.fecha<=fin);return t}).forEach(eq=>{
-    const rEq=reports.filter(r=>r.equipo===eq.patente&&r.fecha>=ini&&r.fecha<=fin),aEq=ausencias.filter(a=>a.equipo===eq.patente&&a.fecha>=ini&&a.fecha<=fin);
-    const aoa=[[``,`${eq.patente} ${eq.tipo?'- '+eq.tipo:''}`,'','Horómetros','','Horas',tM],['Fecha','Report','Operador','Inicial','Final','Dif. Horo','Hrs. Efect.','OBSERVACION']];
-    dias.forEach(fs=>{const fl=fs.split('-').reverse().join('-');['Día','Noche'].forEach(t=>{const r=rEq.find(x=>x.fecha===fs&&x.turno===t),a=aEq.find(x=>x.fecha===fs&&x.turno===t);
-    if(r){const dif=parseFloat(r.dif||(r.hf-r.hi)),hef=parseFloat(r.hef!==undefined?r.hef:dif);aoa.push([fl,r.folio||'S/F',r.operador||'',parseFloat(r.hi),parseFloat(r.hf),dif,hef,r.obs||''])}
-    else if(a)aoa.push([fl,'AUSENCIA','','','','','',`${a.motivo}${a.descripcion?' - '+a.descripcion:''}`]);
-    else aoa.push([fl,'','','','','','',''])})});
-    const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!merges']=[{s:{r:0,c:1},e:{r:0,c:2}},{s:{r:0,c:3},e:{r:0,c:4}},{s:{r:0,c:5},e:{r:0,c:6}}];
-    ws['!cols']=[{wch:11},{wch:10},{wch:20},{wch:9},{wch:9},{wch:9},{wch:9},{wch:40}];
-    XLSX.utils.book_append_sheet(wb,ws,eq.patente.slice(0,31))});
-  XLSX.writeFile(wb,`EDP_Rentamaq_${ini}_al_${fin}.xlsx`);toast('Excel generado','ok');
+  const ini=document.getElementById('c-ini').value, fin=document.getElementById('c-fin').value;
+  if(!ini || !fin) return toast('Seleccione un período primero', 'warn');
+  
+  toast('Generando Excel por equipos...', 'wait');
+  const wb = XLSX.utils.book_new();
+  
+  const d1 = new Date(ini + 'T00:00'), d2 = new Date(fin + 'T00:00');
+  const dias = [];
+  for(let d = new Date(d1); d <= d2; d.setDate(d.getDate() + 1)) {
+    dias.push(new Date(d).toISOString().slice(0,10));
+  }
+
+  const meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  const m1 = meses[d1.getMonth()], m2 = meses[d2.getMonth()];
+  const tituloMeses = (m1 === m2) ? m1 : `${m1}/${m2}`;
+
+  equipos.forEach(eq => {
+    const rEq = reports.filter(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
+    const aEq = ausencias.filter(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
+    
+    const aoa = []; 
+    
+    const tituloEquipo = `${eq.patente} ${eq.tipo ? '- ' + eq.tipo : ''}`;
+    aoa.push(["", tituloEquipo, "", "Horómetros", "", "Horas", tituloMeses]);
+    
+    aoa.push(["Fecha", "Report", "Operador", "Inicial", "Final", "Dif. Horo", "Hrs. Efect.", "OBSERVACION"]);
+
+    dias.forEach(fs => {
+      const fechaLatina = fs.split('-').reverse().join('-'); 
+      
+      ['Día', 'Noche'].forEach(t => {
+        const r = rEq.find(x => x.fecha === fs && x.turno === t);
+        const a = aEq.find(x => x.fecha === fs && x.turno === t);
+
+        if (r) {
+          const dif = parseFloat(r.dif||(r.hf-r.hi));
+          const hef = parseFloat(r.hef!==undefined?r.hef:dif);
+          aoa.push([fechaLatina, r.folio || 'S/F', r.operador || '', parseFloat(r.hi), parseFloat(r.hf), dif, hef, r.obs || '']);
+        } else if (a) {
+          aoa.push([fechaLatina, 'AUSENCIA', '', '', '', '', '', `${a.motivo} ${a.descripcion ? '- '+a.descripcion : ''}`]);
+        } else {
+          aoa.push([fechaLatina, '', '', '', '', '', '', '']);
+        }
+      });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    ws['!merges'] = [
+      { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }, 
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 4 } }, 
+      { s: { r: 0, c: 5 }, e: { r: 0, c: 6 } }  
+    ];
+
+    ws['!cols'] = [
+      { wch: 11 }, { wch: 10 }, { wch: 20 }, { wch: 9 }, { wch: 9 }, { wch: 9 }, { wch: 9 }, { wch: 40 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, eq.patente.slice(0, 31));
+  });
+
+  XLSX.writeFile(wb, `EDP_Rentamaq_${ini}_al_${fin}.xlsx`);
+  toast('Excel generado con éxito', 'ok');
 }
+
+// DESCARGA LAS DOS FOTOS EN EL ZIP
 async function exportFotosZip(){
   const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
   const filt=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin&&(r.foto||r.foto2));
-  if(!filt.length)return toast('Sin fotos','err');toast('Generando ZIP...');
-  const zip=new JSZip();for(const r of filt){if(r.foto){try{const res=await fetch(r.foto);const b=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_1.jpg`,b)}catch(e){}}if(r.foto2){try{const res=await fetch(r.foto2);const b=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_2.jpg`,b)}catch(e){}}}
-  const c=await zip.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(c);a.download=`Fotos_${ini}_${fin}.zip`;a.click();toast('ZIP listo','ok');
+  if(!filt.length)return toast('Sin fotos en el período','err');
+  toast('Generando ZIP... puede tardar');
+  const zip=new JSZip();
+  for(const r of filt){
+    if(r.foto){ try{const res=await fetch(r.foto);const blob=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_1.jpg`,blob)}catch(e){} }
+    if(r.foto2){ try{const res=await fetch(r.foto2);const blob=await res.blob();zip.folder(r.equipo).file(`${r.fecha}_${r.turno}_2.jpg`,blob)}catch(e){} }
+  }
+  const c=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(c);a.download=`Fotos_${ini}_${fin}.zip`;a.click();
+  toast('ZIP listo','ok');
 }
 
 // ============ LOTES ============
 function renderLotes(){
-  let html='<div class="table-responsive"><table><thead><tr><th>#</th><th>Fecha</th><th>Entregado a</th><th>Reports</th><th>Devueltos</th><th>Estado</th><th></th></tr></thead><tbody>';
-  html+=lotes.sort((a,b)=>(b.fecha_despacho||'').localeCompare(a.fecha_despacho||'')).map(l=>{const cnt=reports.filter(r=>r.id_lote===l._id).length;return `<tr><td><b>${l.numero||'—'}</b></td><td>${l.fecha_despacho||''}</td><td>${l.entregado_a||''}</td><td>${cnt}</td><td>${l.devueltos||0}</td><td><span class="badge b-${l.estado==='Cerrado'?'ok':(l.estado==='En firma'?'warn':'info')}">${l.estado||'—'}</span></td><td><button class="btn btn-sm btn-sec" onclick="editLote('${l._id}')">Editar</button></td></tr>`}).join('');
-  html+='</tbody></table></div>';if(!lotes.length)html='<div class="empty">Sin lotes</div>';document.getElementById('lotes-body').innerHTML=html;
+  let html='<div class="table-responsive"><table><thead><tr><th>#</th><th>Fecha despacho</th><th>Entregado a</th><th>Reports</th><th>Devueltos</th><th>Estado</th><th></th></tr></thead><tbody>';
+  html+=lotes.sort((a,b)=>b.fecha_despacho?.localeCompare(a.fecha_despacho||'')||0).map(l=>{
+    const cnt=reports.filter(r=>r.id_lote===l._id).length;
+    return `<tr><td><b>${l.numero||'—'}</b></td><td>${l.fecha_despacho||''}</td><td>${l.entregado_a||''}</td><td>${cnt}</td><td>${l.devueltos||0}</td><td><span class="badge b-${l.estado==='Cerrado'?'ok':(l.estado==='En firma'?'warn':'info')}">${l.estado||'—'}</span></td><td><button class="btn btn-sm btn-sec" onclick="editLote('${l._id}')">Editar</button></td></tr>`;
+  }).join('');
+  html+='</tbody></table></div>';
+  if(!lotes.length)html='<div class="empty">Sin lotes registrados</div>';
+  document.getElementById('lotes-body').innerHTML=html;
 }
-function nuevoLote(){document.getElementById('modal-box').innerHTML=`<h2>Nuevo lote</h2><label>Número</label><input id="l-num" value="${lotes.length+1}"><label>Fecha despacho</label><input type="date" id="l-fec" value="${todayS()}"><label>Entregado a</label><input id="l-ent" placeholder="Nombre receptor"><label>Observaciones</label><textarea id="l-obs" rows="2"></textarea><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-sec" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveLote('')">Crear</button></div>`;document.getElementById('modal').classList.add('show')}
-function editLote(id){const l=lotes.find(x=>x._id===id);if(!l)return;document.getElementById('modal-box').innerHTML=`<h2>Editar lote</h2><label>Número</label><input id="l-num" value="${l.numero||''}"><label>Fecha</label><input type="date" id="l-fec" value="${l.fecha_despacho||''}"><label>Entregado a</label><input id="l-ent" value="${l.entregado_a||''}"><label>Devueltos</label><input type="number" id="l-dev" value="${l.devueltos||0}"><label>Estado</label><select id="l-est"><option ${l.estado==='Abierto'?'selected':''}>Abierto</option><option ${l.estado==='En firma'?'selected':''}>En firma</option><option ${l.estado==='Devuelto parcial'?'selected':''}>Devuelto parcial</option><option ${l.estado==='Cerrado'?'selected':''}>Cerrado</option></select><label>Observaciones</label><textarea id="l-obs" rows="2">${l.obs||''}</textarea><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-dang btn-sm" onclick="delLote('${id}')">Eliminar</button><button class="btn btn-sec" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveLote('${id}')">Guardar</button></div>`;document.getElementById('modal').classList.add('show')}
-async function saveLote(id){const data={numero:document.getElementById('l-num').value,fecha_despacho:document.getElementById('l-fec').value,entregado_a:document.getElementById('l-ent').value,obs:document.getElementById('l-obs').value};if(id){data.devueltos=parseInt(document.getElementById('l-dev').value)||0;data.estado=document.getElementById('l-est').value;await db.collection('lotes').doc(id).update(data)}else{data.estado='Abierto';data.devueltos=0;await db.collection('lotes').add(data)}closeModal();toast('Lote guardado','ok')}
+
+function nuevoLote(){
+  const num=lotes.length+1;
+  document.getElementById('modal-box').innerHTML=`<h2>Nuevo lote de firma</h2>
+  <label>Número</label><input id="l-num" value="${num}">
+  <label>Fecha despacho</label><input type="date" id="l-fec" value="${todayS()}">
+  <label>Entregado a (Teck)</label><input id="l-ent" placeholder="Nombre receptor">
+  <label>Observaciones</label><textarea id="l-obs" rows="2"></textarea>
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveLote('')">Crear</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+function editLote(id){
+  const l=lotes.find(x=>x._id===id);if(!l)return;
+  document.getElementById('modal-box').innerHTML=`<h2>Editar lote</h2>
+  <label>Número</label><input id="l-num" value="${l.numero||''}">
+  <label>Fecha despacho</label><input type="date" id="l-fec" value="${l.fecha_despacho||''}">
+  <label>Entregado a</label><input id="l-ent" value="${l.entregado_a||''}">
+  <label>Devueltos</label><input type="number" id="l-dev" value="${l.devueltos||0}">
+  <label>Estado</label><select id="l-est"><option ${l.estado==='Abierto'?'selected':''}>Abierto</option><option ${l.estado==='En firma'?'selected':''}>En firma</option><option ${l.estado==='Devuelto parcial'?'selected':''}>Devuelto parcial</option><option ${l.estado==='Cerrado'?'selected':''}>Cerrado</option></select>
+  <label>Observaciones</label><textarea id="l-obs" rows="2">${l.obs||''}</textarea>
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn btn-dang btn-sm" onclick="delLote('${id}')">Eliminar</button>
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveLote('${id}')">Guardar</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function saveLote(id){
+  const data={numero:document.getElementById('l-num').value,fecha_despacho:document.getElementById('l-fec').value,entregado_a:document.getElementById('l-ent').value,obs:document.getElementById('l-obs').value};
+  if(id){data.devueltos=parseInt(document.getElementById('l-dev').value)||0;data.estado=document.getElementById('l-est').value;await db.collection('lotes').doc(id).update(data)}
+  else{data.estado='Abierto';data.devueltos=0;await db.collection('lotes').add(data)}
+  closeModal();toast('Lote guardado','ok');
+}
+
 async function delLote(id){if(confirm('¿Eliminar lote?')){await db.collection('lotes').doc(id).delete();closeModal();toast('Eliminado','ok')}}
 
-// ============ EQUIPOS ============
-function renderEquiposTab(){const tb=document.getElementById('t-eq');if(!tb)return;const po=provs.map(p=>p.nombre);tb.innerHTML=equipos.sort((a,b)=>a.patente.localeCompare(b.patente)).map(e=>`<tr><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td><select onchange="setProv('${e.patente}',this.value)"><option value="">—</option>${po.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td><td>${e.horo||'—'}</td><td>${e.estado||'Activo'}</td><td><button class="btn btn-sm" onclick="editEquipo('${e.patente}')">Editar</button> <button class="btn btn-dang btn-sm" onclick="delEq('${e.patente}')">×</button></td></tr>`).join('')}
-function editEquipo(pat){const e=equipos.find(x=>x.patente===pat);document.getElementById('modal-box').innerHTML=`<h2>Editar: ${pat}</h2><label>Patente</label><input id="ne-p" value="${e.patente}" disabled><label>Tipo</label><input id="ne-t" value="${e.tipo}"><label>Proveedor</label><select id="ne-pr"><option value="">—</option>${provs.map(p=>`<option ${e.proveedor===p.nombre?'selected':''}>${p.nombre}</option>`).join('')}</select><label>Horómetro</label><input type="number" step="0.1" id="ne-h" value="${e.horo}"><label>Estado</label><select id="ne-st"><option ${e.estado==='Activo'?'selected':''}>Activo</option><option ${e.estado==='Inactivo'?'selected':''}>Inactivo</option></select><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-sec" onclick="closeModal()">Cancelar</button><button class="btn" onclick="updateEq('${pat}')">Guardar</button></div>`;document.getElementById('modal').classList.add('show')}
-async function updateEq(pat){await db.collection('equipos').doc(pat).update({tipo:document.getElementById('ne-t').value,proveedor:document.getElementById('ne-pr').value,horo:parseFloat(document.getElementById('ne-h').value),estado:document.getElementById('ne-st').value});closeModal();toast('Actualizado','ok')}
+// ============ EQUIPOS / PROVS ============
+function renderEquiposTab(){
+  const tb=document.getElementById('t-eq');if(!tb)return;
+  const provOpts=provs.map(p=>p.nombre);
+  tb.innerHTML=equipos.sort((a,b)=>a.patente.localeCompare(b.patente)).map(e=>`<tr><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td><select onchange="setProv('${e.patente}',this.value)"><option value="">—</option>${provOpts.map(p=>`<option ${e.proveedor===p?'selected':''}>${p}</option>`).join('')}</select></td><td>${e.horo||'—'}</td><td>${e.estado||'Activo'}</td>
+  <td><button class="btn btn-sm" onclick="editEquipo('${e.patente}')">Editar</button> <button class="btn btn-dang btn-sm" onclick="delEq('${e.patente}')">×</button></td></tr>`).join('');
+}
+
+function editEquipo(pat){
+  const e=equipos.find(x=>x.patente===pat);
+  document.getElementById('modal-box').innerHTML=`<h2>Editar Equipo: ${pat}</h2>
+    <label>Patente</label><input id="ne-p" value="${e.patente}" disabled>
+    <label>Tipo de Maquinaria</label><input id="ne-t" value="${e.tipo}">
+    <label>Proveedor</label><select id="ne-pr"><option value="">—</option>${provs.map(p=>`<option ${e.proveedor===p.nombre?'selected':''}>${p.nombre}</option>`).join('')}</select>
+    <label>Horómetro Base/Actual</label><input type="number" step="0.1" id="ne-h" value="${e.horo}">
+    <label>Estado</label><select id="ne-st"><option ${e.estado==='Activo'?'selected':''}>Activo</option><option ${e.estado==='Inactivo'?'selected':''}>Inactivo</option></select>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="updateEq('${pat}')">Actualizar Datos</button>
+    </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function updateEq(pat){
+  await db.collection('equipos').doc(pat).update({
+    tipo:document.getElementById('ne-t').value,
+    proveedor:document.getElementById('ne-pr').value,
+    horo:parseFloat(document.getElementById('ne-h').value),
+    estado:document.getElementById('ne-st').value
+  });
+  closeModal(); toast('Equipo actualizado','ok');
+}
+
 async function setProv(pat,p){await db.collection('equipos').doc(pat).update({proveedor:p})}
 async function delEq(pat){if(confirm('¿Eliminar '+pat+'?'))await db.collection('equipos').doc(pat).delete()}
-function nuevoEquipo(){document.getElementById('modal-box').innerHTML=`<h2>Nuevo equipo</h2><label>Patente</label><input id="ne-p"><label>Tipo</label><input id="ne-t"><label>Proveedor</label><select id="ne-pr"><option value="">—</option>${provs.map(p=>`<option>${p.nombre}</option>`).join('')}</select><label>Horómetro</label><input type="number" step="0.1" id="ne-h"><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-sec" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveNewEq()">Crear</button></div>`;document.getElementById('modal').classList.add('show')}
-async function saveNewEq(){const p=document.getElementById('ne-p').value.trim().toUpperCase();if(!p)return toast('Patente requerida','err');if(eqByPat(p))return toast('Ya existe','err');await db.collection('equipos').doc(p).set({patente:p,tipo:document.getElementById('ne-t').value,proveedor:document.getElementById('ne-pr').value,horo:parseFloat(document.getElementById('ne-h').value)||0,estado:'Activo'});closeModal();toast('Creado','ok')}
-function openProvs(){document.getElementById('modal-box').innerHTML=`<h2>Proveedores</h2><div id="prov-list" style="margin:12px 0">${provs.map(p=>`<div style="display:flex;gap:6px;margin:4px 0;align-items:center"><span style="flex:1"><b>${p.nombre}</b></span><button class="btn btn-dang btn-sm" onclick="delProv('${p._id}')">×</button></div>`).join('')||'<p class="small">Sin proveedores</p>'}</div><div style="display:flex;gap:6px"><input id="new-prov" placeholder="Nombre"><button class="btn btn-sm" onclick="addProv()">+</button></div><div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn btn-sec" onclick="closeModal()">Cerrar</button></div>`;document.getElementById('modal').classList.add('show')}
+
+function nuevoEquipo(){
+  document.getElementById('modal-box').innerHTML=`<h2>Nuevo equipo</h2>
+  <label>Patente</label><input id="ne-p">
+  <label>Tipo</label><input id="ne-t">
+  <label>Proveedor</label><select id="ne-pr"><option value="">—</option>${provs.map(p=>`<option>${p.nombre}</option>`).join('')}</select>
+  <label>Horómetro inicial</label><input type="number" step="0.1" id="ne-h">
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
+  <button class="btn" onclick="saveNewEq()">Crear</button>
+  </div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function saveNewEq(){
+  const p=document.getElementById('ne-p').value.trim().toUpperCase();
+  if(!p)return toast('Patente requerida','err');
+  if(eqByPat(p))return toast('Ya existe','err');
+  await db.collection('equipos').doc(p).set({patente:p,tipo:document.getElementById('ne-t').value,proveedor:document.getElementById('ne-pr').value,horo:parseFloat(document.getElementById('ne-h').value)||0,estado:'Activo'});
+  closeModal();toast('Equipo creado','ok');
+}
+
+function openProvs(){
+  document.getElementById('modal-box').innerHTML=`<h2>Proveedores</h2>
+  <div id="prov-list" style="margin:12px 0">${provs.map(p=>`<div style="display:flex;gap:6px;margin:4px 0;align-items:center"><span style="flex:1"><b>${p.nombre}</b></span><button class="btn btn-dang btn-sm" onclick="delProv('${p._id}')">×</button></div>`).join('')||'<p class="small">Sin proveedores</p>'}</div>
+  <div style="display:flex;gap:6px"><input id="new-prov" placeholder="Nombre proveedor"><button class="btn btn-sm" onclick="addProv()">+</button></div>
+  <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn btn-sec" onclick="closeModal()">Cerrar</button></div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
 async function addProv(){const v=document.getElementById('new-prov').value.trim();if(v){await db.collection('proveedores').add({nombre:v});openProvs()}}
 async function delProv(id){if(confirm('¿Eliminar?')){await db.collection('proveedores').doc(id).delete();openProvs()}}
 
@@ -826,9 +1059,26 @@ function renderErr(){
   const folios={},dups=[],saltos=[];
   reports.forEach(r=>{if(r.folio){const k=r.equipo+'|'+r.folio;if(folios[k])dups.push({eq:r.equipo,folio:r.folio});folios[k]=true}});
   const porEq={};reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
-  Object.keys(porEq).forEach(eq=>{const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));for(let i=1;i<rs.length;i++){const gap=rs[i].hi-rs[i-1].hf;if(Math.abs(gap)>0.1)saltos.push({eq,fecha:rs[i].fecha,turno:rs[i].turno,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})}});
-  const sinF=reports.filter(r=>!r.folio).length,sinFoto=reports.filter(r=>!r.foto&&!r.foto2&&r.estado==='Firmado').length;
-  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div><div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:var(--miss-tx)">${sinF}</div></div><div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:var(--accent)">${sinFoto}</div></div><div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:var(--accent)">${saltos.length}</div></div></div><h3 style="margin-top:14px">Saltos de horómetro</h3>${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha</th><th>Terminó</th><th>Inició</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:var(--miss-tx)">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}<h3 style="margin-top:14px">Folios duplicados</h3>${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
+  Object.keys(porEq).forEach(eq=>{
+    const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
+    for(let i=1;i<rs.length;i++){
+      const gap=rs[i].hi-rs[i-1].hf;
+      if(Math.abs(gap)>0.1)saltos.push({eq,fecha:rs[i].fecha,turno:rs[i].turno,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})
+    }
+  });
+  const sinF=reports.filter(r=>!r.folio).length;
+  const sinFoto=reports.filter(r=>!r.foto&&!r.foto2&&r.estado==='Firmado').length;
+  
+  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
+  <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
+  <div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
+  <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
+  </div>
+  <h3 style="margin-top:14px">Saltos de horómetro (Control Estricto)</h3>
+  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}
+  <h3 style="margin-top:14px">Folios duplicados</h3>
+  ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
 }
 
 function closeModal(){document.getElementById('modal').classList.remove('show')}
