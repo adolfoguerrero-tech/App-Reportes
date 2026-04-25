@@ -17,6 +17,16 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:13px}
+
+/* ====== NUEVO: CSS PANTALLA DE CARGA SEGURO ====== */
+.splash {position:fixed;inset:0;background:#1F4E78;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;}
+.splash.hide {opacity:0;pointer-events:none;}
+.splash img {width:200px;margin-bottom:20px; object-fit:contain;}
+.splash-bar {width:200px;height:4px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden;}
+.splash-bar div {width:0%;height:100%;background:#fff;border-radius:4px;transition:width 0.3s;}
+.splash p {color:rgba(255,255,255,0.8);font-size:12px;margin-top:12px;}
+/* ================================================= */
+
 .nav{background:#1F4E78;color:#fff;padding:10px 16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .nav h1{font-size:15px;margin-right:12px;font-weight:500;display:flex;align-items:center}
 .logo-nav{height:22px;width:auto;margin-right:10px;object-fit:contain}
@@ -103,6 +113,11 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 </style></head>
 <body>
 
+<div class="splash" id="splash">
+  <img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Rentamaq Logo">
+  <div class="splash-bar"><div id="splash-progress"></div></div>
+  <p id="splash-msg">Iniciando sistema...</p>
+</div>
 <div id="login-view" class="hidden">
 <div class="login-box">
 <img src="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/logorentamaq01.png?alt=media&token=153e51ab-1834-4c30-82be-2894de8ca74a" alt="Rentamaq Logo" class="logo-login">
@@ -275,7 +290,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="toast-container"></div>
 
 <script>
-// ============ PWA ============
+// ============ PWA (MANTIENE LA CAPACIDAD DE INSTALARSE) ============
 if('serviceWorker' in navigator){
   const swCode='self.addEventListener("fetch",e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));';
   const swBlob=new Blob([swCode],{type:'application/javascript'});
@@ -283,6 +298,20 @@ if('serviceWorker' in navigator){
 }
 const manifest={name:"Rentamaq Reportabilidad",short_name:"Rentamaq",start_url:location.href,display:"standalone",background_color:"#1F4E78",theme_color:"#1F4E78",icons:[{src:"https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8",sizes:"192x192",type:"image/png"}]};
 const mLink=document.createElement('link');mLink.rel='manifest';mLink.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(manifest));document.head.appendChild(mLink);
+
+// ====== NUEVAS FUNCIONES PANTALLA DE CARGA ======
+let loadedCollections = 0;
+function splashProgress(pct, msg) {
+  const bar = document.getElementById('splash-progress');
+  const txt = document.getElementById('splash-msg');
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = msg;
+}
+function hideSplash() {
+  const s = document.getElementById('splash');
+  if(s) { s.classList.add('hide'); setTimeout(() => s.remove(), 600); }
+}
+// =================================================
 
 // ============ CONFIG ============
 const firebaseConfig = {
@@ -306,6 +335,7 @@ let unsubs=[];
 
 // ============ AUTH CON ROLES ============
 auth.onAuthStateChanged(async u=>{
+  splashProgress(20, 'Verificando usuario...');
   if(u){
     currentUser=u;
     document.getElementById('login-view').classList.add('hidden');
@@ -330,6 +360,7 @@ auth.onAuthStateChanged(async u=>{
     }
 
     setStatus('ok','Conectado');
+    splashProgress(40, 'Cargando base de datos...');
     bootstrap();
   } else {
     currentUser=null;
@@ -337,6 +368,7 @@ auth.onAuthStateChanged(async u=>{
     unsubs.forEach(f=>f());unsubs=[];
     document.getElementById('app').classList.add('hidden');
     document.getElementById('login-view').classList.remove('hidden');
+    hideSplash(); // Oculta si hay que iniciar sesión
   }
 });
 
@@ -362,11 +394,18 @@ function toast(msg,kind){
   setTimeout(()=>t.remove(),3500);
 }
 
-// ============ BOOTSTRAP ============
+// ============ BOOTSTRAP (CON BARRA DE CARGA) ============
 function bootstrap(){
+  const totalCols = 5;
   const handle=(col,tgt,cb)=>{
     const u=db.collection(col).onSnapshot(s=>{
       tgt.length=0;s.docs.forEach(d=>tgt.push({...d.data(),_id:d.id}));
+      
+      // Control de la barra de carga
+      loadedCollections++;
+      splashProgress(40 + Math.round((loadedCollections/totalCols)*60), 'Cargando ' + col + '...');
+      if(loadedCollections >= totalCols) setTimeout(hideSplash, 400);
+
       if(cb)cb();
     },err=>{toast('Error cargando '+col+': '+err.message,'err');setStatus('err','Error')});
     unsubs.push(u);
@@ -453,6 +492,7 @@ function renderDash(){
     totHrs+=hrs; totHef+=hef; totRep+=rs.length;
     firm+=rs.filter(r=>r.estado==='Firmado').length;
     
+    // Buscar el último reporte de la máquina
     const allReps = reports.filter(r => r.equipo === e.patente);
     allReps.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
     const ult = allReps[0];
@@ -498,8 +538,6 @@ function renderDash(){
   if(document.getElementById('s-rep')) document.getElementById('s-rep').textContent=totRep;
   if(document.getElementById('s-firm')) document.getElementById('s-firm').textContent=firm;
   if(document.getElementById('s-firm-sub')) document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
-  if(document.getElementById('s-aus')) document.getElementById('s-aus').textContent=ausP.length;
-  if(document.getElementById('s-miss')) document.getElementById('s-miss').textContent='—';
 }
 
 function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
