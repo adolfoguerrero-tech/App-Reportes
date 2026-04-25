@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1F4E78">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rentamaq">
 <title>Rentamaq Reportabilidad</title>
 <link rel="icon" type="image/png" href="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8">
+<link rel="apple-touch-icon" href="https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -120,7 +125,7 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 </h1>
 <button onclick="show('dash')" id="n-dash" class="active">Dashboard</button>
 <button onclick="show('grid')" id="n-grid">Grilla</button>
-<button onclick="show('new')" id="n-new">Nuevo Report</button>
+<button onclick="show('new')" id="n-new" class="hidden">Nuevo Report</button>
 <button onclick="show('cons')" id="n-cons" class="hidden">Consolidados</button>
 <button onclick="show('lotes')" id="n-lotes" class="hidden">Lotes Firma</button>
 <button onclick="show('equipos')" id="n-equipos" class="hidden">Equipos</button>
@@ -171,8 +176,8 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <form id="form-new" onsubmit="saveReport(event)">
 <input type="hidden" id="f-id">
 <div class="grid3">
-<div><label>Fecha</label><input type="date" id="f-fecha" required></div>
-<div><label>Turno</label><select id="f-turno" required><option value="">—</option><option>Día</option><option>Noche</option></select></div>
+<div><label>Fecha</label><input type="date" id="f-fecha" required onchange="onEqChange()"></div>
+<div><label>Turno</label><select id="f-turno" required onchange="onEqChange()"><option value="">—</option><option>Día</option><option>Noche</option></select></div>
 <div><label>Folio(s) papel</label><input id="f-folio" placeholder="Ej: 34477 / 34478"></div>
 </div>
 <label>Equipo</label><select id="f-eq" required onchange="onEqChange()"></select>
@@ -270,6 +275,15 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div id="toast-container"></div>
 
 <script>
+// ============ PWA ============
+if('serviceWorker' in navigator){
+  const swCode='self.addEventListener("fetch",e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));';
+  const swBlob=new Blob([swCode],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+}
+const manifest={name:"Rentamaq Reportabilidad",short_name:"Rentamaq",start_url:location.href,display:"standalone",background_color:"#1F4E78",theme_color:"#1F4E78",icons:[{src:"https://firebasestorage.googleapis.com/v0/b/app-reportabilidad.firebasestorage.app/o/ICONO%20WEB.png?alt=media&token=bc152ac1-2403-493d-9a90-551b0f4ef7b8",sizes:"192x192",type:"image/png"}]};
+const mLink=document.createElement('link');mLink.rel='manifest';mLink.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(manifest));document.head.appendChild(mLink);
+
 // ============ CONFIG ============
 const firebaseConfig = {
   apiKey: "AIzaSyBkIwhQMJbRdheMtsPcf2iFR0HPrOMW-h0",
@@ -380,8 +394,10 @@ function show(v){
     document.getElementById('view-'+x).classList.add('hidden');
     document.getElementById('n-'+x)?.classList.remove('active');
   });
+  
   document.getElementById('view-'+v).classList.remove('hidden');
   document.getElementById('n-'+v)?.classList.add('active');
+  
   if(v==='dash')renderDash();
   if(v==='grid')renderGrid();
   if(v==='new')initNewForm();
@@ -436,13 +452,43 @@ function renderDash(){
     const hef=rs.reduce((a,b)=>a+Number(b.hef!==undefined?b.hef:b.dif||0),0);
     totHrs+=hrs; totHef+=hef; totRep+=rs.length;
     firm+=rs.filter(r=>r.estado==='Firmado').length;
-    const tHoy=rs.some(r=>r.fecha===hoy);
-    if(tHoy)hoyN++;
-    const st=rs.length===0?'<span class="badge b-warn">Sin reports</span>':(tHoy?'<span class="badge b-ok">Al día</span>':'<span class="badge b-info">Con historial</span>');
-    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${hef.toFixed(1)}</td><td>${st}</td></tr>`;
+    
+    const allReps = reports.filter(r => r.equipo === e.patente);
+    allReps.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
+    const ult = allReps[0];
+
+    let stHtml = '';
+    let ultHtml = '';
+
+    if(rs.length===0){
+      stHtml='<span class="badge b-warn">Sin reports</span>';
+    } else {
+      const tHoy=rs.some(r=>r.fecha===hoy);
+      if(tHoy){
+        stHtml='<span class="badge b-ok">Al día</span>';
+      } else {
+        if(ult) {
+          const diffMs = new Date(hoy + 'T12:00') - new Date(ult.fecha + 'T12:00');
+          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          if(diffDays <= 2) stHtml = '<span class="badge b-info">Reciente</span>';
+          else if(diffDays <= 5) stHtml = '<span class="badge" style="background:#FFE0CC;color:#8B4513">'+diffDays+' días atrás</span>';
+          else stHtml = '<span class="badge" style="background:#F8D7DA;color:#721C24">'+diffDays+' días atrás</span>';
+        } else {
+          stHtml = '<span class="badge b-warn">Sin reports</span>';
+        }
+      }
+    }
+
+    if(ult) {
+      ultHtml = `<br><span style="font-size:10px;color:#888;display:block;margin-top:2px"><b>Último:</b> ${fmtD(ult.fecha)} · ${ult.turno}</span>`;
+    } else {
+      ultHtml = `<br><span style="font-size:10px;color:#888;display:block;margin-top:2px">—</span>`;
+    }
+
+    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${hef.toFixed(1)}</td><td>${stHtml}${ultHtml}</td></tr>`;
   }).join('');
   
-  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
+  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado / Último</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
   
   if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
   if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
@@ -575,6 +621,7 @@ function irReportar(pat,fecha,turno){closeModal();clearForm();show('new');setTim
 function initNewForm(){llenarSelects();if(!document.getElementById('f-id').value){document.getElementById('f-fecha').value=todayS();document.getElementById('new-title').textContent='Ingresar nuevo report';}}
 function editReport(id){
   const r=reports.find(x=>x._id===id);if(!r)return;
+  fotoData1=null; fotoData2=null;
   show('new');
   setTimeout(()=>{
     document.getElementById('new-title').textContent='Editar report';document.getElementById('f-id').value=r._id;document.getElementById('f-fecha').value=r.fecha;document.getElementById('f-turno').value=r.turno;document.getElementById('f-folio').value=r.folio||'';document.getElementById('f-eq').value=r.equipo;document.getElementById('f-op').value=r.operador||'';document.getElementById('f-hi').value=r.hi;document.getElementById('f-hf').value=r.hf;
@@ -595,14 +642,21 @@ async function delReport(id){
   if(!confirm('¿Eliminar este report?'))return;
   try{
     const r=reports.find(x=>x._id===id);
+    const pat = r?.equipo;
     if(r&&r.foto){try{await storage.refFromURL(r.foto).delete()}catch(e){}}
     if(r&&r.foto2){try{await storage.refFromURL(r.foto2).delete()}catch(e){}}
     await db.collection('reportes').doc(id).delete();
+    
+    if(pat){
+      const restantes = reports.filter(x => x.equipo === pat && x._id !== id);
+      const maxHf = restantes.reduce((m, x) => Math.max(m, Number(x.hf || 0)), 0);
+      await db.collection('equipos').doc(pat).update({horo: maxHf});
+    }
+    
     clearForm();show('grid');toast('Report eliminado','ok');
   }catch(e){toast('Error: '+e.message,'err')}
 }
 
-// QUITAR FOTO 1 o 2
 function quitFoto(num){
   document.getElementById('f-foto-prev'+num).innerHTML='';
   document.getElementById('f-foto'+num).value='';
@@ -610,7 +664,6 @@ function quitFoto(num){
   validate();
 }
 
-// COMPRIMIR FOTO 1 o 2
 function compFoto(e, num){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -630,13 +683,36 @@ function compFoto(e, num){
   };r.readAsDataURL(f);
 }
 
-function onEqChange(){const p=document.getElementById('f-eq').value;const e=eqByPat(p);if(e&&!document.getElementById('f-id').value)document.getElementById('f-hi').value=e.horo||'';calcDif();}
+function onEqChange(){
+  const p = document.getElementById('f-eq').value;
+  const e = eqByPat(p);
+  if(!e || document.getElementById('f-id').value) { calcDif(); return; }
+  
+  const fecha = document.getElementById('f-fecha').value;
+  const turno = document.getElementById('f-turno').value;
+  
+  if(fecha && turno && p) {
+    const currentOrder = fecha + (turno === 'Día' ? 'A' : 'B');
+    const anteriores = reports
+      .filter(r => r.equipo === p && (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder)
+      .sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
+    
+    if(anteriores.length > 0) {
+      document.getElementById('f-hi').value = anteriores[0].hf;
+    } else {
+      document.getElementById('f-hi').value = e.horo || '';
+    }
+  } else {
+    document.getElementById('f-hi').value = e.horo || '';
+  }
+  calcDif();
+}
 
 function calcDif(){
-  const hi=parseFloat(document.getElementById('f-hi').value)||0;
-  const hf=parseFloat(document.getElementById('f-hf').value)||0;
-  const dif=(hf-hi).toFixed(1);
-  document.getElementById('f-dif').value=dif;
+  const hi=parseFloat(document.getElementById('f-hi').value);
+  const hf=parseFloat(document.getElementById('f-hf').value);
+  const dif = (!isNaN(hi) && !isNaN(hf)) ? (hf-hi).toFixed(1) : '';
+  document.getElementById('f-dif').value = dif;
   
   const isNew = !document.getElementById('f-id').value;
   const hefInput = document.getElementById('f-hef');
@@ -659,31 +735,27 @@ function validate(){
   const turno=document.getElementById('f-turno').value;
   const folio=document.getElementById('f-folio').value;
   const estado=document.getElementById('f-estado').value;
-  
-  // OBTENEMOS LA OBSERVACIÓN Y NOS ASEGURAMOS DE QUE SEA UN TEXTO
   const obs = (document.getElementById('f-obs').value || '').trim();
-  
   const hoy=todayS();
   const dif = hf - hi;
   
   if(fecha>hoy)msgs.push({t:'err',m:'⊘ Fecha no puede ser futura'});
   if(!isNaN(hi) && !isNaN(hf) && hf < hi)msgs.push({t:'err',m:'⊘ Horóm. final no puede ser menor al inicial'});
   
-  // BLOQUE BLINDADO DE HORAS EFECTIVAS
   if(!isNaN(hi) && !isNaN(hf) && !isNaN(hef)) {
     const difRed = Math.round(dif * 10) / 10;
     const hefRed = Math.round(hef * 10) / 10;
     if(hefRed > difRed) {
       msgs.push({t:'err',m:'⊘ Horas efectivas no pueden ser mayores a la diferencia del horómetro'});
     } else if(hefRed < difRed && obs === '') {
-      // AQUÍ ESTÁ LA MAGIA: Si está vacía, manda el error sin importar qué navegador uses.
       msgs.push({t:'err',m:'⊘ Detectamos un descuento de horas. Escribe una Observación obligatoria indicando el motivo.'});
     }
   }
 
   if(eq&&fecha&&turno&&reports.some(r=>r.equipo===eq&&r.fecha===fecha&&r.turno===turno&&r._id!==id))msgs.push({t:'err',m:'⊘ Ya existe report para este equipo/fecha/turno'});
   
-  // VALIDAMOS QUE AL MENOS HAYA UNA FOTO SI ESTÁ FIRMADO
+  if(folio && eq && reports.some(r=>r.folio===folio && r.equipo===eq && r._id!==id))msgs.push({t:'err',m:'⊘ Folio duplicado en este equipo'});
+  
   const hasPhoto = fotoData1?.blob || fotoData2?.blob || (id && reports.find(r=>r._id===id)?.foto) || (id && reports.find(r=>r._id===id)?.foto2);
   if(estado==='Firmado'&&!hasPhoto)msgs.push({t:'err',m:'⊘ Estado "Firmado" requiere al menos 1 foto adjunta'});
   
@@ -694,7 +766,7 @@ function validate(){
     const pasados = rEq.filter(r => (r.fecha + (r.turno === 'Día' ? 'A' : 'B')) < currentOrder);
     if (pasados.length > 0) {
       pasados.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
-      const ant = pasados[pasados.length-1];
+      const ant = pasados[0];
       if (parseFloat(ant.hf) > hi) msgs.push({t:'err', m:`⊘ Choque: Turno anterior (${fmtD(ant.fecha)} ${ant.turno}) terminó en ${ant.hf}.`});
     }
 
@@ -705,8 +777,7 @@ function validate(){
       if (parseFloat(sig.hi) < hf) msgs.push({t:'err', m:`⊘ Choque: Turno siguiente (${fmtD(sig.fecha)} ${sig.turno}) parte en ${sig.hi}.`});
     }
   }
-  
-  // VALIDACIÓN INICIAL VS BASE DE DATOS
+
   if(!isNaN(hi) && eq && !id){
     const e=eqByPat(eq);
     if(e && e.horo){
@@ -718,7 +789,6 @@ function validate(){
     }
   }
 
-  // RANGO TÍPICO 0-11 HORAS
   if(!isNaN(hi) && !isNaN(hf)){
     if(dif > 11) msgs.push({t:'warn',m:`⚠ Diferencia de ${dif.toFixed(1)}h supera el turno típico de 11h`});
   }
@@ -773,7 +843,7 @@ async function saveReport(e){
       hef:parseFloat(document.getElementById('f-hef').value)||0,
       obs:document.getElementById('f-obs').value,
       foto:fotoUrl1,
-      foto2:fotoUrl2, // GUARDAMOS LA SEGUNDA FOTO
+      foto2:fotoUrl2,
       estado:document.getElementById('f-estado').value,
       usuario:currentUser.email,
       ts:new Date().toISOString()
@@ -869,7 +939,11 @@ function exportExcel(){
   const m1 = meses[d1.getMonth()], m2 = meses[d2.getMonth()];
   const tituloMeses = (m1 === m2) ? m1 : `${m1}/${m2}`;
 
-  equipos.forEach(eq => {
+  equipos.filter(eq => {
+  const tieneR = reports.some(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
+  const tieneA = ausencias.some(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
+  return tieneR || tieneA;
+}).forEach(eq => {
     const rEq = reports.filter(r => r.equipo === eq.patente && r.fecha >= ini && r.fecha <= fin);
     const aEq = ausencias.filter(a => a.equipo === eq.patente && a.fecha >= ini && a.fecha <= fin);
     
@@ -918,7 +992,6 @@ function exportExcel(){
   toast('Excel generado con éxito', 'ok');
 }
 
-// DESCARGA LAS DOS FOTOS EN EL ZIP
 async function exportFotosZip(){
   const ini=document.getElementById('c-ini').value,fin=document.getElementById('c-fin').value;
   const filt=reports.filter(r=>r.fecha>=ini&&r.fecha<=fin&&(r.foto||r.foto2));
