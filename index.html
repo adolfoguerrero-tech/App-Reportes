@@ -189,12 +189,13 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
 <h3>Equipos de la flota</h3>
 <div class="row-flex">
-<select id="fltr-prov" onchange="renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
-<select id="fltr-tipo" onchange="renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
-<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="renderDash()">
+<select id="fltr-prov" onchange="dashPage=1; renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
+<select id="fltr-tipo" onchange="dashPage=1; renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
+<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="dashPage=1; renderDash()">
 </div>
 </div>
 <div id="dash-table" class="table-responsive"><div class="loader">Cargando...</div></div>
+<div id="dash-pag" style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; font-size:12px;" class="hidden"></div>
 </div>
 </div>
 
@@ -370,9 +371,10 @@ const auth = firebase.auth();
 
 const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
+// CAMBIO: Agregadas variables de paginación
 let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
 let fotoData1=null, fotoData2=null, currentUser=null, userRole='operador'; 
-let unsubs=[];
+let unsubs=[], dashPage=1, dashPageSize=20;
 
 // ============ AUTH CON ROLES ============
 auth.onAuthStateChanged(async u=>{
@@ -505,7 +507,7 @@ function defaultPeriod() {
 }
 function eqByPat(p){return equipos.find(e=>e.patente===p)}
 
-// ============ DASHBOARD ============
+// ============ DASHBOARD CON PAGINACIÓN ============
 function renderDash(){
   if(!currentUser)return;
   const fp=document.getElementById('fltr-prov');
@@ -526,14 +528,14 @@ function renderDash(){
   let totHrs=0, totHef=0, totRep=0, firm=0, hoyN=0;
   const hoy=todayS();
   
-  const rows=lista.map(e=>{
+  // CAMBIO: Calculamos todos los datos primero
+  const eqData = lista.map(e=>{
     const rs=repsPorEq[e.patente]||[];
     const hrs=rs.reduce((a,b)=>a+Number(b.dif||(b.hf-b.hi)||0),0);
     const hef=rs.reduce((a,b)=>a+Number(b.hef!==undefined?b.hef:b.dif||0),0);
     totHrs+=hrs; totHef+=hef; totRep+=rs.length;
     firm+=rs.filter(r=>r.estado==='Firmado').length;
     
-    // Buscar el último reporte de la máquina
     const allReps = reports.filter(r => r.equipo === e.patente);
     allReps.sort((a,b) => (b.fecha+(b.turno==='Día'?'A':'B')).localeCompare(a.fecha+(a.turno==='Día'?'A':'B')));
     const ult = allReps[0];
@@ -566,11 +568,10 @@ function renderDash(){
       ultHtml = `<br><span style="font-size:10px;color:#888;display:block;margin-top:2px">—</span>`;
     }
 
-    return `<tr class="clickable" onclick="openGridFor('${e.patente}')"><td><b>${e.patente}</b></td><td>${e.tipo||'—'}</td><td>${e.proveedor||'—'}</td><td>${e.horo||'—'}</td><td>${rs.length}</td><td>${hrs.toFixed(1)}</td><td>${hef.toFixed(1)}</td><td>${stHtml}${ultHtml}</td></tr>`;
-  }).join('');
-  
-  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado / Último</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
-  
+    return { e, rs, hrs, hef, stHtml, ultHtml };
+  });
+
+  // Actualizar estadísticas globales arriba
   if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
   if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
   if(document.getElementById('s-hrs-sub')) document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
@@ -579,6 +580,44 @@ function renderDash(){
   if(document.getElementById('s-rep')) document.getElementById('s-rep').textContent=totRep;
   if(document.getElementById('s-firm')) document.getElementById('s-firm').textContent=firm;
   if(document.getElementById('s-firm-sub')) document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
+
+  // CAMBIO: Lógica de paginación
+  const totalItems = eqData.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / dashPageSize));
+  if(dashPage > totalPages) dashPage = totalPages;
+  const start = (dashPage - 1) * dashPageSize;
+  const pageData = eqData.slice(start, start + dashPageSize);
+
+  // Dibujar solo la página actual
+  const rows = pageData.map(d => {
+    return `<tr class="clickable" onclick="openGridFor('${d.e.patente}')"><td><b>${d.e.patente}</b></td><td>${d.e.tipo||'—'}</td><td>${d.e.proveedor||'—'}</td><td>${d.e.horo||'—'}</td><td>${d.rs.length}</td><td>${d.hrs.toFixed(1)}</td><td>${d.hef.toFixed(1)}</td><td>${d.stHtml}${d.ultHtml}</td></tr>`;
+  }).join('');
+  
+  document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado / Último</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
+  
+  // Dibujar controles de paginación
+  const pagEl = document.getElementById('dash-pag');
+  if (pagEl) {
+      if (totalItems > dashPageSize || dashPage > 1) {
+          pagEl.classList.remove('hidden');
+          pagEl.innerHTML = `
+              <div style="color:var(--text-muted)">${totalItems} equipos · Pág ${dashPage} de ${totalPages}</div>
+              <div style="display:flex; gap:5px; align-items:center;">
+                  <button class="btn btn-sec btn-sm" onclick="dashPage=1;renderDash()" ${dashPage===1?'disabled':''}>&laquo;</button>
+                  <button class="btn btn-sec btn-sm" onclick="dashPage--;renderDash()" ${dashPage===1?'disabled':''}>&lsaquo;</button>
+                  <select onchange="dashPageSize=Number(this.value);dashPage=1;renderDash()" style="width:auto; padding:2px 4px; font-size:11px;">
+                      <option value="20" ${dashPageSize===20?'selected':''}>20/pág</option>
+                      <option value="50" ${dashPageSize===50?'selected':''}>50/pág</option>
+                      <option value="100" ${dashPageSize===100?'selected':''}>100/pág</option>
+                  </select>
+                  <button class="btn btn-sec btn-sm" onclick="dashPage++;renderDash()" ${dashPage>=totalPages?'disabled':''}>&rsaquo;</button>
+                  <button class="btn btn-sec btn-sm" onclick="dashPage=${totalPages};renderDash()" ${dashPage>=totalPages?'disabled':''}>&raquo;</button>
+              </div>
+          `;
+      } else {
+          pagEl.classList.add('hidden');
+      }
+  }
 }
 
 function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
