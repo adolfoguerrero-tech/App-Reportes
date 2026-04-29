@@ -189,13 +189,13 @@ label{display:block;font-size:11px;font-weight:500;color:#555;margin-bottom:3px;
 <div class="row-flex" style="justify-content:space-between;margin-bottom:10px">
 <h3>Equipos de la flota</h3>
 <div class="row-flex">
-<select id="fltr-prov" onchange="dashPage=1; renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
-<select id="fltr-tipo" onchange="dashPage=1; renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
-<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="dashPage=1; renderDash()">
+<select id="fltr-prov" onchange="dashPage=1;renderDash()" style="width:180px"><option value="">Todos proveedores</option></select>
+<select id="fltr-tipo" onchange="dashPage=1;renderDash()" style="width:180px"><option value="">Todos tipos</option></select>
+<input id="fltr" placeholder="Filtrar patente..." style="width:180px" oninput="dashPage=1;renderDash()">
 </div>
 </div>
 <div id="dash-table" class="table-responsive"><div class="loader">Cargando...</div></div>
-<div id="dash-pag" style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; font-size:12px;" class="hidden"></div>
+<div id="dash-pag" class="hidden" style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;font-size:12px;color:#888;"></div>
 </div>
 </div>
 
@@ -366,15 +366,20 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// 1. MODO OFFLINE NATIVO (Sobrevivencia en faena)
+db.enablePersistence().catch(err => console.warn("Modo offline advertencia: ", err.code));
+
 const storage = firebase.storage();
 const auth = firebase.auth();
 
 const MOTIVOS = ['Mantención programada','Mantención no programada','Equipo no requerido por Teck','Sin operador disponible','Mala condición climática','Emergencia en faena','Equipo en traslado','Espera condición segura','Detención extraordinaria','Otro'];
 
-// CAMBIO: Agregadas variables de paginación
 let reports=[], equipos=[], ausencias=[], provs=[], lotes=[];
 let fotoData1=null, fotoData2=null, currentUser=null, userRole='operador'; 
-let unsubs=[], dashPage=1, dashPageSize=20;
+
+// VARIABLES PAGINACIÓN
+let unsubs=[], dashPage=1, dashPageSize=20; 
 
 // ============ AUTH CON ROLES ============
 auth.onAuthStateChanged(async u=>{
@@ -437,27 +442,39 @@ function toast(msg,kind){
   setTimeout(()=>t.remove(),3500);
 }
 
-// ============ BOOTSTRAP ============
+// ============ BOOTSTRAP (CON LÍMITE DE NUBE) ============
 function bootstrap(){
   const totalCols = 5;
-  const handle=(col,tgt,cb)=>{
-    const u=db.collection(col).onSnapshot(s=>{
+  
+  // 4. LÍMITE DE LECTURA (Ahorro de costos) - Últimos 60 días
+  const d60 = new Date();
+  d60.setDate(d60.getDate() - 60);
+  const limitStr = d60.toISOString().slice(0, 10);
+
+  const handle=(queryRef, tgt, cb)=>{
+    const u=queryRef.onSnapshot(s=>{
       tgt.length=0;s.docs.forEach(d=>tgt.push({...d.data(),_id:d.id}));
       
       // Barra de carga
       loadedCollections++;
-      splashProgress(40 + Math.round((loadedCollections/totalCols)*60), 'Cargando ' + col + '...');
+      splashProgress(40 + Math.round((loadedCollections/totalCols)*60), 'Descargando datos...');
       if(loadedCollections >= totalCols) setTimeout(hideSplash, 400);
 
       if(cb)cb();
-    },err=>{toast('Error cargando '+col+': '+err.message,'err');setStatus('err','Error')});
+    },err=>{
+      toast('Trabajando Offline o Error: '+err.message,'warn');
+      setStatus('ok','Modo Offline');
+    });
     unsubs.push(u);
   };
-  handle('equipos',equipos,()=>{renderDash();llenarSelects();if(!isHidden('grid'))renderGrid();if(userRole==='admin')renderEquiposTab()});
-  handle('reportes',reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(userRole==='admin'&&!isHidden('err'))renderErr()});
-  handle('ausencias',ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
-  handle('proveedores',provs,()=>{renderDash();if(userRole==='admin')renderEquiposTab()});
-  handle('lotes',lotes,()=>{if(userRole==='admin'&&!isHidden('lotes'))renderLotes()});
+
+  handle(db.collection('equipos'),equipos,()=>{renderDash();llenarSelects();if(!isHidden('grid'))renderGrid();if(userRole==='admin')renderEquiposTab()});
+  // Aplicamos el filtro de 60 días a los reportes y ausencias
+  handle(db.collection('reportes').where('fecha', '>=', limitStr),reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(userRole==='admin'&&!isHidden('err'))renderErr()});
+  handle(db.collection('ausencias').where('fecha', '>=', limitStr),ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
+  handle(db.collection('proveedores'),provs,()=>{renderDash();if(userRole==='admin')renderEquiposTab()});
+  handle(db.collection('lotes'),lotes,()=>{if(userRole==='admin'&&!isHidden('lotes'))renderLotes()});
+  
   initGrid();
   if(userRole==='admin')initCons();
   document.getElementById('f-fecha').value=todayS();
@@ -528,7 +545,7 @@ function renderDash(){
   let totHrs=0, totHef=0, totRep=0, firm=0, hoyN=0;
   const hoy=todayS();
   
-  // CAMBIO: Calculamos todos los datos primero
+  // Procesar toda la lista filtrada para sacar totales globales
   const eqData = lista.map(e=>{
     const rs=repsPorEq[e.patente]||[];
     const hrs=rs.reduce((a,b)=>a+Number(b.dif||(b.hf-b.hi)||0),0);
@@ -571,17 +588,7 @@ function renderDash(){
     return { e, rs, hrs, hef, stHtml, ultHtml };
   });
 
-  // Actualizar estadísticas globales arriba
-  if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
-  if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
-  if(document.getElementById('s-hrs-sub')) document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
-  if(document.getElementById('s-eq')) document.getElementById('s-eq').textContent=lista.length;
-  if(document.getElementById('s-eq-sub')) document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
-  if(document.getElementById('s-rep')) document.getElementById('s-rep').textContent=totRep;
-  if(document.getElementById('s-firm')) document.getElementById('s-firm').textContent=firm;
-  if(document.getElementById('s-firm-sub')) document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
-
-  // CAMBIO: Lógica de paginación
+  // LOGICA DE PAGINACIÓN
   const totalItems = eqData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / dashPageSize));
   if(dashPage > totalPages) dashPage = totalPages;
@@ -595,29 +602,39 @@ function renderDash(){
   
   document.getElementById('dash-table').innerHTML=`<table><thead><tr><th>Patente</th><th>Tipo</th><th>Proveedor</th><th>Horómetro</th><th>Reports</th><th>Hrs Horo</th><th>Hrs Efect</th><th>Estado / Último</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty">Sin equipos</td></tr>'}</tbody></table>`;
   
-  // Dibujar controles de paginación
+  // Dibujar los controles de paginación
   const pagEl = document.getElementById('dash-pag');
-  if (pagEl) {
-      if (totalItems > dashPageSize || dashPage > 1) {
-          pagEl.classList.remove('hidden');
-          pagEl.innerHTML = `
-              <div style="color:var(--text-muted)">${totalItems} equipos · Pág ${dashPage} de ${totalPages}</div>
-              <div style="display:flex; gap:5px; align-items:center;">
-                  <button class="btn btn-sec btn-sm" onclick="dashPage=1;renderDash()" ${dashPage===1?'disabled':''}>&laquo;</button>
-                  <button class="btn btn-sec btn-sm" onclick="dashPage--;renderDash()" ${dashPage===1?'disabled':''}>&lsaquo;</button>
-                  <select onchange="dashPageSize=Number(this.value);dashPage=1;renderDash()" style="width:auto; padding:2px 4px; font-size:11px;">
-                      <option value="20" ${dashPageSize===20?'selected':''}>20/pág</option>
-                      <option value="50" ${dashPageSize===50?'selected':''}>50/pág</option>
-                      <option value="100" ${dashPageSize===100?'selected':''}>100/pág</option>
-                  </select>
-                  <button class="btn btn-sec btn-sm" onclick="dashPage++;renderDash()" ${dashPage>=totalPages?'disabled':''}>&rsaquo;</button>
-                  <button class="btn btn-sec btn-sm" onclick="dashPage=${totalPages};renderDash()" ${dashPage>=totalPages?'disabled':''}>&raquo;</button>
-              </div>
-          `;
-      } else {
-          pagEl.classList.add('hidden');
-      }
+  if(pagEl) {
+    if(totalItems > dashPageSize) {
+      pagEl.classList.remove('hidden');
+      pagEl.innerHTML=`
+        <div>${totalItems} equipos · Pág ${dashPage} de ${totalPages}</div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sec btn-sm" onclick="dashPage=1;renderDash()" ${dashPage===1?'disabled':''}>&laquo;</button>
+          <button class="btn btn-sec btn-sm" onclick="dashPage--;renderDash()" ${dashPage===1?'disabled':''}>&lsaquo;</button>
+          <select onchange="dashPageSize=+this.value;dashPage=1;renderDash()" style="width:auto;padding:2px 4px;font-size:11px">
+            <option value="20" ${dashPageSize===20?'selected':''}>20 / pág</option>
+            <option value="50" ${dashPageSize===50?'selected':''}>50 / pág</option>
+            <option value="100" ${dashPageSize===100?'selected':''}>100 / pág</option>
+          </select>
+          <button class="btn btn-sec btn-sm" onclick="dashPage++;renderDash()" ${dashPage>=totalPages?'disabled':''}>&rsaquo;</button>
+          <button class="btn btn-sec btn-sm" onclick="dashPage=${totalPages};renderDash()" ${dashPage>=totalPages?'disabled':''}>&raquo;</button>
+        </div>
+      `;
+    } else {
+      pagEl.classList.add('hidden');
+    }
   }
+
+  // Llenar tarjetas superiores (siguen mostrando el total global)
+  if(document.getElementById('s-hrs')) document.getElementById('s-hrs').textContent=totHrs.toFixed(0);
+  if(document.getElementById('s-hef')) document.getElementById('s-hef').textContent=totHef.toFixed(0); 
+  if(document.getElementById('s-hrs-sub')) document.getElementById('s-hrs-sub').textContent = fmtD(per.ini) + ' al ' + fmtD(per.fin);
+  if(document.getElementById('s-eq')) document.getElementById('s-eq').textContent=lista.length;
+  if(document.getElementById('s-eq-sub')) document.getElementById('s-eq-sub').textContent=`de ${equipos.length} totales`;
+  if(document.getElementById('s-rep')) document.getElementById('s-rep').textContent=totRep;
+  if(document.getElementById('s-firm')) document.getElementById('s-firm').textContent=firm;
+  if(document.getElementById('s-firm-sub')) document.getElementById('s-firm-sub').textContent=totRep?Math.round(firm*100/totRep)+'%':'0%';
 }
 
 function openGridFor(p){document.getElementById('sel-eq').value=p;show('grid')}
@@ -925,6 +942,13 @@ document.addEventListener('change',e=>{if(e.target.closest('#form-new'))validate
 async function saveReport(e){
   e.preventDefault();
   if(!validate())return;
+
+  // VERIFICACIÓN DE FOTOS OFFLINE
+  if(!navigator.onLine && (fotoData1?.blob || fotoData2?.blob)) {
+    toast('Pérdida de señal. No se pueden adjuntar fotos en modo offline.', 'err');
+    return;
+  }
+
   const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='Guardando...';
   try{
     const id=document.getElementById('f-id').value;
