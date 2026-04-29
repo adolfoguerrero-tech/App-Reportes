@@ -1312,7 +1312,7 @@ function renderErr(){
   <h3 style="margin-top:14px">Saltos de horómetro (Control Estricto)</h3>
   ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${fmtD(s.fecha)} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}
   
-  <h3 style="margin-top:14px">Reports en "Borrador" pendientes de Foto</h3>
+  <h3 style="margin-top:14px">Reports pendientes de foto</h3>
   ${borradorSinFoto.length===0?'<p class="small">Ninguno ✓ Todos los borradores tienen al menos una foto o no hay borradores.</p>':'<ul class="small" style="padding-left:20px">'+borradorSinFoto.map(r=>`<li style="margin-bottom:6px; cursor:pointer;" onclick="editReport('${r._id}')"><b>${r.equipo}</b>: ${fmtD(r.fecha)} (${r.turno}) - Folio: ${r.folio||'S/F'} <span style="color:#1F4E78; font-weight:bold; margin-left:4px">[Subir foto ahora]</span></li>`).join('')+'</ul>'}
 
   <h3 style="margin-top:14px">Folios duplicados</h3>
