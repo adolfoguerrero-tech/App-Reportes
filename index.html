@@ -1270,30 +1270,55 @@ async function addProv(){const v=document.getElementById('new-prov').value.trim(
 async function delProv(id){if(confirm('¿Eliminar?')){await db.collection('proveedores').doc(id).delete();openProvs()}}
 
 // ============ DIAGNÓSTICO ============
+// ============ DIAGNÓSTICO ============
 function renderErr(){
   const folios={},dups=[],saltos=[];
-  reports.forEach(r=>{if(r.folio){const k=r.equipo+'|'+r.folio;if(folios[k])dups.push({eq:r.equipo,folio:r.folio});folios[k]=true}});
-  const porEq={};reports.forEach(r=>{porEq[r.equipo]=porEq[r.equipo]||[];porEq[r.equipo].push(r)});
+  
+  reports.forEach(r=>{
+    if(r.folio){
+      const k=r.equipo+'|'+r.folio;
+      if(folios[k]) dups.push({eq:r.equipo, folio:r.folio, id:r._id});
+      folios[k]=true;
+    }
+  });
+  
+  const porEq={};
+  reports.forEach(r=>{
+    porEq[r.equipo]=porEq[r.equipo]||[];
+    porEq[r.equipo].push(r);
+  });
+  
   Object.keys(porEq).forEach(eq=>{
     const rs=porEq[eq].sort((a,b)=>(a.fecha+(a.turno==='Día'?'A':'B')).localeCompare(b.fecha+(b.turno==='Día'?'A':'B')));
     for(let i=1;i<rs.length;i++){
       const gap=rs[i].hi-rs[i-1].hf;
-      if(Math.abs(gap)>0.1)saltos.push({eq,fecha:rs[i].fecha,turno:rs[i].turno,prev:rs[i-1].hf,curr:rs[i].hi,gap:gap.toFixed(1)})
+      if(Math.abs(gap)>0.1) saltos.push({eq, fecha:rs[i].fecha, turno:rs[i].turno, prev:rs[i-1].hf, curr:rs[i].hi, gap:gap.toFixed(1)})
     }
   });
-  const sinF=reports.filter(r=>!r.folio).length;
-  const sinFoto=reports.filter(r=>!r.foto&&!r.foto2&&r.estado==='Firmado').length;
+
+  const sinF = reports.filter(r=>!r.folio).length;
   
-  document.getElementById('err-body').innerHTML=`<div class="stats" style="grid-template-columns:repeat(4,1fr)">
-  <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
-  <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
-  <div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
-  <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
+  // Guardamos la lista completa de reportes sin foto para poder mostrarlos
+  const repSinFoto = reports.filter(r=>!r.foto && !r.foto2 && r.estado==='Firmado');
+  const sinFoto = repSinFoto.length;
+  
+  document.getElementById('err-body').innerHTML=`
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
+    <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
+    <div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
+    <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
   </div>
+  
   <h3 style="margin-top:14px">Saltos de horómetro (Control Estricto)</h3>
   ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}
+  
+  <h3 style="margin-top:14px">Reportes Firmados SIN foto adjunta</h3>
+  ${repSinFoto.length===0?'<p class="small">Ninguno ✓ Todos tienen respaldo.</p>':'<ul class="small" style="padding-left:20px">'+repSinFoto.map(r=>`<li style="margin-bottom:6px; cursor:pointer;" onclick="editReport('${r._id}')"><b>${r.equipo}</b>: ${fmtD(r.fecha)} (${r.turno}) - Folio: ${r.folio||'S/F'} <span style="color:#1F4E78; font-weight:bold; margin-left:4px">[Hacer clic para editar]</span></li>`).join('')+'</ul>'}
+
   <h3 style="margin-top:14px">Folios duplicados</h3>
-  ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li>${d.eq}: folio ${d.folio}</li>`).join('')+'</ul>'}`;
+  ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li style="margin-bottom:4px; cursor:pointer;" onclick="editReport('${d.id}')"><b>${d.eq}</b>: folio ${d.folio} <span style="color:#1F4E78; font-weight:bold; margin-left:4px">[Revisar]</span></li>`).join('')+'</ul>'}
+  `;
 }
 
 function closeModal(){document.getElementById('modal').classList.remove('show')}
