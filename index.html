@@ -1270,7 +1270,6 @@ async function addProv(){const v=document.getElementById('new-prov').value.trim(
 async function delProv(id){if(confirm('¿Eliminar?')){await db.collection('proveedores').doc(id).delete();openProvs()}}
 
 // ============ DIAGNÓSTICO ============
-// ============ DIAGNÓSTICO ============
 function renderErr(){
   const folios={},dups=[],saltos=[];
   
@@ -1298,23 +1297,23 @@ function renderErr(){
 
   const sinF = reports.filter(r=>!r.folio).length;
   
-  // Guardamos la lista completa de reportes sin foto para poder mostrarlos
-  const repSinFoto = reports.filter(r=>!r.foto && !r.foto2 && r.estado==='Firmado');
-  const sinFoto = repSinFoto.length;
+  // CAMBIO AQUÍ: Ahora buscamos BORRADORES sin ninguna de las dos fotos
+  const borradorSinFoto = reports.filter(r => r.estado === 'Borrador' && !r.foto && !r.foto2);
+  const totalBorradores = borradorSinFoto.length;
   
   document.getElementById('err-body').innerHTML=`
   <div class="stats" style="grid-template-columns:repeat(4,1fr)">
     <div class="stat"><div class="lbl">Total reports</div><div class="val">${reports.length}</div></div>
     <div class="stat"><div class="lbl">Sin folio</div><div class="val" style="color:#E24B4A">${sinF}</div></div>
-    <div class="stat"><div class="lbl">Firmados sin foto</div><div class="val" style="color:#BA7517">${sinFoto}</div></div>
+    <div class="stat"><div class="lbl">Borradores sin foto</div><div class="val" style="color:#BA7517">${totalBorradores}</div></div>
     <div class="stat"><div class="lbl">Saltos horómetro</div><div class="val" style="color:#BA7517">${saltos.length}</div></div>
   </div>
   
   <h3 style="margin-top:14px">Saltos de horómetro (Control Estricto)</h3>
-  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${s.fecha} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}
+  ${saltos.length===0?'<p class="small">Ninguno ✓</p>':'<div class="table-responsive"><table><thead><tr><th>Equipo</th><th>Fecha Salto</th><th>Terminó en</th><th>Inició en</th><th>Gap</th></tr></thead><tbody>'+saltos.map(s=>`<tr><td>${s.eq}</td><td>${fmtD(s.fecha)} (${s.turno})</td><td>${s.prev}h</td><td>${s.curr}h</td><td style="color:#E24B4A">${s.gap>0?'+':''}${s.gap}h</td></tr>`).join('')+'</tbody></table></div>'}
   
-  <h3 style="margin-top:14px">Reportes Firmados SIN foto adjunta</h3>
-  ${repSinFoto.length===0?'<p class="small">Ninguno ✓ Todos tienen respaldo.</p>':'<ul class="small" style="padding-left:20px">'+repSinFoto.map(r=>`<li style="margin-bottom:6px; cursor:pointer;" onclick="editReport('${r._id}')"><b>${r.equipo}</b>: ${fmtD(r.fecha)} (${r.turno}) - Folio: ${r.folio||'S/F'} <span style="color:#1F4E78; font-weight:bold; margin-left:4px">[Hacer clic para editar]</span></li>`).join('')+'</ul>'}
+  <h3 style="margin-top:14px">Reports en "Borrador" pendientes de Foto</h3>
+  ${borradorSinFoto.length===0?'<p class="small">Ninguno ✓ Todos los borradores tienen al menos una foto o no hay borradores.</p>':'<ul class="small" style="padding-left:20px">'+borradorSinFoto.map(r=>`<li style="margin-bottom:6px; cursor:pointer;" onclick="editReport('${r._id}')"><b>${r.equipo}</b>: ${fmtD(r.fecha)} (${r.turno}) - Folio: ${r.folio||'S/F'} <span style="color:#1F4E78; font-weight:bold; margin-left:4px">[Subir foto ahora]</span></li>`).join('')+'</ul>'}
 
   <h3 style="margin-top:14px">Folios duplicados</h3>
   ${dups.length===0?'<p class="small">Ninguno ✓</p>':'<ul class="small" style="padding-left:20px">'+dups.map(d=>`<li style="margin-bottom:4px; cursor:pointer;" onclick="editReport('${d.id}')"><b>${d.eq}</b>: folio ${d.folio} <span style="color:#1F4E78; font-weight:bold; margin-left:4px">[Revisar]</span></li>`).join('')+'</ul>'}
