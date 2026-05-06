@@ -1,0 +1,28 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local secrets / config
+.env
+.env.local
+.env.*.local
+serviceAccountKey*.json
+
+# Firebase local artifacts
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Dependencias (por si en el futuro se agrega un build)
+node_modules/
+dist/
+build/
