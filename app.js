@@ -101,12 +101,14 @@ auth.onAuthStateChanged(async u=>{
       } else {
         userRole = 'operador';
         $('user-label').innerHTML = `👤 Operador: ${esc(u.email)}`;
-        ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => $(id).classList.add('hidden'));
+        ['n-cons', 'n-lotes', 'n-equipos'].forEach(id => $(id).classList.add('hidden'));
+        $('n-err').classList.remove('hidden');
       }
     } catch(e) {
       userRole = 'operador';
       $('user-label').innerHTML = `👤 Operador: ${esc(u.email)}`;
-      ['n-cons', 'n-lotes', 'n-equipos', 'n-err'].forEach(id => $(id).classList.add('hidden'));
+      ['n-cons', 'n-lotes', 'n-equipos'].forEach(id => $(id).classList.add('hidden'));
+      $('n-err').classList.remove('hidden');
     }
 
     setStatus('ok','Conectado');
@@ -185,7 +187,7 @@ function bootstrap(){
 function isHidden(v){return $('view-'+v).classList.contains('hidden')}
 
 function show(v){
-  const restricted = ['cons', 'lotes', 'equipos', 'err'];
+  const restricted = ['cons', 'lotes', 'equipos'];
   if (restricted.includes(v) && userRole !== 'admin') {
     toast('Acceso denegado', 'err');
     return;
