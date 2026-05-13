@@ -174,7 +174,7 @@ function bootstrap(){
   };
 
   handle(db.collection('equipos'),equipos,()=>{renderDash();llenarSelects();if(!isHidden('grid'))renderGrid();if(userRole==='admin')renderEquiposTab()});
-  handle(db.collection('reportes').where('fecha', '>=', limitStr),reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(userRole==='admin'&&!isHidden('err'))renderErr()});
+  handle(db.collection('reportes').where('fecha', '>=', limitStr),reports,()=>{renderDash();if(!isHidden('grid'))renderGrid();if(userRole==='admin'&&!isHidden('cons'))renderCons();if(!isHidden('err'))renderErr()});
   handle(db.collection('ausencias').where('fecha', '>=', limitStr),ausencias,()=>{renderDash();if(!isHidden('grid'))renderGrid()});
   handle(db.collection('proveedores'),provs,()=>{renderDash();if(userRole==='admin')renderEquiposTab()});
   handle(db.collection('lotes'),lotes,()=>{if(userRole==='admin'&&!isHidden('lotes'))renderLotes()});
@@ -484,7 +484,7 @@ function editReport(id){
     $('f-foto-prev2').innerHTML = r.foto2 ? `<img src="${esc(r.foto2)}" class="foto-full"><div><button type="button" class="btn btn-dang btn-sm" onclick="quitFoto(2)">Quitar foto</button></div>` : '';
 
     const f=$('form-new');
-    if(!$('btn-del-rep') && userRole==='admin'){
+    if(!$('btn-del-rep')){
       const b=document.createElement('button');
       b.id='btn-del-rep';b.type='button';b.className='btn btn-dang btn-sm';b.style.marginRight='auto';b.textContent='Eliminar';
       b.onclick=()=>delReport(r._id);
